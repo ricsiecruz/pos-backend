@@ -23,14 +23,19 @@ router.get('/:id', (request, response) => {
 });
 
 router.post('/', (request, response) => {
-  const { product, stocks } = request.body;
+  const { product, stocks, category, brand } = request.body;
 
-  pool.query('INSERT INTO inventory (product, stocks) VALUES ($1, $2)', [product, stocks], (error, results) => {
-    if (error) {
-      throw error;
-    }
-    response.status(201).send(`User added with ID: ${results.insertId}`);
-  });
+  pool.query(
+      'INSERT INTO inventory (product, stocks, category, brand) VALUES ($1, $2, $3, $4) RETURNING id', 
+      [product, stocks, category, brand], 
+      (error, results) => {
+          if (error) {
+              throw error;
+          }
+          const insertedId = results.rows[0].id;
+          response.status(201).json({ id: insertedId });
+      }
+  );
 });
 
 router.put('/:id', (request, response) => {
