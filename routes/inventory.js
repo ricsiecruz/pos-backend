@@ -74,7 +74,8 @@ router.put('/add-stocks/:id', (request, response) => {
           if (updateError) {
             throw updateError;
           }
-          response.status(200).send(`Stocks updated for product with ID: ${id}`);
+          // Respond with a JSON object containing the message
+          response.status(200).json({ message: `Stocks updated for product with ID: ${id}` });
         }
       );
     }
