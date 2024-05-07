@@ -49,6 +49,38 @@ router.put('/:id', (request, response) => {
   );
 });
 
+router.put('/add-stocks/:id', (request, response) => {
+  const id = parseInt(request.params.id);
+  const { stocks } = request.body;
+
+  // Fetch current stocks from the database
+  pool.query(
+    'SELECT stocks FROM inventory WHERE id = $1',
+    [id],
+    (error, results) => {
+      if (error) {
+        throw error;
+      }
+
+      // Calculate new stocks value by adding the requested value to the current value
+      const currentStocks = results.rows[0].stocks;
+      const newStocks = parseInt(currentStocks) + parseInt(stocks);
+
+      // Update database with the new stocks value
+      pool.query(
+        'UPDATE inventory SET stocks = $1 WHERE id = $2',
+        [newStocks, id],
+        (updateError, updateResults) => {
+          if (updateError) {
+            throw updateError;
+          }
+          response.status(200).send(`Stocks updated for product with ID: ${id}`);
+        }
+      );
+    }
+  );
+});
+
 router.delete('/:id', (request, response) => {
   const id = parseInt(request.params.id);
 
