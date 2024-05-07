@@ -1,7 +1,8 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
-const userRoutes = require('./queries')
+const userRoutes = require('./routes/queries')
+const inventoryRoutes = require('./routes/inventory')
 const port = 3000
 
 app.use(bodyParser.json())
@@ -16,6 +17,7 @@ app.get('/', (request, response) => {
 })
 
 app.use('/users', userRoutes);
+app.use('/inventory', inventoryRoutes);
 
 app.listen(port, () => {
   console.log(`App running on port ${port}.`)
