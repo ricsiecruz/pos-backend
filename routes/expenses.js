@@ -3,7 +3,7 @@ const pool = require('../db');
 const router = express.Router();
 
 router.get('/', (request, response) => {
-    pool.query('SELECT * FROM expenses ORDER BY id ASC', (error, results) => {
+    pool.query('SELECT * FROM expenses ORDER BY id DESC', (error, results) => {
       if (error) {
         throw error;
       }
@@ -23,24 +23,27 @@ router.get('/:id', (request, response) => {
 });
 
 router.post('/', (request, response) => {
-    try {
-        const { expense, month, date, amount, channel } = request.body;
+  try {
+      const { expense, month, date, amount, channel } = request.body;
 
-        pool.query(
-            'INSERT INTO expenses (expense, month, date, amount, channel) VALUES ($1, $2, $3, $4, $5) RETURNING id', 
-            [expense, month, date, amount, channel], 
-            (error, results) => {
-                if (error) {
-                    throw error;
-                }
-                const insertedId = results.rows[0].id;
-                response.status(201).json({ id: insertedId });
-            }
-        );
-      } catch (error) {
-        console.error('Error executing query:', error);
-        response.status(500).json({ error: 'Internal Server Error' });
-      }
+      // Convert date string to a valid JavaScript Date object
+      const formattedDate = new Date(date);
+
+      pool.query(
+          'INSERT INTO expenses (expense, month, date, amount, channel) VALUES ($1, $2, $3, $4, $5) RETURNING id', 
+          [expense, month, formattedDate, amount, channel], 
+          (error, results) => {
+              if (error) {
+                  throw error;
+              }
+              const insertedId = results.rows[0].id;
+              response.status(201).json({ id: insertedId });
+          }
+      );
+    } catch (error) {
+      console.error('Error executing query:', error);
+      response.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
 router.put('/:id', (request, response) => {
