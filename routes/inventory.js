@@ -43,13 +43,13 @@ router.put('/:id', (request, response) => {
   const { product, stocks } = request.body;
 
   pool.query(
-    'UPDATE inventory SET product =stocksemail = $2 WHERE id = $3',
+    'UPDATE inventory SET product = $1, stocks = $2 WHERE id = $3',
     [product, stocks, id],
     (error, results) => {
       if (error) {
         throw error;
       }
-      response.status(200).send(`Stocks modified with ID: ${id}`);
+      response.status(200).send(`Inventory modified with ID: ${id}`);
     }
   );
 });

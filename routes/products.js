@@ -39,20 +39,20 @@ router.post('/', (request, response) => {
 });
 
 router.put('/:id', (request, response) => {
-  const id = parseInt(request.params.id);
-  const { product, stocks } = request.body;
-
-  pool.query(
-    'UPDATE products SET product =stocksemail = $2 WHERE id = $3',
-    [product, stocks, id],
-    (error, results) => {
-      if (error) {
-        throw error;
+    const id = parseInt(request.params.id);
+    const { price } = request.body;
+  
+    pool.query(
+      'UPDATE products SET price = $1 WHERE id = $2',
+      [price, id],
+      (error, results) => {
+        if (error) {
+          throw error;
+        }
+        response.status(200).json(`Product modified with ID: ${id}`);
       }
-      response.status(200).send(`Product modified with ID: ${id}`);
-    }
-  );
-});
+    );
+});  
 
 router.put('/add-stocks/:id', (request, response) => {
   const id = parseInt(request.params.id);
