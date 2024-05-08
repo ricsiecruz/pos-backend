@@ -5,6 +5,7 @@ const app = express()
 const userRoutes = require('./routes/queries')
 const inventoryRoutes = require('./routes/inventory')
 const productsRoutes = require('./routes/products')
+const expensesRoutes = require('./routes/expenses')
 const port = 3000
 
 app.use(cors())
@@ -22,6 +23,7 @@ app.get('/', (request, response) => {
 app.use('/users', userRoutes);
 app.use('/inventory', inventoryRoutes);
 app.use('/products', productsRoutes);
+app.use('/expenses', expensesRoutes);
 
 app.listen(port, () => {
   console.log(`App running on port ${port}.`)
