@@ -3,59 +3,98 @@
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
+const pool = require('./db'); // Import your database pool
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// Define an array to store products
-let products = [];
-
-// WebSocket server connection handler
+// Define WebSocket server connection handler
 wss.on('connection', (ws) => {
   console.log('Client connected');
 
   // Send initial list of products to the client
-  ws.send(JSON.stringify({ action: 'initialize', products }));
+  sendProductsToClient(ws);
 
   // Handle messages from the client
   ws.on('message', (message) => {
     const data = JSON.parse(message);
     switch (data.action) {
       case 'addProduct':
-        // Add the new product to the array
-        const newProduct = data.product;
-        products.push(newProduct);
-        // Broadcast the updated list of products to all connected clients
-        broadcastProducts();
+        // Add the new product to the database
+        addProductToDatabase(data.product)
+          .then(() => {
+            // Broadcast the updated list of products to all connected clients
+            broadcastProducts();
+          })
+          .catch((error) => {
+            console.error('Error adding product to database:', error);
+          });
         break;
-      case 'editProduct':
-        // Find and update the product in the array
-        const index = products.findIndex(product => product.id === data.productId);
-        if (index !== -1) {
-          products[index] = { ...data.product, id: data.productId };
-          // Broadcast the updated list of products to all connected clients
-          broadcastProducts();
-        }
-        break;
+      // Add other cases for handling different actions
       default:
         break;
     }
   });
-
-  function broadcastProducts() {
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ action: 'updateProducts', products }));
-      }
-    });
-  }
 
   // Handle client disconnection
   ws.on('close', () => {
     console.log('Client disconnected');
   });
 });
+
+// Function to send the current list of products to a client
+function sendProductsToClient(client) {
+  pool.query('SELECT * FROM products ORDER BY id DESC', (error, results) => {
+    if (error) {
+      console.error('Error fetching products from database:', error);
+      return;
+    }
+    const products = results.rows;
+    client.send(JSON.stringify({ action: 'initialize', products }));
+    console.log('Sending initial products to client:', products); // Add this line for debugging
+  });
+}
+
+// Function to add a product to the database
+function addProductToDatabase(newProduct) {
+  return new Promise((resolve, reject) => {
+    const { product, price } = newProduct;
+    pool.query(
+      'INSERT INTO products (product, price) VALUES ($1, $2) RETURNING id, product, price',
+      [product, price],
+      (error, results) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        const { id, product, price } = results.rows[0];
+        // Fetch the updated list of products
+        pool.query('SELECT * FROM products ORDER BY id DESC', (error, results) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          const updatedProducts = results.rows;
+          // Broadcast the updated list of products to all connected clients
+          broadcastProducts(updatedProducts);
+          // Resolve with the newly added product
+          resolve({ id, product: product, price });
+        });
+      }
+    );
+  });
+}
+
+// Function to broadcast the updated list of products to all connected clients
+function broadcastProducts(updatedProducts) {
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      sendProductsToClient(client); // Broadcast the updated products
+      console.log('Broadcasting updated products to client:', updatedProducts); // Add this line for debugging
+    }
+  });
+}
 
 // Start the server
 const PORT = process.env.PORT || 8080;
