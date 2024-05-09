@@ -32,6 +32,18 @@ wss.on('connection', (ws) => {
           });
         break;
       // Add other cases for handling different actions
+      case 'editProduct':
+  // Update the product in the database
+  editProductInDatabase(data.product)
+    .then(() => {
+      // Broadcast the updated list of products to all connected clients
+      broadcastProducts();
+    })
+    .catch((error) => {
+      console.error('Error editing product in database:', error);
+    });
+  break;
+
       default:
         break;
     }
@@ -85,6 +97,26 @@ function addProductToDatabase(newProduct) {
     );
   });
 }
+
+// Function to edit a product in the database
+function editProductInDatabase(updatedProduct) {
+  return new Promise((resolve, reject) => {
+    const { id, product, price } = updatedProduct;
+    pool.query(
+      'UPDATE products SET product = $1, price = $2 WHERE id = $3',
+      [product, price, id],
+      (error, results) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        // Resolve after successfully updating the product
+        resolve();
+      }
+    );
+  });
+}
+
 
 // Function to broadcast the updated list of products to all connected clients
 function broadcastProducts(updatedProducts) {
