@@ -19,23 +19,39 @@ wss.on('connection', (ws) => {
   ws.send(JSON.stringify({ action: 'initialize', products }));
 
   // Handle messages from the client
-  ws.on('message', (message) => {
-    const data = JSON.parse(message);
-    switch (data.action) {
-      case 'addProduct':
-        // Add the new product to the array
-        products.push(data.product);
+  // Handle messages from the client
+ws.on('message', (message) => {
+  const data = JSON.parse(message);
+  switch (data.action) {
+    case 'addProduct':
+      // Add the new product to the array
+      products.push(data.product);
+      // Broadcast the updated list of products to all connected clients
+      broadcastProducts();
+      break;
+    case 'editProduct':
+      // Find and update the product in the array
+      const index = products.findIndex(product => product.id === data.productId);
+      if (index !== -1) {
+        products[index] = { ...data.product, id: data.productId };
         // Broadcast the updated list of products to all connected clients
-        wss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({ action: 'updateProducts', products }));
-          }
-        });
-        break;
-      default:
-        break;
+        broadcastProducts();
+      }
+      break;
+    default:
+      break;
+  }
+});
+
+// Function to broadcast updated products to all clients
+function broadcastProducts() {
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({ action: 'updateProducts', products }));
     }
   });
+}
+
 
   // Handle client disconnection
   ws.on('close', () => {
