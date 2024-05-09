@@ -3,7 +3,7 @@ const pool = require('../db');
 const router = express.Router();
 
 router.get('/', (request, response) => {
-    pool.query('SELECT * FROM products ORDER BY id ASC', (error, results) => {
+    pool.query('SELECT * FROM products ORDER BY id DESC', (error, results) => {
       if (error) {
         throw error;
       }
