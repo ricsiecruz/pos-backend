@@ -1,6 +1,10 @@
 const express = require('express');
 const pool = require('../db');
+const WebSocket = require('ws'); // Import WebSocket module
 const router = express.Router();
+
+// Define WebSocket server connection handler
+module.exports = function(wss) {
 
 router.get('/', (request, response) => {
     pool.query('SELECT * FROM inventory ORDER BY id DESC', (error, results) => {
@@ -98,4 +102,5 @@ router.delete('/:id', (request, response) => {
   });
 });
 
-module.exports = router;
+return router;
+};

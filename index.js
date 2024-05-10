@@ -6,6 +6,7 @@ const userRoutes = require('./routes/queries');
 const inventoryRoutes = require('./routes/inventory');
 const productsRoutes = require('./routes/products');
 const expensesRoutes = require('./routes/expenses');
+const salesRoutes = require('./routes/sales');
 const port = 3000;
 
 app.use(cors());
@@ -33,3 +34,4 @@ app.use('/users', userRoutes);
 app.use('/inventory', inventoryRoutes);
 app.use('/products', productsRoutes(wss)); // Pass wss to productsRoutes
 app.use('/expenses', expensesRoutes);
+app.use('/sales', salesRoutes)

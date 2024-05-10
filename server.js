@@ -15,6 +15,7 @@ wss.on('connection', (ws) => {
 
   // Send initial list of products to the client
   sendProductsToClient(ws);
+  sendSalesToClient(ws);
 
   // Handle messages from the client
   ws.on('message', (message) => {
@@ -33,17 +34,27 @@ wss.on('connection', (ws) => {
         break;
       // Add other cases for handling different actions
       case 'editProduct':
-  // Update the product in the database
-  editProductInDatabase(data.product)
-    .then(() => {
-      // Broadcast the updated list of products to all connected clients
-      broadcastProducts();
+      // Update the product in the database
+        editProductInDatabase(data.product)
+          .then(() => {
+            // Broadcast the updated list of products to all connected clients
+            broadcastProducts();
+          })
+          .catch((error) => {
+            console.error('Error editing product in database:', error);
+          });
+        break;
+        case 'addSales':
+  addTransactionSalesToDatabase(data.sale)
+    .then((newSale) => {
+      broadcastSales(newSale);
     })
     .catch((error) => {
-      console.error('Error editing product in database:', error);
+      console.log('Error adding sale to database:', error);
     });
   break;
 
+      
       default:
         break;
     }
@@ -66,6 +77,18 @@ function sendProductsToClient(client) {
     client.send(JSON.stringify({ action: 'initialize', products }));
     console.log('Sending initial products to client:', products); // Add this line for debugging
   });
+}
+
+function sendSalesToClient(client) {
+  pool.query('SELECT * FROM sales ORDER BY id DESC', (error, results) => {
+    if(error) {
+      console.log('Error fetching sales from database:', error);
+      return;
+    }
+    const sales = results.rows;
+    client.send(JSON.stringify({ action: 'initialize', sales }));
+    console.log('Sending initial sales to client:', sales);
+  })
 }
 
 // Function to add a product to the database
@@ -98,6 +121,27 @@ function addProductToDatabase(newProduct) {
   });
 }
 
+// Function to add transaction sales to the database
+function addTransactionSalesToDatabase(sale) {
+  return new Promise((resolve, reject) => {
+    const { transactionId, orders, qty, total, dateTime } = sale;
+
+    pool.query(
+      'INSERT INTO sales (transactionId, orders, qty, total, datetime) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [transactionId, JSON.stringify(orders), qty, total, dateTime],
+      (error, results) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        const newSale = results.rows[0];
+        resolve(newSale);
+      }
+    );
+  });
+}
+
+
 // Function to edit a product in the database
 function editProductInDatabase(updatedProduct) {
   return new Promise((resolve, reject) => {
@@ -117,7 +161,6 @@ function editProductInDatabase(updatedProduct) {
   });
 }
 
-
 // Function to broadcast the updated list of products to all connected clients
 function broadcastProducts(updatedProducts) {
   wss.clients.forEach((client) => {
@@ -127,6 +170,24 @@ function broadcastProducts(updatedProducts) {
     }
   });
 }
+
+function broadcastSales(addSales) {
+  wss.clients.forEach((client) => {
+    if(client.readyState === WebSocket.OPEN) {
+      sendSalesToClient(client);
+      console.log('Broadcasting sales to client:', addSales)
+    }
+  })
+}
+
+// function broadcastSales(addSales) {
+//   wss.clients.forEach((client) => {
+//     if(client.readyState === WebSocket.OPEN) {
+//       sendSalesToClient(client);
+//       console.log('Broadcasting sales to client:', addSales)
+//     }
+//   })
+// }
 
 // Start the server
 const PORT = process.env.PORT || 8080;

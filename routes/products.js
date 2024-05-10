@@ -25,29 +25,6 @@ module.exports = function(wss) {
     });
   });
 
-  // router.post('/', (request, response) => {
-  //   const { product, price } = request.body;
-
-  //   pool.query(
-  //     'INSERT INTO products (product, price) VALUES ($1, $2) RETURNING id', 
-  //     [product, price], 
-  //     (error, results) => {
-  //       if (error) {
-  //         throw error;
-  //       }
-  //       const insertedId = results.rows[0].id;
-  //       response.status(201).json({ id: insertedId });
-
-  //       // Emit a WebSocket message to notify clients of the new product
-  //       wss.clients.forEach((client) => {
-  //         if (client.readyState === WebSocket.OPEN) {
-  //           client.send(JSON.stringify({ action: 'addProduct', product: { id: insertedId, product, price } }));
-  //         }
-  //       });
-  //     }
-  //   );
-  // });
-
   router.put('/:id', (request, response) => {
     const id = parseInt(request.params.id);
     const { price } = request.body;
