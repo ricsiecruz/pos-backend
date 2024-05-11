@@ -52,14 +52,17 @@ wss.on('connection', (ws) => {
             console.error('Error adding stock:', error);
           })
         break;
-      case 'addExpenses':
-        addExpenses(data.expenses)
-          .then(() => {
-            broadcaseExpenses();
-          })
-          .catch((error) => {
-            console.error('Error adding expenses in database:', error);
-          });
+        case 'addExpenses':
+          addExpenses(data.expense)
+            .then(() => {
+              broadcastExpenses();
+            })
+            .catch((error) => {
+              console.error('Error adding expenses in database:', error);
+            });
+          break;        
+      case 'addExpensesResponse':
+        handleAddExpensesResponse(data);
         break;
       case 'addSales':
         addTransactionSalesToDatabase(data.sale)
@@ -156,6 +159,7 @@ function addProductToDatabase(newProduct) {
 
 function addExpenses(newExpenses) {
   return new Promise((resolve, reject) => {
+    console.log('newExpenses', newExpenses)
     const { expense, month, date, amount, channel } = newExpenses;
     pool.query(
       'INSERT INTO expenses (expense, month, date, amount, channel) VALUES ($1, $2, $3, $4, $5) RETURNING id , expense, month, date, amount, channel',
@@ -172,12 +176,18 @@ function addExpenses(newExpenses) {
             return;
           }
           const updatedExpenses = results.rows;
-          broadcaseExpenses(updatedExpenses);
-          resolve({ id, expense, month, date, amount, channel });
-        })
+          broadcastExpenses(updatedExpenses);
+        });
       }
     )
   })
+}
+
+function handleAddExpensesResponse(data) {
+  const { expense, totalSum } = data;
+  // Update UI to reflect the newly added expense and total sum
+  console.log('Newly added expense:', expense);
+  console.log('Total sum of expenses:', totalSum);
 }
 
 function addInventory(newInventory) {
@@ -271,7 +281,7 @@ function broadcastProducts(updatedProducts) {
   });
 }
 
-function broadcaseExpenses(updatedExpenses) {
+function broadcastExpenses(updatedExpenses) {
   wss.clients.forEach((client) => {
     if(client.readyState === WebSocket.OPEN) {
       sendExpensesToClient(client);
