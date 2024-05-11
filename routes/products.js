@@ -1,6 +1,5 @@
 const express = require('express');
 const pool = require('../db');
-const WebSocket = require('ws'); // Import WebSocket module
 const router = express.Router();
 
 // Define WebSocket server connection handler
