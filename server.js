@@ -42,6 +42,15 @@ wss.on('connection', (ws) => {
             console.log('Error adding invetory to database:', error);
           });
         break;
+      case 'addStock':
+        addStock(data.inventory)
+          .then(() => {
+            broadcastInventory();
+          })
+          .catch((error) => {
+            console.error('Error adding stock:', error);
+          })
+        break;
       case 'addSales':
         addTransactionSalesToDatabase(data.sale)
           .then((newSale) => {
@@ -125,11 +134,6 @@ function addProductToDatabase(newProduct) {
 
 function addInventory(newInventory) {
   return new Promise((resolve, reject) => {
-    // if (!newInventory || !newInventory.product) {
-    //   reject(new Error('Product is undefined in newInventory'));
-    //   return;
-    // }
-
     const { product, category, brand, stocks } = newInventory;
     pool.query(
       'INSERT INTO inventory (product, category, brand, stocks) VALUES ($1, $2, $3, $4) RETURNING id, product, category, brand, stocks',
@@ -174,6 +178,7 @@ function addTransactionSalesToDatabase(sale) {
 
 function editProductInDatabase(updatedProduct) {
   return new Promise((resolve, reject) => {
+    console.log('updated products', updatedProduct);
     const { id, product, price } = updatedProduct;
     pool.query(
       'UPDATE products SET product = $1, price = $2 WHERE id = $3',
@@ -184,6 +189,26 @@ function editProductInDatabase(updatedProduct) {
           return;
         }
         resolve();
+      }
+    );
+  });
+}
+
+function addStock(updateInventory) {
+  return new Promise((resolve, reject) => {
+    console.log('updateInventory', updateInventory);
+    const { id, stocks } = updateInventory; // Corrected destructuring here
+    pool.query(
+      'UPDATE inventory SET stocks = $1 WHERE id = $2',
+      [stocks, id], // Corrected usage here
+      (error, results) => {
+        if (error) {
+          console.error('Error updating stock:', error);
+          reject(error);
+          return;
+        }
+        resolve();
+        broadcastInventory(); // Broadcast updated inventory to clients
       }
     );
   });
