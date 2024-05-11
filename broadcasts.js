@@ -1,5 +1,6 @@
 const WebSocket = require('ws');
 const websocketHandlers = require('./websocketHandlers');
+const productsHandler = require('./handlers/productsHandler')
 
 // Export the function to broadcast products
 function broadcastProducts(wss) {
@@ -10,7 +11,7 @@ function broadcastProducts(wss) {
   
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      websocketHandlers.sendProductsToClient(client);
+        productsHandler.sendProductsToClient(client);
       console.log('Broadcasting updated products to client');
     }
   });

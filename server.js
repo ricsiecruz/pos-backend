@@ -6,11 +6,12 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const websocketHandlers = require('./websocketHandlers');
+const productsHandler = require('./handlers/productsHandler')
 const broadcasts = require('./broadcasts');
 
 wss.on('connection', (ws) => {
   console.log('Client connected');
-  websocketHandlers.sendProductsToClient(ws);
+  productsHandler.sendProductsToClient(ws);
   websocketHandlers.sendSalesToClient(ws);
   websocketHandlers.sendInventoryToClient(ws);
   websocketHandlers.sendExpensesToClient(ws);
@@ -29,7 +30,7 @@ wss.on('connection', (ws) => {
       case 'editProduct':
         editProductInDatabase(data.product)
           .then(() => {
-            broadcasts.broadcastProducts();
+            broadcasts.broadcastProducts(wss);
           })
           .catch((error) => {
             console.error('Error editing product in database:', error);
