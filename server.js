@@ -5,21 +5,22 @@ const pool = require('./db');
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
-const broadcasts = require('./websocketHandlers');
+const websocketHandlers = require('./websocketHandlers');
+const broadcasts = require('./broadcasts');
 
 wss.on('connection', (ws) => {
   console.log('Client connected');
-  broadcasts.sendProductsToClient(ws);
-  broadcasts.sendSalesToClient(ws);
-  broadcasts.sendInventoryToClient(ws);
-  broadcasts.sendExpensesToClient(ws);
+  websocketHandlers.sendProductsToClient(ws);
+  websocketHandlers.sendSalesToClient(ws);
+  websocketHandlers.sendInventoryToClient(ws);
+  websocketHandlers.sendExpensesToClient(ws);
   ws.on('message', (message) => {
     const data = JSON.parse(message);
     switch (data.action) {
       case 'addProduct':
         addProductToDatabase(data.product)
           .then(() => {
-            broadcastProducts();
+            broadcasts.broadcastProducts(wss);
           })
           .catch((error) => {
             console.error('Error adding product to database:', error);
@@ -28,7 +29,7 @@ wss.on('connection', (ws) => {
       case 'editProduct':
         editProductInDatabase(data.product)
           .then(() => {
-            broadcastProducts();
+            broadcasts.broadcastProducts();
           })
           .catch((error) => {
             console.error('Error editing product in database:', error);
@@ -101,7 +102,7 @@ function addProductToDatabase(newProduct) {
             return;
           }
           const updatedProducts = results.rows;
-          broadcastProducts(updatedProducts);
+          broadcasts.broadcastProducts(updatedProducts);
           resolve({ id, product: product, price });
         });
       }
@@ -223,19 +224,19 @@ function addStock(updateInventory) {
   });
 }
 
-function broadcastProducts(updatedProducts) {
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      broadcasts.sendProductsToClient(client);
-      console.log('Broadcasting updated products to client:', updatedProducts);
-    }
-  });
-}
+// function broadcastProducts(updatedProducts) {
+//   wss.clients.forEach((client) => {
+//     if (client.readyState === WebSocket.OPEN) {
+//       websocketHandlers.sendProductsToClient(client);
+//       console.log('Broadcasting updated products to client:', updatedProducts);
+//     }
+//   });
+// }
 
 function broadcastExpenses(updatedExpenses) {
   wss.clients.forEach((client) => {
     if(client.readyState === WebSocket.OPEN) {
-      broadcasts.sendExpensesToClient(client);
+      websocketHandlers.sendExpensesToClient(client);
       console.log('Broadcasting updated expenses to client:', updatedExpenses);
     }
   })
@@ -244,7 +245,7 @@ function broadcastExpenses(updatedExpenses) {
 function broadcastInventory(addInventory) {
   wss.clients.forEach((client) => {
     if(client.readyState === WebSocket.OPEN) {
-      broadcasts.sendInventoryToClient(client);
+      websocketHandlers.sendInventoryToClient(client);
       console.log('Broadcasting updated inventory to client:', addInventory);
     }
   })
@@ -253,7 +254,7 @@ function broadcastInventory(addInventory) {
 function broadcastSales(addSales) {
   wss.clients.forEach((client) => {
     if(client.readyState === WebSocket.OPEN) {
-      broadcasts.sendSalesToClient(client);
+      websocketHandlers.sendSalesToClient(client);
       console.log('Broadcasting sales to client:', addSales)
     }
   })
