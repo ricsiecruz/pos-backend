@@ -12,6 +12,7 @@ wss.on('connection', (ws) => {
   sendProductsToClient(ws);
   sendSalesToClient(ws);
   sendInventoryToClient(ws);
+  sendExpensesToClient(ws);
   ws.on('message', (message) => {
     const data = JSON.parse(message);
     switch (data.action) {
@@ -39,7 +40,7 @@ wss.on('connection', (ws) => {
             broadcastInventory();
           })
           .catch((error) => {
-            console.log('Error adding invetory to database:', error);
+            console.error('Error adding invetory to database:', error);
           });
         break;
       case 'addStock':
@@ -50,6 +51,15 @@ wss.on('connection', (ws) => {
           .catch((error) => {
             console.error('Error adding stock:', error);
           })
+        break;
+      case 'addExpenses':
+        addExpenses(data.expenses)
+          .then(() => {
+            broadcaseExpenses();
+          })
+          .catch((error) => {
+            console.error('Error adding expenses in database:', error);
+          });
         break;
       case 'addSales':
         addTransactionSalesToDatabase(data.sale)
@@ -80,6 +90,18 @@ function sendProductsToClient(client) {
     client.send(JSON.stringify({ action: 'initialize', products }));
     console.log('Sending initial products to client:', products);
   });
+}
+
+function sendExpensesToClient(client) {
+  pool.query('SELECT * FROM expenses ORDER BY id DESC', (error, results) => {
+    if(error) {
+      console.error('Error fetching expenses from database:', error);
+      return;
+    }
+    const expenses = results.rows;
+    client.send(JSON.stringify({ action: 'initialize', expenses }));
+    console.log('Sending initial expenses to client:', expenses)
+  })
 }
 
 function sendInventoryToClient(client) {
@@ -130,6 +152,32 @@ function addProductToDatabase(newProduct) {
       }
     );
   });
+}
+
+function addExpenses(newExpenses) {
+  return new Promise((resolve, reject) => {
+    const { expense, month, date, amount, channel } = newExpenses;
+    pool.query(
+      'INSERT INTO expenses (expense, month, date, amount, channel) VALUES ($1, $2, $3, $4, $5) RETURNING id , expense, month, date, amount, channel',
+      [expense, month, date, amount, channel],
+      (error, results) => {
+        if(error) {
+          reject(error);
+          return;
+        }
+        const { id, expense, month, date, amount, channel } = results.rows[0];
+        pool.query('SELECT * FROM expenses ORDER BY id DESC', (error, results) => {
+          if(error) {
+            reject(error);
+            return;
+          }
+          const updatedExpenses = results.rows;
+          broadcaseExpenses(updatedExpenses);
+          resolve({ id, expense, month, date, amount, channel });
+        })
+      }
+    )
+  })
 }
 
 function addInventory(newInventory) {
@@ -221,6 +269,15 @@ function broadcastProducts(updatedProducts) {
       console.log('Broadcasting updated products to client:', updatedProducts);
     }
   });
+}
+
+function broadcaseExpenses(updatedExpenses) {
+  wss.clients.forEach((client) => {
+    if(client.readyState === WebSocket.OPEN) {
+      sendExpensesToClient(client);
+      console.log('Broadcasting updated expenses to client:', updatedExpenses);
+    }
+  })
 }
 
 function broadcastInventory(addInventory) {

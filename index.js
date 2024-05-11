@@ -32,6 +32,6 @@ const wss = new WebSocket.Server({ server });
 // Initialize routes
 app.use('/users', userRoutes);
 app.use('/inventory', inventoryRoutes);
-app.use('/products', productsRoutes(wss)); // Pass wss to productsRoutes
-app.use('/expenses', expensesRoutes);
+app.use('/products', productsRoutes(wss));
+app.use('/expenses', expensesRoutes(wss));
 app.use('/sales', salesRoutes)
