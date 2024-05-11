@@ -5,9 +5,7 @@ const pool = require('./db');
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
-
-const productsRoutes = require('./routes/products');
-const broadcasts = require('./broadcasts');
+const broadcasts = require('./websocketHandlers');
 
 wss.on('connection', (ws) => {
   console.log('Client connected');
@@ -84,18 +82,6 @@ wss.on('connection', (ws) => {
     console.log('Client disconnected');
   });
 });
-
-// function sendExpensesToClient(client) {
-//   pool.query('SELECT * FROM expenses ORDER BY id DESC', (error, results) => {
-//     if(error) {
-//       console.error('Error fetching expenses from database:', error);
-//       return;
-//     }
-//     const expenses = results.rows;
-//     client.send(JSON.stringify({ action: 'initialize', expenses }));
-//     console.log('Sending initial expenses to client:', expenses)
-//   })
-// }
 
 function addProductToDatabase(newProduct) {
   return new Promise((resolve, reject) => {
@@ -272,8 +258,6 @@ function broadcastSales(addSales) {
     }
   })
 }
-
-app.use('/products', productsRoutes);
 
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
