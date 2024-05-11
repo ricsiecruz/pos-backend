@@ -39,10 +39,23 @@ function sendInventoryToClient(client) {
       client.send(JSON.stringify({ action: 'initialize', inventory }));
       console.log('Sending initial inventory to client:', inventory);
     });
-  }
+}
+
+function sendExpensesToClient(client) {
+    pool.query('SELECT * FROM expenses ORDER BY id DESC', (error, results) => {
+      if(error) {
+        console.error('Error fetching expenses from database:', error);
+        return;
+      }
+      const expenses = results.rows;
+      client.send(JSON.stringify({ action: 'initialize', expenses }));
+      console.log('Sending initial expenses to client:', expenses)
+    })
+}
 
 module.exports = {
   sendProductsToClient,
   sendSalesToClient,
-  sendInventoryToClient
+  sendInventoryToClient,
+  sendExpensesToClient
 };
