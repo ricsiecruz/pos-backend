@@ -13,7 +13,7 @@ wss.on('connection', (ws) => {
   console.log('Client connected');
   broadcasts.sendProductsToClient(ws);
   broadcasts.sendSalesToClient(ws);
-  sendInventoryToClient(ws);
+  broadcasts.sendInventoryToClient(ws);
   sendExpensesToClient(ws);
   ws.on('message', (message) => {
     const data = JSON.parse(message);
@@ -97,28 +97,16 @@ function sendExpensesToClient(client) {
   })
 }
 
-function sendInventoryToClient(client) {
-  pool.query('SELECT * FROM inventory ORDER BY id DESC', (error, results) => {
-    if(error) {
-      console.error('Error fetching inventory from database:', error);
-      return;
-    }
-    const inventory = results.rows;
-    client.send(JSON.stringify({ action: 'initialize', inventory }));
-    console.log('Sending initial inventory to client:', inventory);
-  });
-}
-
-// function sendSalesToClient(client) {
-//   pool.query('SELECT * FROM sales ORDER BY id DESC', (error, results) => {
+// function sendInventoryToClient(client) {
+//   pool.query('SELECT * FROM inventory ORDER BY id DESC', (error, results) => {
 //     if(error) {
-//       console.log('Error fetching sales from database:', error);
+//       console.error('Error fetching inventory from database:', error);
 //       return;
 //     }
-//     const sales = results.rows;
-//     client.send(JSON.stringify({ action: 'initialize', sales }));
-//     console.log('Sending initial sales to client:', sales);
-//   })
+//     const inventory = results.rows;
+//     client.send(JSON.stringify({ action: 'initialize', inventory }));
+//     console.log('Sending initial inventory to client:', inventory);
+//   });
 // }
 
 function addProductToDatabase(newProduct) {
@@ -282,7 +270,7 @@ function broadcastExpenses(updatedExpenses) {
 function broadcastInventory(addInventory) {
   wss.clients.forEach((client) => {
     if(client.readyState === WebSocket.OPEN) {
-      sendInventoryToClient(client);
+      broadcasts.sendInventoryToClient(client);
       console.log('Broadcasting updated inventory to client:', addInventory);
     }
   })
