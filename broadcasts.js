@@ -17,6 +17,19 @@ function sendProductsToClient(client) {
   });
 }
 
+function sendSalesToClient(client) {
+  pool.query('SELECT * FROM sales ORDER BY id DESC', (error, results) => {
+    if(error) {
+      console.log('Error fetching sales from database:', error);
+      return;
+    }
+    const sales = results.rows;
+    client.send(JSON.stringify({ action: 'initialize', sales }));
+    console.log('Sending initial sales to client:', sales);
+  })
+}
+
 module.exports = {
-  sendProductsToClient
+  sendProductsToClient,
+  sendSalesToClient
 };

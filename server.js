@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const pool = require('./db');
-
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
@@ -13,7 +12,7 @@ const broadcasts = require('./broadcasts');
 wss.on('connection', (ws) => {
   console.log('Client connected');
   broadcasts.sendProductsToClient(ws);
-  sendSalesToClient(ws);
+  broadcasts.sendSalesToClient(ws);
   sendInventoryToClient(ws);
   sendExpensesToClient(ws);
   ws.on('message', (message) => {
@@ -32,7 +31,6 @@ wss.on('connection', (ws) => {
         editProductInDatabase(data.product)
           .then(() => {
             broadcastProducts();
-            // broadcasts.sendProductsToClient(ws);
           })
           .catch((error) => {
             console.error('Error editing product in database:', error);
@@ -111,17 +109,17 @@ function sendInventoryToClient(client) {
   });
 }
 
-function sendSalesToClient(client) {
-  pool.query('SELECT * FROM sales ORDER BY id DESC', (error, results) => {
-    if(error) {
-      console.log('Error fetching sales from database:', error);
-      return;
-    }
-    const sales = results.rows;
-    client.send(JSON.stringify({ action: 'initialize', sales }));
-    console.log('Sending initial sales to client:', sales);
-  })
-}
+// function sendSalesToClient(client) {
+//   pool.query('SELECT * FROM sales ORDER BY id DESC', (error, results) => {
+//     if(error) {
+//       console.log('Error fetching sales from database:', error);
+//       return;
+//     }
+//     const sales = results.rows;
+//     client.send(JSON.stringify({ action: 'initialize', sales }));
+//     console.log('Sending initial sales to client:', sales);
+//   })
+// }
 
 function addProductToDatabase(newProduct) {
   return new Promise((resolve, reject) => {
@@ -293,7 +291,7 @@ function broadcastInventory(addInventory) {
 function broadcastSales(addSales) {
   wss.clients.forEach((client) => {
     if(client.readyState === WebSocket.OPEN) {
-      sendSalesToClient(client);
+      broadcasts.sendSalesToClient(client);
       console.log('Broadcasting sales to client:', addSales)
     }
   })
