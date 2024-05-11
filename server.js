@@ -7,9 +7,12 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
+const productsRoutes = require('./routes/products');
+const broadcasts = require('./broadcasts');
+
 wss.on('connection', (ws) => {
   console.log('Client connected');
-  sendProductsToClient(ws);
+  broadcasts.sendProductsToClient(ws);
   sendSalesToClient(ws);
   sendInventoryToClient(ws);
   sendExpensesToClient(ws);
@@ -29,6 +32,7 @@ wss.on('connection', (ws) => {
         editProductInDatabase(data.product)
           .then(() => {
             broadcastProducts();
+            // broadcasts.sendProductsToClient(ws);
           })
           .catch((error) => {
             console.error('Error editing product in database:', error);
@@ -82,18 +86,6 @@ wss.on('connection', (ws) => {
     console.log('Client disconnected');
   });
 });
-
-function sendProductsToClient(client) {
-  pool.query('SELECT * FROM products ORDER BY id DESC', (error, results) => {
-    if (error) {
-      console.error('Error fetching products from database:', error);
-      return;
-    }
-    const products = results.rows;
-    client.send(JSON.stringify({ action: 'initialize', products }));
-    console.log('Sending initial products to client:', products);
-  });
-}
 
 function sendExpensesToClient(client) {
   pool.query('SELECT * FROM expenses ORDER BY id DESC', (error, results) => {
@@ -185,7 +177,6 @@ function addExpenses(newExpenses) {
 
 function handleAddExpensesResponse(data) {
   const { expense, totalSum } = data;
-  // Update UI to reflect the newly added expense and total sum
   console.log('Newly added expense:', expense);
   console.log('Total sum of expenses:', totalSum);
 }
@@ -255,10 +246,10 @@ function editProductInDatabase(updatedProduct) {
 function addStock(updateInventory) {
   return new Promise((resolve, reject) => {
     console.log('updateInventory', updateInventory);
-    const { id, stocks } = updateInventory; // Corrected destructuring here
+    const { id, stocks } = updateInventory;
     pool.query(
       'UPDATE inventory SET stocks = $1 WHERE id = $2',
-      [stocks, id], // Corrected usage here
+      [stocks, id],
       (error, results) => {
         if (error) {
           console.error('Error updating stock:', error);
@@ -266,7 +257,7 @@ function addStock(updateInventory) {
           return;
         }
         resolve();
-        broadcastInventory(); // Broadcast updated inventory to clients
+        broadcastInventory();
       }
     );
   });
@@ -275,7 +266,7 @@ function addStock(updateInventory) {
 function broadcastProducts(updatedProducts) {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      sendProductsToClient(client);
+      broadcasts.sendProductsToClient(client);
       console.log('Broadcasting updated products to client:', updatedProducts);
     }
   });
@@ -307,6 +298,8 @@ function broadcastSales(addSales) {
     }
   })
 }
+
+app.use('/products', productsRoutes);
 
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
