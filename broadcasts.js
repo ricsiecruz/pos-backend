@@ -1,8 +1,6 @@
 const WebSocket = require('ws');
-const websocketHandlers = require('./websocketHandlers');
 const productsHandler = require('./handlers/productsHandler')
 
-// Export the function to broadcast products
 function broadcastProducts(wss) {
   if (!wss || !wss.clients) {
     console.error('WebSocket Server or clients are not defined.');
@@ -17,7 +15,6 @@ function broadcastProducts(wss) {
   });
 }
 
-// Export the function
 module.exports = {
-    broadcastProducts
+  broadcastProducts
 };
