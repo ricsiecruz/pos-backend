@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const http = require('http');
 const WebSocket = require('ws');
 const pool = require('./db');
@@ -8,6 +9,7 @@ const wss = new WebSocket.Server({ server });
 const websocketHandlers = require('./websocketHandlers');
 const productsHandler = require('./handlers/productsHandler')
 const broadcasts = require('./broadcasts');
+app.use(cors());
 
 wss.on('connection', (ws) => {
   console.log('Client connected');
