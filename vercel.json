@@ -1,5 +1,11 @@
 {
     "version": 2,
+    "env": {
+      "APP_ID": "1801844",
+      "KEY": "53a5d4980fe9d0fb7b6b",
+      "SECRET": "3b4d5e65da86dd68611e",
+      "CLUSTER": "ap1"
+    },
     "builds": [
       {
         "src": "./index.js",

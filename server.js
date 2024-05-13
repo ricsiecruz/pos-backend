@@ -227,15 +227,6 @@ function addStock(updateInventory) {
   });
 }
 
-// function broadcastProducts(updatedProducts) {
-//   wss.clients.forEach((client) => {
-//     if (client.readyState === WebSocket.OPEN) {
-//       websocketHandlers.sendProductsToClient(client);
-//       console.log('Broadcasting updated products to client:', updatedProducts);
-//     }
-//   });
-// }
-
 function broadcastExpenses(updatedExpenses) {
   wss.clients.forEach((client) => {
     if(client.readyState === WebSocket.OPEN) {
