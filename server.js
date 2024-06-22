@@ -219,11 +219,11 @@ function addInventory(newInventory) {
 
 function addTransactionSalesToDatabase(sale) {
   return new Promise((resolve, reject) => {
-    const { transactionId, orders, qty, total, dateTime } = sale;
+    const { transactionId, orders, qty, total, dateTime, customer } = sale;
 
     pool.query(
-      'INSERT INTO sales (transactionId, orders, qty, total, datetime) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [transactionId, JSON.stringify(orders), qty, total, dateTime],
+      'INSERT INTO sales (transactionId, orders, qty, total, datetime, customer) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [transactionId, JSON.stringify(orders), qty, total, dateTime, customer],
       (error, results) => {
         if (error) {
           reject(error);
