@@ -16,21 +16,30 @@ function broadcastProducts(wss) {
   });
 }
 
-function broadcastMembers(wss) {
-  if (!wss || !wss.clients) {
-    console.error('WebSocket Server or clients are not defined.');
-    return;
-  }
+// function broadcastMembers(wss) {
+//   if (!wss || !wss.clients) {
+//     console.error('WebSocket Server or clients of member are not defined.');
+//     return;
+//   }
 
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      membersHandler.sendMembersToClient(client);
-      console.log('Broadcasting updated members to client');
-    }
-  })
-}
+//   wss.clients.forEach((client) => {
+//     if (client.readyState === WebSocket.OPEN) {
+//       membersHandler.sendMembersToClient(client);
+//       console.log('Broadcasting updated members to client');
+//     }
+//   })
+// }
+
+// function broadcastMembers(updatedMembers) {
+//   wss.clients.forEach((client) => {
+//     if(client.readyState === WebSocket.OPEN) {
+//       membersHandler.sendMembersToClient(client);
+//       console.log('Broadcasting updated members to client:', updatedMembers);
+//     }
+//   })
+// }
 
 module.exports = {
   broadcastProducts,
-  broadcastMembers
+  // broadcastMembers
 };

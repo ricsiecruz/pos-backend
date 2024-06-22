@@ -10,6 +10,7 @@ const port = 8080; // Set the desired port
 const wss = new WebSocket.Server({ port });
 const websocketHandlers = require('./websocketHandlers');
 const productsHandler = require('./handlers/productsHandler');
+const membersHandler = require('./handlers/membersHandler');
 const broadcasts = require('./broadcasts');
 app.use(cors());
 
@@ -23,6 +24,7 @@ wss.on('connection', (ws) => {
   websocketHandlers.sendSalesToClient(ws);
   websocketHandlers.sendInventoryToClient(ws);
   websocketHandlers.sendExpensesToClient(ws);
+  membersHandler.sendMembersToClient(ws);
 
   ws.on('message', (message) => {
     console.log('Received:', message);
@@ -88,7 +90,7 @@ wss.on('connection', (ws) => {
       case 'addMember':
         addMemberToDatabase(data.member)
           .then(() => {
-            broadcasts.broadcastMembers(wss);
+            broadcastMembers(wss);
           })
           .catch((error) => {
             console.error('Error adding member to database:', error);
@@ -133,18 +135,26 @@ function addProductToDatabase(newProduct) {
 
 function addMemberToDatabase(newMember) {
   return new Promise((resolve, reject) => {
-    const { name } = newMember;
+    const { name, date_joined, coffee, total_load, total_spent, last_spent,  } = newMember;
     pool.query(
-      'INSERT INTO members (name) VALUES ($1) RETURNING id, name',
-      [name],
+      'INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, date_joined, coffee, total_load, total_spent, last_spent',
+      [name, date_joined, coffee, total_load, total_spent, last_spent],
       (error, results) => {
         if(error) {
           reject(error);
           return;
         }
-        const updatedMembers = results.rows;
-        broadcasts.broadcastMembers(updatedMembers);
-        resovle({ id, name: name })
+        // const updatedMembers = results.rows;
+        // broadcastMembers(updatedMembers);
+        // resolve({ id, name: name })
+        pool.query('SELECT * FROM members ORDER BY id DESC', (error, results) => {
+          if(error) {
+            reject(error);
+            return;
+          }
+          const updatedMembers = results.rows;
+          broadcastMembers(updatedMembers);
+        });
       }
     )
   })
@@ -269,6 +279,15 @@ function broadcastExpenses(updatedExpenses) {
     if(client.readyState === WebSocket.OPEN) {
       websocketHandlers.sendExpensesToClient(client);
       console.log('Broadcasting updated expenses to client:', updatedExpenses);
+    }
+  })
+}
+
+function broadcastMembers(updatedMembers) {
+  wss.clients.forEach((client) => {
+    if(client.readyState === WebSocket.OPEN) {
+      membersHandler.sendMembersToClient(client);
+      console.log('Broadcasting updated members to client:', updatedMembers);
     }
   })
 }

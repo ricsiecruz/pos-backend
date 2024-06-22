@@ -29,6 +29,51 @@ router.get('/:id', (request, response) => {
   });
 });
 
+router.post('/', (request, response) => {
+  try {
+    const { name, date_joined, coffee, total_load, total_spent, last_spent } = request.body;
+
+    // Log the received request body
+    console.log('Received request body:', request.body);
+
+    // Check if date_joined is provided and is a valid date string
+    if (!date_joined || isNaN(Date.parse(date_joined))) {
+      console.error('Invalid or missing date_joined:', date_joined);
+      return response.status(400).json({ error: 'Invalid or missing date_joined' });
+    }
+
+    // Check if last_spent is provided and is a valid date string
+    if (!last_spent || isNaN(Date.parse(last_spent))) {
+      console.error('Invalid or missing last_spent:', last_spent);
+      return response.status(400).json({ error: 'Invalid or missing last_spent' });
+    }
+
+    // Convert date strings to valid JavaScript Date objects
+    const formattedDate = new Date(date_joined);
+    const formattedLastSpent = new Date(last_spent);
+
+    // Log the formatted dates
+    console.log('Formatted date_joined:', formattedDate);
+    console.log('Formatted last_spent:', formattedLastSpent);
+
+    pool.query(
+      'INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id', 
+      [name, formattedDate, coffee, total_load, total_spent, formattedLastSpent], 
+      (error, results) => {
+        if (error) {
+          throw error;
+        }
+        const insertedId = results.rows[0].id;
+        response.status(201).json({ id: insertedId });
+      }
+    );
+  } catch (error) {
+    console.error('Error executing query:', error);
+    response.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
 router.put('/:id', (request, response) => {
   const id = parseInt(request.params.id);
   const { price } = request.body;
