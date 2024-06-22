@@ -5,11 +5,17 @@ const WebSocket = require('ws');
 const pool = require('./db');
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+// const wss = new WebSocket.Server({ server });
+const port = 8080; // Set the desired port 
+const wss = new WebSocket.Server({ port });
 const websocketHandlers = require('./websocketHandlers');
-const productsHandler = require('./handlers/productsHandler')
+const productsHandler = require('./handlers/productsHandler');
 const broadcasts = require('./broadcasts');
 app.use(cors());
+
+wss.on('listening', () => { 
+  console.log(`WebSocket server is listening on port ${port}`); 
+  }); 
 
 wss.on('connection', (ws) => {
   console.log('Client connected');
@@ -17,7 +23,9 @@ wss.on('connection', (ws) => {
   websocketHandlers.sendSalesToClient(ws);
   websocketHandlers.sendInventoryToClient(ws);
   websocketHandlers.sendExpensesToClient(ws);
+
   ws.on('message', (message) => {
+    console.log('Received:', message);
     const data = JSON.parse(message);
     switch (data.action) {
       case 'addProduct':
@@ -44,7 +52,7 @@ wss.on('connection', (ws) => {
             broadcastInventory();
           })
           .catch((error) => {
-            console.error('Error adding invetory to database:', error);
+            console.error('Error adding inventory to database:', error);
           });
         break;
       case 'addStock':
@@ -54,17 +62,17 @@ wss.on('connection', (ws) => {
           })
           .catch((error) => {
             console.error('Error adding stock:', error);
-          })
+          });
         break;
-        case 'addExpenses':
-          addExpenses(data.expense)
-            .then(() => {
-              broadcastExpenses();
-            })
-            .catch((error) => {
-              console.error('Error adding expenses in database:', error);
-            });
-          break;        
+      case 'addExpenses':
+        addExpenses(data.expense)
+          .then(() => {
+            broadcastExpenses();
+          })
+          .catch((error) => {
+            console.error('Error adding expenses in database:', error);
+          });
+        break;        
       case 'addExpensesResponse':
         handleAddExpensesResponse(data);
         break;
@@ -77,6 +85,15 @@ wss.on('connection', (ws) => {
             console.log('Error adding sale to database:', error);
           });
         break;
+      case 'addMember':
+        addMemberToDatabase(data.member)
+          .then(() => {
+            broadcasts.broadcastMembers(wss);
+          })
+          .catch((error) => {
+            console.error('Error adding member to database:', error);
+          });
+        break;
       default:
         break;
     }
@@ -86,6 +103,7 @@ wss.on('connection', (ws) => {
     console.log('Client disconnected');
   });
 });
+
 
 function addProductToDatabase(newProduct) {
   return new Promise((resolve, reject) => {
@@ -111,6 +129,25 @@ function addProductToDatabase(newProduct) {
       }
     );
   });
+}
+
+function addMemberToDatabase(newMember) {
+  return new Promise((resolve, reject) => {
+    const { name } = newMember;
+    pool.query(
+      'INSERT INTO members (name) VALUES ($1) RETURNING id, name',
+      [name],
+      (error, results) => {
+        if(error) {
+          reject(error);
+          return;
+        }
+        const updatedMembers = results.rows;
+        broadcasts.broadcastMembers(updatedMembers);
+        resovle({ id, name: name })
+      }
+    )
+  })
 }
 
 function addExpenses(newExpenses) {
@@ -254,7 +291,7 @@ function broadcastSales(addSales) {
   })
 }
 
-const PORT = process.env.PORT || 8080;
-server.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
+// const PORT = process.env.PORT || 8080;
+// server.listen(port, () => {
+//   console.log(`Server listening on port ${port}`);
+// });
