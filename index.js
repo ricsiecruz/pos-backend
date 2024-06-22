@@ -7,6 +7,7 @@ const inventoryRoutes = require('./routes/inventory');
 const productsRoutes = require('./routes/products');
 const expensesRoutes = require('./routes/expenses');
 const salesRoutes = require('./routes/sales');
+const membersRoutes = require('./routes/members')
 const port = 3000;
 
 const WebSocket = require('ws');
@@ -35,4 +36,5 @@ app.use('/users', userRoutes);
 app.use('/inventory', inventoryRoutes);
 app.use('/products', productsRoutes);
 app.use('/expenses', expensesRoutes(wss));
-app.use('/sales', salesRoutes)
+app.use('/sales', salesRoutes);
+app.use('/members', membersRoutes);
