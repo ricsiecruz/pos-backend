@@ -48,6 +48,16 @@ wss.on('connection', (ws) => {
             console.error('Error editing product in database:', error);
           });
         break;
+        case 'updateSales':
+          updateSalesInDatabase(data.sales)
+            .then((updatedSale) => {
+              broadcastSales(updatedSale); // Pass updated sale data to broadcast
+            })
+            .catch((error) => {
+              console.error('Error updating sales in database:', error);
+            });
+          break;
+        
       case 'addInventory':
         addInventory(data.inventory)
           .then(() => {
@@ -236,6 +246,23 @@ function addTransactionSalesToDatabase(sale) {
   });
 }
 
+function updateSalesInDatabase(updatedSales) {
+  return new Promise((resolve, reject) => {
+    const { id, transactionid, orders, qty, total, datetime, customer, computer, subtotal, credit } = updatedSales;
+    pool.query(
+      'UPDATE sales SET transactionid = $1, orders = $2, qty = $3, total = $4, datetime = $5, customer = $6, computer = $7, subtotal = $8, credit = $9 WHERE id = $10',
+      [transactionid, JSON.stringify(orders), qty, total, datetime, customer, computer, subtotal, credit, id],
+      (error, results) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(results.rows[0]); // Resolve with updated data
+      }
+    );
+  });
+}
+
 function editProductInDatabase(updatedProduct) {
   return new Promise((resolve, reject) => {
     console.log('updated products', updatedProduct);
@@ -304,13 +331,8 @@ function broadcastInventory(addInventory) {
 function broadcastSales(addSales) {
   wss.clients.forEach((client) => {
     if(client.readyState === WebSocket.OPEN) {
-      websocketHandlers.sendSalesToClient(client);
-      console.log('Broadcasting sales to client:', addSales)
+      websocketHandlers.sendSalesToClient(client, addSales);
+      console.log('Broadcasting updated sales to client:', addSales)
     }
   })
 }
-
-// const PORT = process.env.PORT || 8080;
-// server.listen(port, () => {
-//   console.log(`Server listening on port ${port}`);
-// });
