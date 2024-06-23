@@ -10,7 +10,7 @@ function sendMembersToClient(client) {
         const members = results.rows;
         if(client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({ action: 'initialize', members }));
-            console.log('Sending initial products to client:', members);
+            // console.log('Sending initial members to client:', members);
         } else {
             console.error('Client is not in open state, unable to send data.');
         }

@@ -12,7 +12,8 @@ const websocketHandlers = require('./websocketHandlers');
 const productsHandler = require('./handlers/productsHandler');
 const membersHandler = require('./handlers/membersHandler');
 const broadcasts = require('./broadcasts');
-const { default: cli } = require('@angular/cli');
+// const { default: cli } = require('@angular/cli');
+// const { rejects } = require('assert');
 app.use(cors());
 
 wss.on('listening', () => { 
@@ -84,6 +85,15 @@ wss.on('connection', (ws) => {
           })
           .catch((error) => {
             console.error('Error adding stock:', error);
+          });
+        break;
+      case 'addFoodStock':
+        addFoodStock(data.food)
+          .then(() => {
+            broadcastFoods();
+          })
+          .catch((error) => {
+            console.error('Error adding food stock:', error)
           });
         break;
       case 'addExpenses':
@@ -171,7 +181,7 @@ function addFoodToDatabase(newFood) {
           }
           const updatedFoods = results.rows;
           broadcastFoods(updatedFoods);
-          resolve({ id, food: food, price, stocks })
+          resolve({ id, food, price, stocks })
         })
       }
     )
@@ -334,6 +344,34 @@ function addStock(updateInventory) {
       }
     );
   });
+}
+
+function addFoodStock(updateFoodStock) {
+  return new Promise((resolve, reject) => {
+    console.log('updateFoodStock', updateFoodStock);
+    const { id, stocks } = updateFoodStock;
+    pool.query(
+      'UPDATE foods SET stocks = $1 WHERE id = $2',
+      [stocks, id],
+      (error, results) => {
+        if(error) {
+          console.error('Error updating food stock:', error);
+          reject(error);
+          return;
+        }
+        resolve();
+        broadcastFoods();
+        // pool.query('SELECT * FROM foods ORDER BY id DESC', (error, results) => {
+        //   if(error) {
+        //     console.error('Error fetching updated foods:', error);
+        //     return;
+        //   }
+        //   const updatedFoods = results.rows;
+        //   broadcastFoods(updatedFoods); // Pass the updated foods to the broadcast function
+        // });
+      }
+    )
+  })
 }
 
 function broadcastExpenses(updatedExpenses) {
