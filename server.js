@@ -53,8 +53,8 @@ wss.on('connection', (ws) => {
         break;
       case 'addFood':
         addFoodToDatabase(data.food)
-          .then(() => {
-            broadcastFoods();
+          .then((updatedFoodStock) => {
+            broadcastFoods(updatedFoodStock);
           })
           .catch((error) => {
             console.error('Error adding foods to database:', error);
@@ -395,7 +395,7 @@ function broadcastMembers(updatedMembers) {
 function broadcastFoods(addFood) {
   wss.clients.forEach((client) => {
     if(client.readyState === WebSocket.OPEN) {
-      websocketHandlers.sendFoodsToClient(client);
+      websocketHandlers.sendFoodsToClient(client, addFood);
       console.log('Broadcasting updated foods to client:', addFood);
     }
   })
