@@ -12,6 +12,7 @@ const websocketHandlers = require('./websocketHandlers');
 const productsHandler = require('./handlers/productsHandler');
 const membersHandler = require('./handlers/membersHandler');
 const broadcasts = require('./broadcasts');
+const { default: cli } = require('@angular/cli');
 app.use(cors());
 
 wss.on('listening', () => { 
@@ -23,6 +24,7 @@ wss.on('connection', (ws) => {
   productsHandler.sendProductsToClient(ws);
   websocketHandlers.sendSalesToClient(ws);
   websocketHandlers.sendInventoryToClient(ws);
+  websocketHandlers.sendFoodsToClient(ws);
   websocketHandlers.sendExpensesToClient(ws);
   membersHandler.sendMembersToClient(ws);
 
@@ -48,16 +50,24 @@ wss.on('connection', (ws) => {
             console.error('Error editing product in database:', error);
           });
         break;
-        case 'updateSales':
-          updateSalesInDatabase(data.sales)
-            .then((updatedSale) => {
-              broadcastSales(updatedSale); // Pass updated sale data to broadcast
-            })
-            .catch((error) => {
-              console.error('Error updating sales in database:', error);
-            });
-          break;
-        
+      case 'addFood':
+        addFoodToDatabase(data.food)
+          .then(() => {
+            broadcastFoods();
+          })
+          .catch((error) => {
+            console.error('Error adding foods to database:', error);
+          });
+        break;
+      case 'updateSales':
+        updateSalesInDatabase(data.sales)
+          .then((updatedSale) => {
+            broadcastSales(updatedSale);
+          })
+          .catch((error) => {
+            console.error('Error updating sales in database:', error);
+          });
+        break;
       case 'addInventory':
         addInventory(data.inventory)
           .then(() => {
@@ -116,7 +126,6 @@ wss.on('connection', (ws) => {
   });
 });
 
-
 function addProductToDatabase(newProduct) {
   return new Promise((resolve, reject) => {
     const { product, price } = newProduct;
@@ -141,6 +150,32 @@ function addProductToDatabase(newProduct) {
       }
     );
   });
+}
+
+function addFoodToDatabase(newFood) {
+  return new Promise((resolve, reject) => {
+    const { food, price, stocks } = newFood;
+    pool.query(
+      'INSERT INTO foods (food, price, stocks) VALUES ($1, $2, $3) RETURNING id, food, price, stocks',
+      [food, price, stocks],
+      (error, results) => {
+        if(error) {
+          reject(error);
+          return;
+        }
+        const { id, food, price, stocks } = results.rows[0];
+        pool.query('SELECT * FROM foods ORDER BY id DESC', (error, results) => {
+          if(error) {
+            reject(error);
+            return
+          }
+          const updatedFoods = results.rows;
+          broadcastFoods(updatedFoods);
+          resolve({ id, food: food, price, stocks })
+        })
+      }
+    )
+  })
 }
 
 function addMemberToDatabase(newMember) {
@@ -315,6 +350,15 @@ function broadcastMembers(updatedMembers) {
     if(client.readyState === WebSocket.OPEN) {
       membersHandler.sendMembersToClient(client);
       console.log('Broadcasting updated members to client:', updatedMembers);
+    }
+  })
+}
+
+function broadcastFoods(addFood) {
+  wss.clients.forEach((client) => {
+    if(client.readyState === WebSocket.OPEN) {
+      websocketHandlers.sendFoodsToClient(client);
+      console.log('Broadcasting updated foods to client:', addFood);
     }
   })
 }

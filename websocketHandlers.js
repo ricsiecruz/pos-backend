@@ -8,7 +8,19 @@ function sendSalesToClient(client) {
     }
     const sales = results.rows;
     client.send(JSON.stringify({ action: 'initialize', sales }));
-    console.log('Sending initial sales to client:', sales);
+    // console.log('Sending initial sales to client:', sales);
+  })
+}
+
+function sendFoodsToClient(client) {
+  pool.query('SELECT * FROM foods ORDER BY id DESC', (error, results) => {
+    if(error) {
+      console.error('Error fetching foods from database:', error);
+      return;
+    }
+    const foods = results.rows;
+    client.send(JSON.stringify({ action: 'initialize', foods }));
+    console.log('Sending initial foods to client:', foods)
   })
 }
 
@@ -20,7 +32,7 @@ function sendInventoryToClient(client) {
       }
       const inventory = results.rows;
       client.send(JSON.stringify({ action: 'initialize', inventory }));
-      console.log('Sending initial inventory to client:', inventory);
+      // console.log('Sending initial inventory to client:', inventory);
     });
 }
 
@@ -32,12 +44,13 @@ function sendExpensesToClient(client) {
       }
       const expenses = results.rows;
       client.send(JSON.stringify({ action: 'initialize', expenses }));
-      console.log('Sending initial expenses to client:', expenses)
+      // console.log('Sending initial expenses to client:', expenses)
     })
 }
 
 module.exports = {
   sendSalesToClient,
   sendInventoryToClient,
-  sendExpensesToClient
+  sendExpensesToClient,
+  sendFoodsToClient
 };
