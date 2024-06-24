@@ -72,10 +72,15 @@ async function getSumOfTotalSales() {
 }
 
 async function getSumOfTotalSalesToday() {
+  // const queryText = `
+  //   SELECT SUM(total) AS total_sum_today
+  //   FROM sales 
+  //   WHERE DATE_TRUNC('day', datetime) = DATE_TRUNC('day', NOW());
+  // `;
   const queryText = `
-    SELECT SUM(total) AS total_sum_today
-    FROM sales 
-    WHERE DATE_TRUNC('day', datetime) = DATE_TRUNC('day', NOW());
+    SELECT COALESCE(SUM(total), 0) AS total_sum_today
+    FROM sales
+    WHERE DATE(datetime) = CURRENT_DATE;
   `;
   const { rows } = await pool.query(queryText);
   return rows[0].total_sum_today;
