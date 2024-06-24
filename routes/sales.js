@@ -46,17 +46,17 @@ async function getSalesForCurrentDate() {
     ORDER BY id DESC;
   `;
 
-  try {
+  // try {
     // Set timezone for the session to 'Asia/Manila'
     await pool.query(setTimezoneQuery);
 
     // Query to get today's sales using local timezone
     const { rows } = await pool.query(selectSalesQuery);
-    console.log('Fetched sales for today:', rows);
+    console.log('@@@@@@@@', rows);
     return rows;
-  } catch (err) {
-    console.error('Error executing query', err.stack);
-  }
+  // } catch (err) {
+  //   console.error('Error executing query', err.stack);
+  // }
 }
 
 async function getSalesFromDatabase() {
