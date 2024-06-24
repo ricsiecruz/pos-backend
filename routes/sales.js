@@ -33,7 +33,7 @@ async function getSalesForCurrentDate() {
     WHERE DATE(datetime) = CURRENT_DATE ORDER BY id DESC;
   `
   const { rows } = await pool.query(queryText);
-  console.log('Fetched sales for today:', rows);
+  console.log('Fetched sales for today aaa:', rows);
   return rows;
 }
 
@@ -58,6 +58,16 @@ async function getSumOfTotalSalesToday() {
   const { rows } = await pool.query(queryText);
   return rows[0].total_sum_today;
 }
+
+router.get('/today', async (req, res) => {
+  try {
+    const today = await getSalesForCurrentDate();
+    res.json({ today: today });
+  } catch(error) {
+    console.error('Error fetching sales for current day:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+})
 
 router.get('/total-sum', async (req, res) => {
   try {
