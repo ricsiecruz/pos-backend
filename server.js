@@ -170,22 +170,15 @@ function addExpenses(newExpenses) {
     console.log('newExpenses', newExpenses)
     const { expense, month, date, amount, channel } = newExpenses;
     pool.query(
-      'INSERT INTO expenses (expense, month, date, amount, channel) VALUES ($1, $2, $3, $4, $5) RETURNING id , expense, month, date, amount, channel',
+      'INSERT INTO expenses (expense, month, date, amount, channel) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [expense, month, date, amount, channel],
       (error, results) => {
         if(error) {
           reject(error);
           return;
         }
-        const { id, expense, month, date, amount, channel } = results.rows[0];
-        pool.query('SELECT * FROM expenses ORDER BY id DESC', (error, results) => {
-          if(error) {
-            reject(error);
-            return;
-          }
-          const updatedExpenses = results.rows;
-          broadcastExpenses(updatedExpenses);
-        });
+        const newExpense = results.rows[0];
+        resolve(newExpense);
       }
     )
   })
@@ -199,6 +192,7 @@ function handleAddExpensesResponse(data) {
 
 function addTransactionSalesToDatabase(sale) {
   return new Promise((resolve, reject) => {
+    console.log('new sales', sale)
     const { transactionId, orders, qty, total, dateTime, customer, computer, subtotal, credit } = sale;
 
     pool.query(
@@ -284,7 +278,7 @@ function addFoodStock(updateFoodStock) {
 function broadcastExpenses(updatedExpenses) {
   wss.clients.forEach((client) => {
     if(client.readyState === WebSocket.OPEN) {
-      websocketHandlers.sendExpensesToClient(client);
+      websocketHandlers.sendExpensesToClient(client, updatedExpenses);
       console.log('Broadcasting updated expenses to client:', updatedExpenses);
     }
   })
