@@ -1,3 +1,4 @@
+const moment = require('moment-timezone');
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
@@ -222,21 +223,32 @@ function handleAddExpensesResponse(data) {
 
 function addTransactionSalesToDatabase(sale) {
   return new Promise((resolve, reject) => {
-    console.log('new sales', sale)
-    const { transactionId, orders, qty, total, dateTime, customer, computer, subtotal, credit } = sale;
+    const localDatetime = moment().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss'); // Convert to local time
 
-    pool.query(
-      'INSERT INTO sales (transactionId, orders, qty, total, datetime, customer, computer, subtotal, credit) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-      [transactionId, JSON.stringify(orders), qty, total, dateTime, customer, computer, subtotal, credit],
-      (error, results) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        const newSale = results.rows[0];
-        resolve(newSale);
+    const query = `
+      INSERT INTO sales (transactionId, orders, qty, total, datetime, customer, computer, subtotal, credit)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *
+    `;
+    const values = [
+      sale.transactionId,
+      JSON.stringify(sale.orders),
+      sale.qty,
+      sale.total,
+      localDatetime, // Use the local datetime here
+      sale.customer,
+      sale.computer,
+      sale.subtotal,
+      sale.credit
+    ];
+
+    pool.query(query, values, (error, results) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(results.rows[0]);
       }
-    );
+    });
   });
 }
 
