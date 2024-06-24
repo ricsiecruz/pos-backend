@@ -42,8 +42,14 @@ async function getSalesFromDatabase() {
 async function getSumOfTotalSales() {
   const queryText = 'SELECT SUM(total) AS total_sum FROM sales';
   const { rows } = await pool.query(queryText);
-  console.log('bbb', rows)
   return rows[0].total_sum; // Extract the total sum from the first row
+}
+
+// Function to fetch total sum of 'total' column from 'sales' table
+async function getSumOfTotalSalesToday() {
+  const queryText = 'SELECT SUM(total) AS total_sum_today FROM sales WHERE DATE(datetime) = DATE(NOW())';
+  const { rows } = await pool.query(queryText);
+  return rows[0].total_sum_today; // Extract the total sum from the first row
 }
 
 // Define the endpoint for fetching total sum of sales
@@ -51,6 +57,17 @@ router.get('/total-sum', async (req, res) => {
   try {
     const totalSum = await getSumOfTotalSales();
     res.json({ total_sum: totalSum });
+  } catch (error) {
+    console.error('Error fetching total sum of sales:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Define the endpoint for fetching total sum of sales
+router.get('/total-sum-today', async (req, res) => {
+  try {
+    const totalSumToday = await getSumOfTotalSalesToday();
+    res.json({ total_sum_today: totalSumToday });
   } catch (error) {
     console.error('Error fetching total sum of sales:', error);
     res.status(500).json({ error: 'Internal server error' });
