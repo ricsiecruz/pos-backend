@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const app = express();
+const dashboardRoutes = require('./routes/dashboard');
 const userRoutes = require('./routes/queries');
 const inventoryRoutes = require('./routes/inventory');
 const productsRoutes = require('./routes/products');
@@ -34,6 +35,7 @@ app.get('/', (request, response) => {
 });
 
 app.use('/users', userRoutes);
+app.use('/dashboard', dashboardRoutes);
 app.use('/inventory', inventoryRoutes);
 app.use('/products', productsRoutes);
 app.use('/expenses', expensesRoutes(wss));

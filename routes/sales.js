@@ -28,7 +28,6 @@ router.get('/', async (req, res) => {
 async function getSalesFromDatabase() {
   const queryText = 'SELECT * FROM sales ORDER BY id DESC';
   const { rows } = await pool.query(queryText);
-  console.log('aaa', rows)
   return rows;
 }
 
@@ -39,7 +38,11 @@ async function getSumOfTotalSales() {
 }
 
 async function getSumOfTotalSalesToday() {
-  const queryText = 'SELECT SUM(total) AS total_sum_today FROM sales WHERE DATE(datetime) = DATE(NOW())';
+  const queryText = `
+    SELECT SUM(total) AS total_sum_today
+    FROM sales 
+    WHERE DATE(datetime) = DATE(NOW());
+  `;
   const { rows } = await pool.query(queryText);
   return rows[0].total_sum_today;
 }
