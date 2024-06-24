@@ -15,16 +15,25 @@ async function getSumOfTotalSales() {
   return rows[0].total_sum; // Extract the total sum from the first row
 }
 
+async function getSumOfTotalSalesToday() {
+  const queryText = 'SSELECT SUM(total) AS total_sum_today FROM sales WHERE DATE(datetime) = DATE(NOW())';
+  const { rows } = await pool.query(queryText);
+  console.log('Total sum of sales today:', rows);
+  return rows[0].total_sum_today; // Extract the total sum from the first row
+}
+
 async function sendSalesToClient(client) {
   try {
     const sales = await getSalesFromDatabase();
     const totalSum = await getSumOfTotalSales();
+    const totalSumToday = await getSumOfTotalSalesToday();
     
     // Send both sales data and total sum to the client
-    client.send(JSON.stringify({ action: 'initialize', sales, total_sum: totalSum }));
+    client.send(JSON.stringify({ action: 'initialize', sales, total_sum: totalSum, total_sum_today: totalSumToday }));
     
     console.log('Sending initial sales to client:', sales);
     console.log('Sending total sum to client:', totalSum);
+    console.log('Sending total sum today to client:', totalSumToday);
   } catch (error) {
     console.error('Error sending sales to client:', error);
   }
