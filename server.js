@@ -5,8 +5,7 @@ const WebSocket = require('ws');
 const pool = require('./db');
 const app = express();
 const server = http.createServer(app);
-// const wss = new WebSocket.Server({ server });
-const port = 8080; // Set the desired port 
+const port = 8080;
 const wss = new WebSocket.Server({ port });
 const websocketHandlers = require('./websocketHandlers');
 const productsHandler = require('./handlers/productsHandler');
@@ -14,8 +13,6 @@ const foodsHandler = require('./handlers/foodsHandler');
 const salesHandler = require('./handlers/salesHandler');
 const membersHandler = require('./handlers/membersHandler');
 const broadcasts = require('./broadcasts');
-// const { default: cli } = require('@angular/cli');
-// const { rejects } = require('assert');
 app.use(cors());
 
 wss.on('listening', () => { 
@@ -60,6 +57,15 @@ wss.on('connection', (ws) => {
           })
           .catch((error) => {
             console.error('Error adding foods to database:', error);
+          });
+        break;
+      case 'editFood':
+        editFood(data.product)
+          .then(() => {
+            broadcastFoods();
+          })
+          .catch((error) => {
+            console.error('Error editing food in database:', error);
           });
         break;
       case 'updateSales':
@@ -137,6 +143,30 @@ wss.on('connection', (ws) => {
     console.log('Client disconnected');
   });
 });
+
+function editFood(updatedFood) {
+  return new Promise((resolve, reject) => {
+    console.log('updated foods', updatedFood);
+    // if (!updatedFood || !updatedFood.id || !updatedFood.product || !updatedFood.price) {
+    //   reject(new Error('Invalid updatedFood object or missing properties'));
+    //   return;
+    // }
+    const { id, product, stocks, price } = updatedFood;
+    pool.query(
+      'UPDATE foods SET product = $1, stocks = $2, price = $3 WHERE id = $4',
+      [product, stocks, price, id],
+      (error, results) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+        broadcastFoods();
+      }
+    )
+
+  })
+}
 
 function addMemberToDatabase(newMember) {
   return new Promise((resolve, reject) => {

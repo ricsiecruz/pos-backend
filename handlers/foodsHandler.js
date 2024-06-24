@@ -26,6 +26,26 @@ function addFoodToDatabase(newFood) {
     })
 }
 
+function editFood(updatedFood) {
+  return new Promise((resolve, reject) => {
+    console.log('updated foods', updatedFood);
+    const { id, product, price } = updatedFood;
+    pool.query(
+      'UPDATE foods SET product = $1, price = $2 WHERE id = $3',
+      [product, price, id],
+      (error, results) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      }
+    )
+
+  })
+}
+
 module.exports = {
-    addFoodToDatabase
+    addFoodToDatabase,
+    editFood
 }
