@@ -9,14 +9,25 @@ async function getSalesFromDatabase() {
 }
 
 async function getSalesForCurrentDate() {
-  const queryText = `
+  const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
+  const selectSalesQuery = `
     SELECT *
     FROM sales
-    WHERE DATE(datetime) = CURRENT_DATE ORDER BY id DESC;
-  `
-  const { rows } = await pool.query(queryText);
-  console.log('Fetched sales for today:', rows);
-  return rows;
+    WHERE DATE(datetime AT TIME ZONE 'Asia/Manila') = CURRENT_DATE
+    ORDER BY id DESC;
+  `;
+
+  try {
+    // Set timezone for the session to 'Asia/Manila'
+    await pool.query(setTimezoneQuery);
+
+    // Query to get today's sales using local timezone
+    const { rows } = await pool.query(selectSalesQuery);
+    console.log('Fetched sales for today:', rows);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err.stack);
+  }
 }
 
 async function getSumOfTotalSales() {
@@ -46,7 +57,7 @@ async function sendSalesToClient(client) {
     
     // Send both sales data and total sum to the client
     client.send(JSON.stringify({ action: 'initialize', salesCurrentDate, sales, total_sum: totalSum, total_sum_today: totalSumToday }));
-    
+    console.log('=======', salesCurrentDate)
     // console.log('Sending initial sales to client:', sales);
     // console.log('Sending total sum to client:', totalSum);
     // console.log('Sending total sum today to client:', totalSumToday);

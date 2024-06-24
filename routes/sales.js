@@ -26,15 +26,37 @@ router.get('/', async (req, res) => {
   }
 });
 
+// async function getSalesForCurrentDate() {
+//   const queryText = `
+//     SELECT *
+//     FROM sales
+//     WHERE DATE(datetime) = CURRENT_DATE ORDER BY id DESC;
+//   `
+//   const { rows } = await pool.query(queryText);
+//   console.log('Fetched sales for today aaa:', rows);
+//   return rows;
+// }
+
 async function getSalesForCurrentDate() {
-  const queryText = `
+  const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
+  const selectSalesQuery = `
     SELECT *
     FROM sales
-    WHERE DATE(datetime) = CURRENT_DATE ORDER BY id DESC;
-  `
-  const { rows } = await pool.query(queryText);
-  console.log('Fetched sales for today aaa:', rows);
-  return rows;
+    WHERE DATE(datetime AT TIME ZONE 'Asia/Manila') = CURRENT_DATE
+    ORDER BY id DESC;
+  `;
+
+  try {
+    // Set timezone for the session to 'Asia/Manila'
+    await pool.query(setTimezoneQuery);
+
+    // Query to get today's sales using local timezone
+    const { rows } = await pool.query(selectSalesQuery);
+    console.log('Fetched sales for today:', rows);
+    return rows;
+  } catch (err) {
+    console.error('Error executing query', err.stack);
+  }
 }
 
 async function getSalesFromDatabase() {
