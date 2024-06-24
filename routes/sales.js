@@ -41,7 +41,7 @@ async function getSumOfTotalSalesToday() {
   const queryText = `
     SELECT SUM(total) AS total_sum_today
     FROM sales 
-    WHERE DATE(datetime) = DATE(NOW());
+    WHERE DATE_TRUNC('day', datetime) = DATE_TRUNC('day', NOW());
   `;
   const { rows } = await pool.query(queryText);
   return rows[0].total_sum_today;
