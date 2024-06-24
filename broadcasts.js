@@ -1,6 +1,5 @@
 const WebSocket = require('ws');
 const productsHandler = require('./handlers/productsHandler');
-const membersHandler = require('./handlers/membersHandler');
 
 function broadcastProducts(wss) {
   if (!wss || !wss.clients) {
