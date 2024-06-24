@@ -7,6 +7,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const [sales, totalSum, totalSumToday] = await Promise.all([
+      getSalesForCurrentDate(),
       getSalesFromDatabase(),
       getSumOfTotalSales(),
       getSumOfTotalSalesToday()
@@ -24,6 +25,17 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+async function getSalesForCurrentDate() {
+  const queryText = `
+    SELECT *
+    FROM sales
+    WHERE DATE(datetime) = CURRENT_DATE ORDER BY id DESC;
+  `
+  const { rows } = await pool.query(queryText);
+  console.log('Fetched sales for today:', rows);
+  return rows;
+}
 
 async function getSalesFromDatabase() {
   const queryText = 'SELECT * FROM sales ORDER BY id DESC';

@@ -8,6 +8,17 @@ async function getSalesFromDatabase() {
   return rows;
 }
 
+async function getSalesForCurrentDate() {
+  const queryText = `
+    SELECT *
+    FROM sales
+    WHERE DATE(datetime) = CURRENT_DATE ORDER BY id DESC;
+  `
+  const { rows } = await pool.query(queryText);
+  console.log('Fetched sales for today:', rows);
+  return rows;
+}
+
 async function getSumOfTotalSales() {
   const queryText = 'SELECT SUM(total) AS total_sum FROM sales';
   const { rows } = await pool.query(queryText);
@@ -28,12 +39,13 @@ async function getSumOfTotalSalesToday() {
 
 async function sendSalesToClient(client) {
   try {
+    const salesCurrentDate = await getSalesForCurrentDate();
     const sales = await getSalesFromDatabase();
     const totalSum = await getSumOfTotalSales();
     const totalSumToday = await getSumOfTotalSalesToday();
     
     // Send both sales data and total sum to the client
-    client.send(JSON.stringify({ action: 'initialize', sales, total_sum: totalSum, total_sum_today: totalSumToday }));
+    client.send(JSON.stringify({ action: 'initialize', salesCurrentDate, sales, total_sum: totalSum, total_sum_today: totalSumToday }));
     
     // console.log('Sending initial sales to client:', sales);
     // console.log('Sending total sum to client:', totalSum);
@@ -51,7 +63,7 @@ function sendFoodsToClient(client) {
     }
     const foods = results.rows;
     client.send(JSON.stringify({ action: 'initialize', foods }));
-    console.log('Sending initial foods to client:', foods);
+    // console.log('Sending initial foods to client:', foods);
   });
 }
 
