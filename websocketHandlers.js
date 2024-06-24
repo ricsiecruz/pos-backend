@@ -4,22 +4,26 @@ const pool = require('./db');
 async function getSalesFromDatabase() {
   const queryText = 'SELECT * FROM sales ORDER BY id DESC';
   const { rows } = await pool.query(queryText);
-  console.log('Fetched sales from database:', rows);
+  // console.log('Fetched sales from database:', rows);
   return rows;
 }
 
 async function getSumOfTotalSales() {
   const queryText = 'SELECT SUM(total) AS total_sum FROM sales';
   const { rows } = await pool.query(queryText);
-  console.log('Total sum of sales:', rows);
-  return rows[0].total_sum; // Extract the total sum from the first row
+  // console.log('Total sum of sales:', rows);
+  return rows[0].total_sum;
 }
 
 async function getSumOfTotalSalesToday() {
-  const queryText = 'SELECT SUM(total) AS total_sum_today FROM sales WHERE DATE(datetime) = DATE(NOW())';
+  const queryText = `
+    SELECT SUM(total) AS total_sum_today
+    FROM sales 
+    WHERE DATE_TRUNC('day', datetime) = DATE_TRUNC('day', NOW());
+  `;
   const { rows } = await pool.query(queryText);
-  console.log('Total sum of sales today:', rows);
-  return rows[0].total_sum_today; // Extract the total sum from the first row
+  // console.log('Total sum of sales today:', rows);
+  return rows[0].total_sum_today;
 }
 
 async function sendSalesToClient(client) {
@@ -31,9 +35,9 @@ async function sendSalesToClient(client) {
     // Send both sales data and total sum to the client
     client.send(JSON.stringify({ action: 'initialize', sales, total_sum: totalSum, total_sum_today: totalSumToday }));
     
-    console.log('Sending initial sales to client:', sales);
-    console.log('Sending total sum to client:', totalSum);
-    console.log('Sending total sum today to client:', totalSumToday);
+    // console.log('Sending initial sales to client:', sales);
+    // console.log('Sending total sum to client:', totalSum);
+    // console.log('Sending total sum today to client:', totalSumToday);
   } catch (error) {
     console.error('Error sending sales to client:', error);
   }
@@ -59,7 +63,7 @@ function sendInventoryToClient(client) {
     }
     const inventory = results.rows;
     client.send(JSON.stringify({ action: 'initialize', inventory }));
-    console.log('Sending initial inventory to client:', inventory);
+    // console.log('Sending initial inventory to client:', inventory);
   });
 }
 
@@ -71,7 +75,7 @@ function sendExpensesToClient(client) {
     }
     const expenses = results.rows;
     client.send(JSON.stringify({ action: 'initialize', expenses }));
-    console.log('Sending initial expenses to client:', expenses);
+    // console.log('Sending initial expenses to client:', expenses);
   });
 }
 
