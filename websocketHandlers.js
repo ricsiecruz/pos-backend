@@ -16,7 +16,7 @@ async function getSumOfTotalSales() {
 }
 
 async function getSumOfTotalSalesToday() {
-  const queryText = 'SSELECT SUM(total) AS total_sum_today FROM sales WHERE DATE(datetime) = DATE(NOW())';
+  const queryText = 'SELECT SUM(total) AS total_sum_today FROM sales WHERE DATE(datetime) = DATE(NOW())';
   const { rows } = await pool.query(queryText);
   console.log('Total sum of sales today:', rows);
   return rows[0].total_sum_today; // Extract the total sum from the first row
