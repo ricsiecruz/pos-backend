@@ -28,6 +28,43 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.post('/', async (req, res) => {
+  const { startDate, endDate } = req.body;
+
+  try {
+    // Check if startDate and endDate are provided
+    // if (!startDate || !endDate) {
+    //   return res.status(400).json({ error: 'Both startDate and endDate are required.' });
+    // }
+
+    const salesData = await getSalesByDateRange(startDate, endDate);
+    console.log('Sales Data:', salesData); // Ensure this prints correctly
+
+    res.json(salesData);
+  } catch (error) {
+    console.error('Error fetching sales data by date range:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+async function getSalesByDateRange(startDate, endDate) {
+  const queryText = `
+    SELECT customer, qty, datetime, computer, credit, total
+    FROM sales
+    WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2
+    ORDER BY datetime DESC;
+  `;
+  const values = [startDate, endDate];
+
+  try {
+    const { rows } = await pool.query(queryText, values);
+    return rows;
+  } catch (error) {
+    console.error('Error in getSalesByDateRange query:', error);
+    throw error; // Propagate the error up to the caller (router.post)
+  }
+}
+
 async function getSalesForCurrentDate() {
   const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
   const selectSalesQuery = `
