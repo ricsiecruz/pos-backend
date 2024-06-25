@@ -28,17 +28,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// async function getSalesForCurrentDate() {
-//   const queryText = `
-//     SELECT *
-//     FROM sales
-//     WHERE DATE(datetime) = CURRENT_DATE ORDER BY id DESC;
-//   `
-//   const { rows } = await pool.query(queryText);
-//   console.log('Fetched sales for today aaa:', rows);
-//   return rows;
-// }
-
 async function getSalesForCurrentDate() {
   const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
   const selectSalesQuery = `
