@@ -6,12 +6,12 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
-    const [sales, totalSum, totalSumToday] = await Promise.all([
+    const [sales, totalSum, totalSumToday, totalSumOfFoodsAndDrinksToday] = await Promise.all([
       getSalesForCurrentDate(),
       getSalesFromDatabase(),
       getSumOfTotalSales(),
       getSumOfTotalSalesToday(),
-      getSumOfFoodAndDrinksToday
+      getSumOfFoodAndDrinksToday()
     ]);
 
     const responseData = {

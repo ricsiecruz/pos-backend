@@ -9,7 +9,6 @@ async function getSalesFromDatabase() {
     CASE WHEN credit::float > 0 THEN 0 ELSE 1 END, 
     id DESC;`;
   const { rows } = await pool.query(queryText);
-  // console.log('Fetched sales from database:', rows);
   return rows;
 }
 
@@ -23,12 +22,9 @@ async function getSalesForCurrentDate() {
   `;
 
   try {
-    // Set timezone for the session to 'Asia/Manila'
     await pool.query(setTimezoneQuery);
 
-    // Query to get today's sales using local timezone
     const { rows } = await pool.query(selectSalesQuery);
-    // console.log('Fetched sales for today:', rows);
     return rows;
   } catch (err) {
     console.error('Error executing query', err.stack);
@@ -38,7 +34,6 @@ async function getSalesForCurrentDate() {
 async function getSumOfTotalSales() {
   const queryText = 'SELECT SUM(total) AS total_sum FROM sales';
   const { rows } = await pool.query(queryText);
-  // console.log('Total sum of sales:', rows);
   return rows[0].total_sum;
 }
 
@@ -49,18 +44,7 @@ async function getSumOfTotalSalesToday() {
     WHERE DATE(datetime) = CURRENT_DATE;
   `;
   const { rows } = await pool.query(queryText);
-  // console.log('Total sum of sales today:', rows);
   return rows[0].total_sum_today;
-}
-
-async function getSumOfFoodAndDrinksToday() {
-  const query = `
-    SELECT COALESCE(SUM(subtotal), 0) AS total_food_and_drinks_today
-    FROM sales
-    WHERE DATE(datetime) = CURRENT_DATE;
-  `;
-  const { rows } = await pool.query(queryText);
-  return rows[0].total_food_and_drinks_today;
 }
 
 async function sendSalesToClient(client) {
@@ -69,15 +53,13 @@ async function sendSalesToClient(client) {
     const sales = await getSalesFromDatabase();
     const totalSum = await getSumOfTotalSales();
     const totalSumToday = await getSumOfTotalSalesToday();
-    const totalFoodsAndDrinksToday = await getSumOfFoodAndDrinksToday();
     
     client.send(JSON.stringify({ 
       action: 'initialize',
       salesCurrentDate,
       sales,
       total_sum: totalSum,
-      total_sum_today: totalSumToday,
-      total_food_and_drinks_today: totalFoodsAndDrinksToday
+      total_sum_today: totalSumToday
     }));
   } catch (error) {
     console.error('Error sending sales to client:', error);
@@ -92,7 +74,6 @@ function sendFoodsToClient(client) {
     }
     const foods = results.rows;
     client.send(JSON.stringify({ action: 'initialize', foods }));
-    // console.log('Sending initial foods to client:', foods);
   });
 }
 
@@ -104,7 +85,6 @@ function sendInventoryToClient(client) {
     }
     const inventory = results.rows;
     client.send(JSON.stringify({ action: 'initialize', inventory }));
-    // console.log('Sending initial inventory to client:', inventory);
   });
 }
 
@@ -116,7 +96,6 @@ function sendExpensesToClient(client) {
     }
     const expenses = results.rows;
     client.send(JSON.stringify({ action: 'initialize', expenses }));
-    // console.log('Sending initial expenses to client:', expenses);
   });
 }
 
