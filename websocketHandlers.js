@@ -53,14 +53,32 @@ async function getSumOfTotalSalesToday() {
   return rows[0].total_sum_today;
 }
 
+async function getSumOfFoodAndDrinksToday() {
+  const query = `
+    SELECT COALESCE(SUM(subtotal), 0) AS total_food_and_drinks_today
+    FROM sales
+    WHERE DATE(datetime) = CURRENT_DATE;
+  `;
+  const { rows } = await pool.query(queryText);
+  return rows[0].total_food_and_drinks_today;
+}
+
 async function sendSalesToClient(client) {
   try {
     const salesCurrentDate = await getSalesForCurrentDate();
     const sales = await getSalesFromDatabase();
     const totalSum = await getSumOfTotalSales();
     const totalSumToday = await getSumOfTotalSalesToday();
+    const totalFoodsAndDrinksToday = await getSumOfFoodAndDrinksToday();
     
-    client.send(JSON.stringify({ action: 'initialize', salesCurrentDate, sales, total_sum: totalSum, total_sum_today: totalSumToday }));
+    client.send(JSON.stringify({ 
+      action: 'initialize',
+      salesCurrentDate,
+      sales,
+      total_sum: totalSum,
+      total_sum_today: totalSumToday,
+      total_food_and_drinks_today: totalFoodsAndDrinksToday
+    }));
   } catch (error) {
     console.error('Error sending sales to client:', error);
   }

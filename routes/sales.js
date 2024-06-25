@@ -10,13 +10,15 @@ router.get('/', async (req, res) => {
       getSalesForCurrentDate(),
       getSalesFromDatabase(),
       getSumOfTotalSales(),
-      getSumOfTotalSalesToday()
+      getSumOfTotalSalesToday(),
+      getSumOfFoodAndDrinksToday
     ]);
 
     const responseData = {
       sales: sales,
       total_sum: totalSum,
-      total_sum_today: totalSumToday
+      total_sum_today: totalSumToday,
+      total_sum_of_foods_and_drinks_today: totalSumOfFoodsAndDrinksToday
     };
 
     res.json(responseData);
@@ -74,6 +76,16 @@ async function getSumOfTotalSalesToday() {
   return rows[0].total_sum_today;
 }
 
+async function getSumOfFoodAndDrinksToday() {
+  const queryText = `
+    SELECT COALESCE(SUM(subtotal), 0) AS total_food_and_drinks_today
+    FROM sales
+    WHERE DATE(datetime) = CURRENT_DATE;
+  `;
+  const { rows } = await pool.query(queryText);
+  return rows[0].total_food_and_drinks_today;
+}
+
 router.get('/today', async (req, res) => {
   try {
     const today = await getSalesForCurrentDate();
@@ -103,5 +115,15 @@ router.get('/total-sum-today', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+router.get('/total-sum-of-foods-and-drinks-today', async(req, res) => {
+  try {
+    const totalSumOfFoodsAndDrinksToday = await getSumOfFoodAndDrinksToday();
+    res.json({ total_sum_of_foods_and_drinks_today: totalSumOfFoodsAndDrinksToday });
+  } catch(error) {
+    console.error('Error fetching total sum of foods and drinks for current date:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+})
 
 module.exports = router;
