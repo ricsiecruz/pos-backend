@@ -10,7 +10,6 @@ function broadcastProducts(wss) {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       productsHandler.sendProductsToClient(client);
-      console.log('Broadcasting updated products to client');
     }
   });
 }

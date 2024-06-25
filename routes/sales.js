@@ -46,17 +46,9 @@ async function getSalesForCurrentDate() {
     ORDER BY id DESC;
   `;
 
-  // try {
-    // Set timezone for the session to 'Asia/Manila'
     await pool.query(setTimezoneQuery);
-
-    // Query to get today's sales using local timezone
     const { rows } = await pool.query(selectSalesQuery);
-    console.log('@@@@@@@@', rows);
     return rows;
-  // } catch (err) {
-  //   console.error('Error executing query', err.stack);
-  // }
 }
 
 async function getSalesFromDatabase() {
@@ -72,17 +64,13 @@ async function getSumOfTotalSales() {
 }
 
 async function getSumOfTotalSalesToday() {
-  // const queryText = `
-  //   SELECT SUM(total) AS total_sum_today
-  //   FROM sales 
-  //   WHERE DATE_TRUNC('day', datetime) = DATE_TRUNC('day', NOW());
-  // `;
   const queryText = `
     SELECT COALESCE(SUM(total), 0) AS total_sum_today
     FROM sales
     WHERE DATE(datetime) = CURRENT_DATE;
   `;
   const { rows } = await pool.query(queryText);
+  console.log('Query result:', rows);
   return rows[0].total_sum_today;
 }
 

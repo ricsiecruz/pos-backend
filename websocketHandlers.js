@@ -2,7 +2,6 @@
 const pool = require('./db');
 
 async function getSalesFromDatabase() {
-  // const queryText = 'SELECT * FROM sales ORDER BY id DESC';
   const queryText = `
   SELECT *
   FROM sales
@@ -44,18 +43,13 @@ async function getSumOfTotalSales() {
 }
 
 async function getSumOfTotalSalesToday() {
-  // const queryText = `
-  //   SELECT SUM(total) AS total_sum_today
-  //   FROM sales 
-  //   WHERE DATE_TRUNC('day', datetime) = DATE_TRUNC('day', NOW());
-  // `;
   const queryText = `
     SELECT COALESCE(SUM(total), 0) AS total_sum_today
     FROM sales
     WHERE DATE(datetime) = CURRENT_DATE;
   `;
   const { rows } = await pool.query(queryText);
-  console.log('Total sum of sales today:', rows);
+  // console.log('Total sum of sales today:', rows);
   return rows[0].total_sum_today;
 }
 
@@ -66,12 +60,7 @@ async function sendSalesToClient(client) {
     const totalSum = await getSumOfTotalSales();
     const totalSumToday = await getSumOfTotalSalesToday();
     
-    // Send both sales data and total sum to the client
     client.send(JSON.stringify({ action: 'initialize', salesCurrentDate, sales, total_sum: totalSum, total_sum_today: totalSumToday }));
-    // console.log('=======', salesCurrentDate)
-    // console.log('Sending initial sales to client:', sales);
-    // console.log('Sending total sum to client:', totalSum);
-    // console.log('Sending total sum today to client:', totalSumToday);
   } catch (error) {
     console.error('Error sending sales to client:', error);
   }

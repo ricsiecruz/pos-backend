@@ -33,26 +33,19 @@ router.post('/', (request, response) => {
   try {
     const { name, date_joined, coffee, total_load, total_spent, last_spent } = request.body;
 
-    // Log the received request body
-    console.log('Received request body:', request.body);
-
-    // Check if date_joined is provided and is a valid date string
     if (!date_joined || isNaN(Date.parse(date_joined))) {
       console.error('Invalid or missing date_joined:', date_joined);
       return response.status(400).json({ error: 'Invalid or missing date_joined' });
     }
 
-    // Check if last_spent is provided and is a valid date string
     if (!last_spent || isNaN(Date.parse(last_spent))) {
       console.error('Invalid or missing last_spent:', last_spent);
       return response.status(400).json({ error: 'Invalid or missing last_spent' });
     }
 
-    // Convert date strings to valid JavaScript Date objects
     const formattedDate = new Date(date_joined);
     const formattedLastSpent = new Date(last_spent);
 
-    // Log the formatted dates
     console.log('Formatted date_joined:', formattedDate);
     console.log('Formatted last_spent:', formattedLastSpent);
 

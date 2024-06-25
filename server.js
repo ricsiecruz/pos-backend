@@ -14,6 +14,7 @@ const foodsHandler = require('./handlers/foodsHandler');
 const salesHandler = require('./handlers/salesHandler');
 const membersHandler = require('./handlers/membersHandler');
 const broadcasts = require('./broadcasts');
+const { rejects } = require('assert');
 app.use(cors());
 
 wss.on('listening', () => { 
@@ -76,6 +77,16 @@ wss.on('connection', (ws) => {
           })
           .catch((error) => {
             console.error('Error updating sales in database:', error);
+          });
+        break;
+      case 'editSalesLoad':
+        // editSalesLoad(data.product)
+        //   .then((load) => {
+        //     broadcastSales(load);
+        //   });
+        editSalesLoad(data.product)
+          .then(() => {
+            broadcastSales();
           });
         break;
       case 'addInventory':
@@ -145,13 +156,34 @@ wss.on('connection', (ws) => {
   });
 });
 
+function editSalesLoad(updatedLoad) {
+  console.log('sales id', updatedLoad.id)
+  return new Promise((resolve, reject) => {
+    const { id, transactionid, orders, qty, datetime, customer, computer, subtotal, credit } = updatedLoad;
+    const total = parseFloat(subtotal) + parseFloat(computer);
+
+    pool.query(
+      `UPDATE sales
+       SET transactionid = $1, orders = $2, qty = $3, total = $4, datetime = $5, customer = $6, computer = $7, subtotal = $8, credit = $9
+       WHERE id = $10`,
+      [transactionid, JSON.stringify(orders), qty, total, datetime, customer, computer, subtotal, credit, id],
+      (error, results) => {
+        if (error) {
+          console.error('Error updating sales:', error);
+          reject(error);
+          return;
+        }
+        console.log('data', updatedLoad)
+        resolve();
+        broadcastSales();
+      }
+    );
+  });
+}
+
 function editFood(updatedFood) {
   return new Promise((resolve, reject) => {
-    console.log('updated foods', updatedFood);
-    // if (!updatedFood || !updatedFood.id || !updatedFood.product || !updatedFood.price) {
-    //   reject(new Error('Invalid updatedFood object or missing properties'));
-    //   return;
-    // }
+    // console.log('updated foods', updatedFood);
     const { id, product, stocks, price } = updatedFood;
     pool.query(
       'UPDATE foods SET product = $1, stocks = $2, price = $3 WHERE id = $4',
@@ -165,7 +197,6 @@ function editFood(updatedFood) {
         broadcastFoods();
       }
     )
-
   })
 }
 
@@ -180,9 +211,6 @@ function addMemberToDatabase(newMember) {
           reject(error);
           return;
         }
-        // const updatedMembers = results.rows;
-        // broadcastMembers(updatedMembers);
-        // resolve({ id, name: name })
         pool.query('SELECT * FROM members ORDER BY id DESC', (error, results) => {
           if(error) {
             reject(error);
@@ -198,7 +226,7 @@ function addMemberToDatabase(newMember) {
 
 function addExpenses(newExpenses) {
   return new Promise((resolve, reject) => {
-    console.log('newExpenses', newExpenses)
+    // console.log('newExpenses', newExpenses)
     const { expense, month, date, amount, channel } = newExpenses;
     pool.query(
       'INSERT INTO expenses (expense, month, date, amount, channel) VALUES ($1, $2, $3, $4, $5) RETURNING *',
@@ -279,7 +307,7 @@ function addInventory(newInventory) {
 
 function addStock(updateInventory) {
   return new Promise((resolve, reject) => {
-    console.log('updateInventory', updateInventory);
+    // console.log('updateInventory', updateInventory);
     const { id, stocks } = updateInventory;
     pool.query(
       'UPDATE inventory SET stocks = $1 WHERE id = $2',
@@ -299,7 +327,7 @@ function addStock(updateInventory) {
 
 function addFoodStock(updateFoodStock) {
   return new Promise((resolve, reject) => {
-    console.log('updateFoodStock', updateFoodStock);
+    // console.log('updateFoodStock', updateFoodStock);
     const { id, stocks } = updateFoodStock;
     pool.query(
       'UPDATE foods SET stocks = $1 WHERE id = $2',
@@ -321,7 +349,7 @@ function broadcastExpenses(updatedExpenses) {
   wss.clients.forEach((client) => {
     if(client.readyState === WebSocket.OPEN) {
       websocketHandlers.sendExpensesToClient(client, updatedExpenses);
-      console.log('Broadcasting updated expenses to client:', updatedExpenses);
+      // console.log('Broadcasting updated expenses to client:', updatedExpenses);
     }
   })
 }
@@ -330,7 +358,7 @@ function broadcastMembers(updatedMembers) {
   wss.clients.forEach((client) => {
     if(client.readyState === WebSocket.OPEN) {
       membersHandler.sendMembersToClient(client);
-      console.log('Broadcasting updated members to client:', updatedMembers);
+      // console.log('Broadcasting updated members to client:', updatedMembers);
     }
   })
 }
@@ -348,7 +376,7 @@ function broadcastInventory(addInventory) {
   wss.clients.forEach((client) => {
     if(client.readyState === WebSocket.OPEN) {
       websocketHandlers.sendInventoryToClient(client);
-      console.log('Broadcasting updated inventory to client:', addInventory);
+      // console.log('Broadcasting updated inventory to client:', addInventory);
     }
   })
 }
