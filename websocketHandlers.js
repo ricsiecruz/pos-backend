@@ -2,7 +2,13 @@
 const pool = require('./db');
 
 async function getSalesFromDatabase() {
-  const queryText = 'SELECT * FROM sales ORDER BY id DESC';
+  // const queryText = 'SELECT * FROM sales ORDER BY id DESC';
+  const queryText = `
+  SELECT *
+  FROM sales
+  ORDER BY 
+    CASE WHEN credit::float > 0 THEN 0 ELSE 1 END, 
+    id DESC;`;
   const { rows } = await pool.query(queryText);
   // console.log('Fetched sales from database:', rows);
   return rows;
