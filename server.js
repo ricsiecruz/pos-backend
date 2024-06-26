@@ -14,7 +14,6 @@ const foodsHandler = require('./handlers/foodsHandler');
 const salesHandler = require('./handlers/salesHandler');
 const membersHandler = require('./handlers/membersHandler');
 const broadcasts = require('./broadcasts');
-const { rejects } = require('assert');
 app.use(cors());
 
 wss.on('listening', () => { 
