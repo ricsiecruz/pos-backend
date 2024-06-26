@@ -101,14 +101,14 @@ async function getSalesForCurrentDate() {
 }
 
 async function getSumOfTotalSales() {
-  const queryText = 'SELECT SUM(total) AS total_sum FROM sales';
+  const queryText = 'SELECT SUM(total::numeric) AS total_sum FROM sales';
   const { rows } = await pool.query(queryText);
   return rows[0].total_sum;
 }
 
 async function getSumOfTotalSalesToday() {
   const queryText = `
-    SELECT COALESCE(SUM(total), 0) AS total_sum_today
+    SELECT COALESCE(SUM(total::numeric), 0) AS total_sum_today
     FROM sales
     WHERE DATE(datetime) = CURRENT_DATE;
   `;
@@ -118,7 +118,7 @@ async function getSumOfTotalSalesToday() {
 
 async function getSumOfFoodAndDrinksToday() {
   const queryText = `
-    SELECT COALESCE(SUM(subtotal), 0) AS total_food_and_drinks_today
+    SELECT COALESCE(SUM(subtotal::numeric), 0) AS total_food_and_drinks_today
     FROM sales
     WHERE DATE(datetime) = CURRENT_DATE;
   `;
@@ -153,7 +153,7 @@ async function getSalesByDateRange(startDate, endDate) {
 
 async function getSumOfExpensesByDateRange(startDate, endDate) {
   let queryText = `
-    SELECT COALESCE(SUM(amount), 0) AS total_expenses
+    SELECT COALESCE(SUM(amount::numeric), 0) AS total_expenses
     FROM expenses
   `;
   const values = [];
@@ -173,7 +173,7 @@ async function getSumOfExpensesByDateRange(startDate, endDate) {
 }
 
 async function getSumOfCredits(startDate, endDate) {
-  let queryText = 'SELECT COALESCE(SUM(credit), 0) AS total_credit FROM sales';
+  let queryText = 'SELECT COALESCE(SUM(credit::numeric), 0) AS total_credit FROM sales';
 
   if (startDate && endDate) {
     queryText += ' WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2';
@@ -191,7 +191,7 @@ async function getSumOfCredits(startDate, endDate) {
 }
 
 async function getSumOfComputers(startDate, endDate) {
-  let queryText = 'SELECT COALESCE(SUM(computer), 0) AS total_computer FROM sales';
+  let queryText = 'SELECT COALESCE(SUM(computer::numeric), 0) AS total_computer FROM sales';
 
   if (startDate && endDate) {
     queryText += ' WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2';
@@ -209,7 +209,7 @@ async function getSumOfComputers(startDate, endDate) {
 }
 
 async function getSumOfFoodAndDrinks(startDate, endDate) {
-  let queryText = 'SELECT COALESCE(SUM(subtotal), 0) AS total_food_and_drinks FROM sales';
+  let queryText = 'SELECT COALESCE(SUM(subtotal::numeric), 0) AS total_food_and_drinks FROM sales';
 
   if (startDate && endDate) {
     queryText += ' WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2';

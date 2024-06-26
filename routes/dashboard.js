@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
         res.json(responseData);
     } catch (error) {
         console.error('Error fetching dashboard from database:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Internal server error - dashboard' });
     }
 });
 
@@ -25,7 +25,7 @@ async function getMostOrdered() {
     const queryText = `
         WITH expanded_orders AS (
             SELECT 
-            jsonb_array_elements(orders::jsonb) AS order_detail
+                jsonb_array_elements(orders::jsonb) AS order_detail
             FROM sales
         )
         SELECT 
@@ -44,7 +44,7 @@ async function getSalesAndExpensesSummary() {
         WITH sales_summary AS (
             SELECT 
                 DATE(datetime) AS date,
-                SUM(total) AS total_sales
+                SUM(total::numeric) AS total_sales
             FROM 
                 sales
             GROUP BY 
@@ -53,7 +53,7 @@ async function getSalesAndExpensesSummary() {
         expenses_summary AS (
             SELECT 
                 DATE(date) AS date,
-                SUM(amount) AS total_expenses
+                SUM(amount::numeric) AS total_expenses
             FROM 
                 expenses
             GROUP BY 
