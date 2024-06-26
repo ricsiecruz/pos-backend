@@ -14,11 +14,17 @@ router.get('/', async (req, res) => {
       getSumOfFoodAndDrinksToday()
     ]);
 
+    const totalExpenses = await getSumOfExpensesByDateRange(); // New function to calculate total expenses
+    const totalNet = totalSum - totalExpenses; // Calculate net sales
+
     const responseData = {
       sales: sales,
-      total_sum: totalSum,
-      total_sum_today: totalSumToday,
-      total_sum_of_foods_and_drinks_today: totalSumOfFoodsAndDrinksToday
+      total_sales: totalSum,
+      total_expenses: totalExpenses,
+      total_net: totalNet,
+      total_credit: await getSumOfCredits(),
+      total_computer: await getSumOfComputers(),
+      total_food_and_drinks: await getSumOfFoodAndDrinks()
     };
 
     res.json(responseData);
@@ -32,38 +38,31 @@ router.post('/', async (req, res) => {
   const { startDate, endDate } = req.body;
 
   try {
-    // Check if startDate and endDate are provided
-    // if (!startDate || !endDate) {
-    //   return res.status(400).json({ error: 'Both startDate and endDate are required.' });
-    // }
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: 'Both startDate and endDate are required.' });
+    }
 
-    const salesData = await getSalesByDateRange(startDate, endDate);
-    console.log('Sales Data:', salesData); // Ensure this prints correctly
+    const { salesData, totalIncome } = await getSalesByDateRange(startDate, endDate);
+    const totalExpenses = await getSumOfExpensesByDateRange(startDate, endDate);
+    const totalNet = totalIncome - totalExpenses;
 
-    res.json(salesData);
+    const responseData = {
+      sales: salesData,
+      total_sales: totalIncome,
+      total_expenses: totalExpenses,
+      total_net: totalNet,
+      total_credit: await getSumOfCredits(startDate, endDate),
+      total_computer: await getSumOfComputers(startDate, endDate),
+      total_food_and_drinks: await getSumOfFoodAndDrinks(startDate, endDate),
+      total_income: totalIncome // Include total_income in the response
+    };
+
+    res.json(responseData);
   } catch (error) {
     console.error('Error fetching sales data by date range:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-async function getSalesByDateRange(startDate, endDate) {
-  const queryText = `
-    SELECT customer, qty, datetime, computer, credit, total
-    FROM sales
-    WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2
-    ORDER BY datetime DESC;
-  `;
-  const values = [startDate, endDate];
-
-  try {
-    const { rows } = await pool.query(queryText, values);
-    return rows;
-  } catch (error) {
-    console.error('Error in getSalesByDateRange query:', error);
-    throw error; // Propagate the error up to the caller (router.post)
-  }
-}
 
 async function getSalesForCurrentDate() {
   const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
@@ -74,14 +73,8 @@ async function getSalesForCurrentDate() {
     ORDER BY id DESC;
   `;
 
-    await pool.query(setTimezoneQuery);
-    const { rows } = await pool.query(selectSalesQuery);
-    return rows;
-}
-
-async function getSalesFromDatabase() {
-  const queryText = 'SELECT * FROM sales ORDER BY id DESC';
-  const { rows } = await pool.query(queryText);
+  await pool.query(setTimezoneQuery);
+  const { rows } = await pool.query(selectSalesQuery);
   return rows;
 }
 
@@ -98,7 +91,6 @@ async function getSumOfTotalSalesToday() {
     WHERE DATE(datetime) = CURRENT_DATE;
   `;
   const { rows } = await pool.query(queryText);
-  console.log('Query result:', rows);
   return rows[0].total_sum_today;
 }
 
@@ -112,44 +104,100 @@ async function getSumOfFoodAndDrinksToday() {
   return rows[0].total_food_and_drinks_today;
 }
 
-router.get('/today', async (req, res) => {
-  try {
-    const today = await getSalesForCurrentDate();
-    res.json({ today: today });
-  } catch(error) {
-    console.error('Error fetching sales for current day:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-})
+async function getSalesFromDatabase() {
+  const queryText = 'SELECT * FROM sales ORDER BY id DESC';
+  const { rows } = await pool.query(queryText);
+  return rows;
+}
 
-router.get('/total-sum', async (req, res) => {
+async function getSalesByDateRange(startDate, endDate) {
+  const queryText = `
+    SELECT customer, qty, datetime, computer, credit, total
+    FROM sales
+    WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2
+    ORDER BY datetime DESC;
+  `;
+  const values = [startDate, endDate];
+
   try {
-    const totalSum = await getSumOfTotalSales();
-    res.json({ total_sum: totalSum });
+    const { rows } = await pool.query(queryText, values);
+    const totalIncome = rows.reduce((acc, sale) => acc + parseFloat(sale.total), 0);
+    return { salesData: rows, totalIncome: totalIncome };
   } catch (error) {
-    console.error('Error fetching total sum of sales:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error in getSalesByDateRange query:', error);
+    throw error;
   }
-});
+}
 
-router.get('/total-sum-today', async (req, res) => {
+async function getSumOfExpensesByDateRange(startDate, endDate) {
+  const queryText = `
+    SELECT COALESCE(SUM(amount), 0) AS total_expenses
+    FROM expenses
+    WHERE date >= $1 AND date <= $2;
+  `;
+  const values = [startDate, endDate];
+
   try {
-    const totalSumToday = await getSumOfTotalSalesToday();
-    res.json({ total_sum_today: totalSumToday });
+    const { rows } = await pool.query(queryText, values);
+    return rows[0].total_expenses;
   } catch (error) {
-    console.error('Error fetching total sum of sales:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error in getSumOfExpensesByDateRange query:', error);
+    throw error;
   }
-});
+}
 
-router.get('/total-sum-of-foods-and-drinks-today', async(req, res) => {
-  try {
-    const totalSumOfFoodsAndDrinksToday = await getSumOfFoodAndDrinksToday();
-    res.json({ total_sum_of_foods_and_drinks_today: totalSumOfFoodsAndDrinksToday });
-  } catch(error) {
-    console.error('Error fetching total sum of foods and drinks for current date:', error);
-    res.status(500).json({ error: 'Internal server error' });
+async function getSumOfCredits(startDate, endDate) {
+  let queryText = 'SELECT COALESCE(SUM(credit), 0) AS total_credit FROM sales';
+
+  if (startDate && endDate) {
+    queryText += ' WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2';
   }
-})
+
+  const values = startDate && endDate ? [startDate, endDate] : [];
+
+  try {
+    const { rows } = await pool.query(queryText, values);
+    return rows[0].total_credit;
+  } catch (error) {
+    console.error('Error in getSumOfCredits query:', error);
+    throw error;
+  }
+}
+
+async function getSumOfComputers(startDate, endDate) {
+  let queryText = 'SELECT COALESCE(SUM(computer), 0) AS total_computer FROM sales';
+
+  if (startDate && endDate) {
+    queryText += ' WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2';
+  }
+
+  const values = startDate && endDate ? [startDate, endDate] : [];
+
+  try {
+    const { rows } = await pool.query(queryText, values);
+    return rows[0].total_computer;
+  } catch (error) {
+    console.error('Error in getSumOfComputers query:', error);
+    throw error;
+  }
+}
+
+async function getSumOfFoodAndDrinks(startDate, endDate) {
+  let queryText = 'SELECT COALESCE(SUM(subtotal), 0) AS total_food_and_drinks FROM sales';
+
+  if (startDate && endDate) {
+    queryText += ' WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2';
+  }
+
+  const values = startDate && endDate ? [startDate, endDate] : [];
+
+  try {
+    const { rows } = await pool.query(queryText, values);
+    return rows[0].total_food_and_drinks;
+  } catch (error) {
+    console.error('Error in getSumOfFoodAndDrinks query:', error);
+    throw error;
+  }
+}
 
 module.exports = router;
