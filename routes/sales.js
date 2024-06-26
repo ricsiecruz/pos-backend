@@ -50,6 +50,42 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Updated route for fetching sales by date range with POST method
+router.post('/date-range', async (req, res) => {
+  try {
+    const { startDate, endDate } = req.body;
+
+    // Validate the input dates
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: 'Please provide both startDate and endDate' });
+    }
+
+    const { salesData, totalIncome } = await getSalesByDateRange(startDate, endDate);
+    const totalExpenses = await getSumOfExpensesByDateRange(startDate, endDate);
+    const totalNet = totalIncome - totalExpenses;
+    const totalComputer = await getSumOfComputers(startDate, endDate);
+    const totalFoodAndDrinks = await getSumOfFoodAndDrinks(startDate, endDate);
+    const totalCredit = await getSumOfCredits(startDate, endDate);
+
+    const responseData = {
+      sales: {
+        data: salesData,
+        income: totalIncome,
+        expenses: totalExpenses,
+        net: totalNet,
+        computer: totalComputer,
+        food_and_drinks: totalFoodAndDrinks,
+        credit: totalCredit
+      }
+    };
+
+    res.json(responseData);
+  } catch (error) {
+    console.error('Error fetching sales by date range:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 async function getSalesForCurrentDate() {
   const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
   const selectSalesQuery = `
