@@ -1,5 +1,3 @@
-// routes/sales.js
-
 const express = require('express');
 const pool = require('../db');
 const router = express.Router();
@@ -7,59 +5,47 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const [sales, totalSum, totalSumToday, totalSumOfFoodsAndDrinksToday] = await Promise.all([
-      getSalesForCurrentDate(),
       getSalesFromDatabase(),
       getSumOfTotalSales(),
       getSumOfTotalSalesToday(),
       getSumOfFoodAndDrinksToday()
     ]);
 
-    const totalExpenses = await getSumOfExpensesByDateRange(); // New function to calculate total expenses
+    const totalExpenses = await getSumOfExpensesByDateRange(null, null); // New function to calculate total expenses
     const totalNet = totalSum - totalExpenses; // Calculate net sales
 
+    const currentSalesData = await getSalesForCurrentDate();
+    const currentIncome = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.total), 0);
+    const currentExpenses = await getSumOfExpensesByDateRange(new Date(), new Date());
+    const currentNet = currentIncome - currentExpenses;
+    const currentCredit = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.credit), 0);
+    const currentComputer = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.computer), 0);
+    const currentFoodAndDrinks = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.subtotal), 0);
+
     const responseData = {
-      sales: sales,
-      total_sales: totalSum,
-      total_expenses: totalExpenses,
-      total_net: totalNet,
-      total_credit: await getSumOfCredits(),
-      total_computer: await getSumOfComputers(),
-      total_food_and_drinks: await getSumOfFoodAndDrinks()
+      current_sales: {
+        data: currentSalesData,
+        income: currentIncome,
+        expenses: currentExpenses,
+        net: currentNet,
+        computer: currentComputer,
+        food_and_drinks: currentFoodAndDrinks,
+        credit: currentCredit,
+      },
+      sales: {
+        data: sales,
+        income: totalSum,
+        expenses: totalExpenses,
+        net: totalNet,
+        computer: await getSumOfComputers(),
+        food_and_drinks: await getSumOfFoodAndDrinks(),
+        credit: await getSumOfCredits()
+      }
     };
 
     res.json(responseData);
   } catch (error) {
     console.error('Error fetching sales and total sum from database:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.post('/', async (req, res) => {
-  const { startDate, endDate } = req.body;
-
-  try {
-    if (!startDate || !endDate) {
-      return res.status(400).json({ error: 'Both startDate and endDate are required.' });
-    }
-
-    const { salesData, totalIncome } = await getSalesByDateRange(startDate, endDate);
-    const totalExpenses = await getSumOfExpensesByDateRange(startDate, endDate);
-    const totalNet = totalIncome - totalExpenses;
-
-    const responseData = {
-      sales: salesData,
-      total_sales: totalIncome,
-      total_expenses: totalExpenses,
-      total_net: totalNet,
-      total_credit: await getSumOfCredits(startDate, endDate),
-      total_computer: await getSumOfComputers(startDate, endDate),
-      total_food_and_drinks: await getSumOfFoodAndDrinks(startDate, endDate),
-      total_income: totalIncome // Include total_income in the response
-    };
-
-    res.json(responseData);
-  } catch (error) {
-    console.error('Error fetching sales data by date range:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -130,12 +116,16 @@ async function getSalesByDateRange(startDate, endDate) {
 }
 
 async function getSumOfExpensesByDateRange(startDate, endDate) {
-  const queryText = `
+  let queryText = `
     SELECT COALESCE(SUM(amount), 0) AS total_expenses
     FROM expenses
-    WHERE date >= $1 AND date <= $2;
   `;
-  const values = [startDate, endDate];
+  const values = [];
+
+  if (startDate && endDate) {
+    queryText += ' WHERE date >= $1 AND date <= $2';
+    values.push(startDate, endDate);
+  }
 
   try {
     const { rows } = await pool.query(queryText, values);
