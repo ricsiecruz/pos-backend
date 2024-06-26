@@ -2,7 +2,6 @@ const express = require('express');
 const pool = require('../db');
 const router = express.Router();
 
-// Define WebSocket server connection handler
 module.exports = function(wss) {
 
   router.get('/', (request, response) => {
@@ -28,8 +27,6 @@ module.exports = function(wss) {
   router.post('/', (request, response) => {
     try {
         const { expense, month, date, amount, channel } = request.body;
-
-        // Convert date string to a valid JavaScript Date object
         const formattedDate = new Date(date);
 
         pool.query(
@@ -69,7 +66,6 @@ module.exports = function(wss) {
     const id = parseInt(request.params.id);
     const { stocks } = request.body;
 
-    // Fetch current stocks from the database
     pool.query(
       'SELECT stocks FROM expenses WHERE id = $1',
       [id],
@@ -78,11 +74,9 @@ module.exports = function(wss) {
           throw error;
         }
 
-        // Calculate new stocks value by adding the requested value to the current value
         const currentStocks = results.rows[0].stocks;
         const newStocks = parseInt(currentStocks) + parseInt(stocks);
 
-        // Update database with the new stocks value
         pool.query(
           'UPDATE expenses SET stocks = $1 WHERE id = $2',
           [newStocks, id],
@@ -90,7 +84,6 @@ module.exports = function(wss) {
             if (updateError) {
               throw updateError;
             }
-            // Respond with a JSON object containing the message
             response.status(200).json({ message: `Stocks updated for product with ID: ${id}` });
           }
         );
@@ -108,5 +101,12 @@ module.exports = function(wss) {
       response.status(200).send(`Product deleted with ID: ${id}`);
     });
   });
+
+  async function getSumOfAllExpenses() {
+    const queryText = 'SELECT SUM(amount) AS total_expenses FROM expenses';
+    const { rows } = await pool.query(queryText);
+    return rows[0].total_expenses;
+  }
+
   return router;
 };
