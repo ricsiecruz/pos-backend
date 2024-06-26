@@ -4,15 +4,15 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
-    const [sales, totalSum, totalSumToday, totalSumOfFoodsAndDrinksToday] = await Promise.all([
+    const [sales, totalSum] = await Promise.all([
       getSalesFromDatabase(),
       getSumOfTotalSales(),
       getSumOfTotalSalesToday(),
       getSumOfFoodAndDrinksToday()
     ]);
 
-    const totalExpenses = await getSumOfExpensesByDateRange(null, null); // New function to calculate total expenses
-    const totalNet = totalSum - totalExpenses; // Calculate net sales
+    const totalExpenses = await getSumOfExpensesByDateRange(null, null);
+    const totalNet = totalSum - totalExpenses;
 
     const currentSalesData = await getSalesForCurrentDate();
     const currentIncome = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.total), 0);
@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
     res.json(responseData);
   } catch (error) {
     console.error('Error fetching sales and total sum from database:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error - sales' });
   }
 });
 

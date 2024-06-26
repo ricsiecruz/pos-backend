@@ -1,5 +1,6 @@
 // websockethandlers.js
 const pool = require('./db');
+const { getSalesForCurrentDate, getSalesFromDatabase, getSumOfTotalSales, getSumOfTotalSalesToday } = require('./routes/sales');
 
 async function getSalesFromDatabase() {
   const queryText = `
