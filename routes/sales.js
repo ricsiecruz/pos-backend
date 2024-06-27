@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
 
     const currentSalesData = await getSalesForCurrentDate();
     const currentIncome = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.total), 0);
-    const currentExpenses = await getSumOfExpensesByDateRange(new Date(), new Date());
+    const currentExpenses = await getSumOfExpensesForCurrentDate();
     const currentNet = currentIncome - currentExpenses;
     const currentCredit = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.credit), 0);
     const currentComputer = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.computer), 0);
@@ -149,6 +149,19 @@ async function getSalesByDateRange(startDate, endDate) {
     console.error('Error in getSalesByDateRange query:', error);
     throw error;
   }
+}
+
+async function getSumOfExpensesForCurrentDate() {
+  const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
+  const queryText = `
+    SELECT COALESCE(SUM(amount::numeric), 0) AS total_expenses
+    FROM expenses
+    WHERE DATE(date AT TIME ZONE 'Asia/Manila') = CURRENT_DATE;
+  `;
+
+  await pool.query(setTimezoneQuery);
+  const { rows } = await pool.query(queryText);
+  return rows[0].total_expenses;
 }
 
 async function getSumOfExpensesByDateRange(startDate, endDate) {

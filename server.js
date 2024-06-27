@@ -1,3 +1,4 @@
+// server.js
 const moment = require('moment-timezone');
 const express = require('express');
 const cors = require('cors');
@@ -18,7 +19,7 @@ app.use(cors());
 
 wss.on('listening', () => { 
   console.log(`WebSocket server is listening on port ${port}`); 
-  }); 
+});
 
 wss.on('connection', (ws) => {
   console.log('Client connected');
@@ -79,10 +80,6 @@ wss.on('connection', (ws) => {
           });
         break;
       case 'editSalesLoad':
-        // editSalesLoad(data.product)
-        //   .then((load) => {
-        //     broadcastSales(load);
-        //   });
         editSalesLoad(data.product)
           .then(() => {
             broadcastSales();
@@ -117,8 +114,9 @@ wss.on('connection', (ws) => {
         break;
       case 'addExpenses':
         addExpenses(data.expense)
-          .then(() => {
-            broadcastExpenses();
+          .then(async (newExpense) => {
+            const totalExpenses = await getSumOfExpensesForCurrentDate();
+            broadcastExpenses({ newExpense, totalExpenses });
           })
           .catch((error) => {
             console.error('Error adding expenses in database:', error);
@@ -182,7 +180,6 @@ function editSalesLoad(updatedLoad) {
 
 function editFood(updatedFood) {
   return new Promise((resolve, reject) => {
-    // console.log('updated foods', updatedFood);
     const { id, product, stocks, price } = updatedFood;
     pool.query(
       'UPDATE foods SET product = $1, stocks = $2, price = $3 WHERE id = $4',
@@ -201,17 +198,17 @@ function editFood(updatedFood) {
 
 function addMemberToDatabase(newMember) {
   return new Promise((resolve, reject) => {
-    const { name, date_joined, coffee, total_load, total_spent, last_spent,  } = newMember;
+    const { name, date_joined, coffee, total_load, total_spent, last_spent } = newMember;
     pool.query(
       'INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, date_joined, coffee, total_load, total_spent, last_spent',
       [name, date_joined, coffee, total_load, total_spent, last_spent],
       (error, results) => {
-        if(error) {
+        if (error) {
           reject(error);
           return;
         }
         pool.query('SELECT * FROM members ORDER BY id DESC', (error, results) => {
-          if(error) {
+          if (error) {
             reject(error);
             return;
           }
@@ -225,27 +222,46 @@ function addMemberToDatabase(newMember) {
 
 function addExpenses(newExpenses) {
   return new Promise((resolve, reject) => {
-    // console.log('newExpenses', newExpenses)
     const { expense, month, date, amount, channel } = newExpenses;
     pool.query(
       'INSERT INTO expenses (expense, month, date, amount, channel) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [expense, month, date, amount, channel],
       (error, results) => {
-        if(error) {
+        if (error) {
           reject(error);
           return;
         }
         const newExpense = results.rows[0];
         resolve(newExpense);
+
+        // Broadcast to clients that an expense has been added
+        wss.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ action: 'addExpensesResponse', expense: newExpense }));
+          }
+        });
       }
-    )
-  })
+    );
+  });
 }
 
 function handleAddExpensesResponse(data) {
   const { expense, totalSum } = data;
   console.log('Newly added expense:', expense);
   console.log('Total sum of expenses:', totalSum);
+}
+
+async function getSumOfExpensesForCurrentDate() {
+  const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
+  const queryText = `
+    SELECT COALESCE(SUM(amount::numeric), 0) AS total_expenses
+    FROM expenses
+    WHERE DATE(date AT TIME ZONE 'Asia/Manila') = CURRENT_DATE;
+  `;
+
+  await pool.query(setTimezoneQuery);
+  const { rows } = await pool.query(queryText);
+  return rows[0].total_expenses;
 }
 
 function addTransactionSalesToDatabase(sale) {
@@ -306,7 +322,6 @@ function addInventory(newInventory) {
 
 function addStock(updateInventory) {
   return new Promise((resolve, reject) => {
-    // console.log('updateInventory', updateInventory);
     const { id, stocks } = updateInventory;
     pool.query(
       'UPDATE inventory SET stocks = $1 WHERE id = $2',
@@ -326,13 +341,12 @@ function addStock(updateInventory) {
 
 function addFoodStock(updateFoodStock) {
   return new Promise((resolve, reject) => {
-    // console.log('updateFoodStock', updateFoodStock);
     const { id, stocks } = updateFoodStock;
     pool.query(
       'UPDATE foods SET stocks = $1 WHERE id = $2',
       [stocks, id],
       (error, results) => {
-        if(error) {
+        if (error) {
           console.error('Error updating food stock:', error);
           reject(error);
           return;
@@ -346,25 +360,23 @@ function addFoodStock(updateFoodStock) {
 
 function broadcastExpenses(updatedExpenses) {
   wss.clients.forEach((client) => {
-    if(client.readyState === WebSocket.OPEN) {
+    if (client.readyState === WebSocket.OPEN) {
       websocketHandlers.sendExpensesToClient(client, updatedExpenses);
-      // console.log('Broadcasting updated expenses to client:', updatedExpenses);
     }
   })
 }
 
 function broadcastMembers(updatedMembers) {
   wss.clients.forEach((client) => {
-    if(client.readyState === WebSocket.OPEN) {
+    if (client.readyState === WebSocket.OPEN) {
       membersHandler.sendMembersToClient(client);
-      // console.log('Broadcasting updated members to client:', updatedMembers);
     }
   })
 }
 
 function broadcastFoods(addFood) {
   wss.clients.forEach((client) => {
-    if(client.readyState === WebSocket.OPEN) {
+    if (client.readyState === WebSocket.OPEN) {
       websocketHandlers.sendFoodsToClient(client, addFood);
       console.log('Broadcasting updated foods to client:', addFood);
     }
@@ -373,16 +385,15 @@ function broadcastFoods(addFood) {
 
 function broadcastInventory(addInventory) {
   wss.clients.forEach((client) => {
-    if(client.readyState === WebSocket.OPEN) {
+    if (client.readyState === WebSocket.OPEN) {
       websocketHandlers.sendInventoryToClient(client);
-      // console.log('Broadcasting updated inventory to client:', addInventory);
     }
   })
 }
 
 function broadcastSales(addSales) {
   wss.clients.forEach((client) => {
-    if(client.readyState === WebSocket.OPEN) {
+    if (client.readyState === WebSocket.OPEN) {
       websocketHandlers.sendSalesToClient(client, addSales);
       console.log('Broadcasting updated sales to client:', addSales)
     }

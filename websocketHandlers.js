@@ -1,6 +1,19 @@
 // websockethandlers.js
 const pool = require('./db');
 
+async function getSumOfExpensesForCurrentDate() {
+  const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
+  const queryText = `
+    SELECT COALESCE(SUM(amount::numeric), 0) AS total_expenses
+    FROM expenses
+    WHERE DATE(date AT TIME ZONE 'Asia/Manila') = CURRENT_DATE;
+  `;
+
+  await pool.query(setTimezoneQuery);
+  const { rows } = await pool.query(queryText);
+  return rows[0].total_expenses;
+}
+
 async function getSalesFromDatabase() {
   const queryText = `
   SELECT *
@@ -53,13 +66,15 @@ async function sendSalesToClient(client) {
     const sales = await getSalesFromDatabase();
     const totalSum = await getSumOfTotalSales();
     const totalSumToday = await getSumOfTotalSalesToday();
+    const expensesCurrentDate = await getSumOfExpensesForCurrentDate();
     
     client.send(JSON.stringify({ 
       action: 'initialize',
       salesCurrentDate,
       sales,
       total_sum: totalSum,
-      total_sum_today: totalSumToday
+      total_sum_today: totalSumToday,
+      expenses_current_date: expensesCurrentDate
     }));
   } catch (error) {
     console.error('Error sending sales to client:', error);
