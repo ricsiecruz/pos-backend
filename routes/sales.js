@@ -86,6 +86,39 @@ router.post('/date-range', async (req, res) => {
   }
 });
 
+// New route for fetching sales for a specific member on the current date
+router.post('/member-sales-today', async (req, res) => {
+  try {
+    const { member } = req.body;
+
+    // Validate the input member
+    if (!member) {
+      return res.status(400).json({ error: 'Please provide a member name' });
+    }
+
+    const salesData = await getSalesForMember(member);
+    const totalIncome = salesData.reduce((acc, sale) => acc + parseFloat(sale.total), 0);
+    const totalCredit = salesData.reduce((acc, sale) => acc + parseFloat(sale.credit), 0);
+    const totalComputer = salesData.reduce((acc, sale) => acc + parseFloat(sale.computer), 0);
+    const totalFoodAndDrinks = salesData.reduce((acc, sale) => acc + parseFloat(sale.subtotal), 0);
+
+    const responseData = {
+      member_sales: {
+        data: salesData,
+        income: totalIncome,
+        computer: totalComputer,
+        food_and_drinks: totalFoodAndDrinks,
+        credit: totalCredit,
+      }
+    };
+
+    res.json(responseData);
+  } catch (error) {
+    console.error('Error fetching sales for member:', error);
+    res.status(500).json({ error: 'Internal server error - member sales' });
+  }
+});
+
 async function getSalesForCurrentDate() {
   const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
   const selectSalesQuery = `
@@ -97,6 +130,21 @@ async function getSalesForCurrentDate() {
 
   await pool.query(setTimezoneQuery);
   const { rows } = await pool.query(selectSalesQuery);
+  return rows;
+}
+
+async function getSalesForMember(member) {
+  const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
+  const selectSalesQuery = `
+    SELECT *
+    FROM sales
+    WHERE customer = $1 AND DATE(datetime AT TIME ZONE 'Asia/Manila') = CURRENT_DATE
+    ORDER BY id DESC;
+  `;
+  const values = [member];
+
+  await pool.query(setTimezoneQuery);
+  const { rows } = await pool.query(selectSalesQuery, values);
   return rows;
 }
 
