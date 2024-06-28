@@ -4,14 +4,16 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
     try {
-        const [mostOrdered, salesAndExpensesSummary] = await Promise.all([
+        const [mostOrdered, salesAndExpensesSummary, topSpenders] = await Promise.all([
             getMostOrdered(),
-            getSalesAndExpensesSummary()
+            getSalesAndExpensesSummary(),
+            getTopSpenders()
         ]);
 
         const responseData = {
             mostOrdered: mostOrdered,
-            salesAndExpensesSummary: salesAndExpensesSummary
+            salesAndExpensesSummary: salesAndExpensesSummary,
+            topSpenders: topSpenders
         };
 
         res.json(responseData);
@@ -77,6 +79,37 @@ async function getSalesAndExpensesSummary() {
     return rows;
 }
 
+async function getTopSpenders() {
+    const queryText = `
+        SELECT 
+            customer,
+            SUM(total::numeric) AS total_spent,
+            SUM(subtotal::numeric) AS total_subtotal,
+            SUM(computer::numeric) AS total_computer
+        FROM 
+            sales
+        GROUP BY 
+            customer
+        ORDER BY 
+            total_spent DESC;
+    `;
+    const { rows } = await pool.query(queryText);
+    
+    // Format numbers with commas
+    const formatter = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+    
+    rows.forEach(row => {
+        row.total_spent = formatter.format(row.total_spent);
+        row.total_subtotal = formatter.format(row.total_subtotal);
+        row.total_computer = formatter.format(row.total_computer);
+    });
+
+    return rows;
+}
+
 router.get('/most-ordered', async (req, res) => {
     try {
         const mostOrdered = await getMostOrdered();
@@ -93,6 +126,16 @@ router.get('/sales-expenses-summary', async (req, res) => {
         res.json({ sales_expenses_summary: summary });
     } catch (error) {
         console.error('Error fetching sales and expenses summary:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.get('/top-spenders', async (req, res) => {
+    try {
+        const topSpenders = await getTopSpenders();
+        res.json({ top_spenders: topSpenders });
+    } catch (error) {
+        console.error('Error fetching top spenders:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
