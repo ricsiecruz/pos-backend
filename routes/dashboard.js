@@ -1,19 +1,22 @@
 const express = require('express');
 const pool = require('../db');
+const moment = require('moment-timezone');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
     try {
-        const [mostOrdered, salesAndExpensesSummary, topSpenders] = await Promise.all([
+        const [mostOrdered, salesAndExpensesSummary, topSpenders, updatedMembers] = await Promise.all([
             getMostOrdered(),
             getSalesAndExpensesSummary(),
-            getTopSpenders()
+            getTopSpenders(),
+            updateMemberData()
         ]);
 
         const responseData = {
             mostOrdered: mostOrdered,
             salesAndExpensesSummary: salesAndExpensesSummary,
-            topSpenders: topSpenders
+            topSpenders: topSpenders,
+            updatedMembers: updatedMembers
         };
 
         res.json(responseData);
@@ -95,7 +98,6 @@ async function getTopSpenders() {
     `;
     const { rows } = await pool.query(queryText);
     
-    // Format numbers with commas
     const formatter = new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -105,6 +107,63 @@ async function getTopSpenders() {
         row.total_spent = formatter.format(row.total_spent);
         row.total_subtotal = formatter.format(row.total_subtotal);
         row.total_computer = formatter.format(row.total_computer);
+    });
+
+    return rows;
+}
+
+async function updateMemberData() {
+    const updateQueryText = `
+        WITH member_sales AS (
+            SELECT 
+                customer,
+                MAX(datetime AT TIME ZONE 'Asia/Manila') AS last_spent,
+                SUM(computer::numeric) AS total_computer,
+                SUM(subtotal::numeric) AS total_subtotal
+            FROM 
+                sales
+            GROUP BY 
+                customer
+        )
+        UPDATE members
+        SET 
+            total_load = ms.total_computer,
+            coffee = ms.total_subtotal,
+            total_spent = ms.total_computer + ms.total_subtotal,
+            last_spent = ms.last_spent
+        FROM 
+            member_sales ms
+        WHERE 
+            members.name = ms.customer;
+    `;
+    await pool.query(updateQueryText);
+
+    // Fetch the updated member data
+    const fetchUpdatedMembersQueryText = `
+        SELECT 
+            id, 
+            name, 
+            total_load, 
+            coffee, 
+            total_spent,
+            last_spent AT TIME ZONE 'Asia/Manila' AS last_spent
+        FROM 
+            members
+        ORDER BY 
+            total_spent DESC;
+    `;
+    const { rows } = await pool.query(fetchUpdatedMembersQueryText);
+    
+    const formatter = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+    
+    rows.forEach(row => {
+        row.total_load = formatter.format(row.total_load);
+        row.coffee = formatter.format(row.coffee);
+        row.total_spent = formatter.format(row.total_spent);
+        row.last_spent = moment(row.last_spent).tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
     });
 
     return rows;

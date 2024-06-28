@@ -129,6 +129,7 @@ wss.on('connection', (ws) => {
         addTransactionSalesToDatabase(data.sale)
           .then((newSale) => {
             broadcastSales(newSale);
+            updateMembersAfterSale();            
           })
           .catch((error) => {
             console.log('Error adding sale to database:', error);
@@ -381,6 +382,44 @@ function broadcastFoods(addFood) {
       console.log('Broadcasting updated foods to client:', addFood);
     }
   })
+}
+
+function updateMembersAfterSale() {
+  pool.query(`
+    WITH member_sales AS (
+      SELECT 
+        customer,
+        MAX(datetime AT TIME ZONE 'Asia/Manila') AS last_spent,
+        SUM(computer::numeric) AS total_computer,
+        SUM(subtotal::numeric) AS total_subtotal
+      FROM 
+        sales
+      GROUP BY 
+        customer
+    )
+    UPDATE members
+    SET 
+      total_load = ms.total_computer,
+      coffee = ms.total_subtotal,
+      total_spent = ms.total_computer + ms.total_subtotal,
+      last_spent = ms.last_spent
+    FROM 
+      member_sales ms
+    WHERE 
+      members.name = ms.customer;
+  `, (error, results) => {
+    if (error) {
+      console.error('Error updating members after sale:', error);
+      return;
+    }
+    
+    // Broadcast updated members
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        membersHandler.sendMembersToClient(client);
+      }
+    });
+  });
 }
 
 function broadcastInventory(addInventory) {

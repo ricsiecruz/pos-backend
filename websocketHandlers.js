@@ -81,6 +81,41 @@ async function sendSalesToClient(client) {
   }
 }
 
+async function sendMembersToClient(ws) {
+  try {
+    const membersQuery = `
+      SELECT 
+        id, 
+        name, 
+        total_load, 
+        coffee, 
+        total_spent, 
+        last_spent 
+      FROM 
+        members 
+      ORDER BY 
+        total_spent DESC
+    `;
+    const { rows: members } = await pool.query(membersQuery);
+    
+    const formatter = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+
+    members.forEach(member => {
+        member.total_load = formatter.format(member.total_load);
+        member.coffee = formatter.format(member.coffee);
+        member.total_spent = formatter.format(member.total_spent);
+        member.last_spent = moment(member.last_spent).tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
+    });
+
+    ws.send(JSON.stringify({ action: 'updateMembers', members }));
+  } catch (error) {
+    console.error('Error sending members data to client:', error);
+  }
+}
+
 function sendFoodsToClient(client) {
   pool.query('SELECT * FROM foods ORDER BY id DESC', (error, results) => {
     if(error) {
@@ -118,5 +153,6 @@ module.exports = {
   sendSalesToClient,
   sendInventoryToClient,
   sendExpensesToClient,
-  sendFoodsToClient
+  sendFoodsToClient,
+  sendMembersToClient
 };
