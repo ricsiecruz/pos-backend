@@ -50,38 +50,60 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Updated route for fetching sales by date range with POST method
 router.post('/date-range', async (req, res) => {
   try {
-    const { startDate, endDate } = req.body;
+    const { startDate, endDate, customer } = req.body;
+    let queryText = `
+      SELECT customer, qty, datetime, computer, credit, total, subtotal
+      FROM sales
+    `;
+    const values = [];
 
-    // Validate the input dates
-    if (!startDate || !endDate) {
-      return res.status(400).json({ error: 'Please provide both startDate and endDate' });
+    // If customer is provided, filter by customer
+    if (customer) {
+      queryText += ' WHERE customer = $1';
+      values.push(customer);
     }
 
-    const { salesData, totalIncome } = await getSalesByDateRange(startDate, endDate);
-    const totalExpenses = await getSumOfExpensesByDateRange(startDate, endDate);
-    const totalNet = totalIncome - totalExpenses;
-    const totalComputer = await getSumOfComputers(startDate, endDate);
-    const totalFoodAndDrinks = await getSumOfFoodAndDrinks(startDate, endDate);
-    const totalCredit = await getSumOfCredits(startDate, endDate);
+    // If both startDate and endDate are provided, filter by date range
+    if (startDate && endDate) {
+      if (values.length > 0) {
+        queryText += ' AND DATE(datetime) >= $' + (values.length + 1) + ' AND DATE(datetime) <= $' + (values.length + 2);
+      } else {
+        queryText += ' WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2';
+      }
+      values.push(startDate, endDate);
+    }
+
+    queryText += ' ORDER BY datetime DESC';
+
+    // Execute the query
+    const { rows } = await pool.query(queryText, values);
+    
+    // Calculate the totals
+    const filteredIncome = rows.reduce((acc, sale) => acc + parseFloat(sale.total), 0);
+    const filteredExpenses = await getSumOfExpensesByDateRange(startDate, endDate);
+    const filteredNet = filteredIncome - filteredExpenses;
+    const filteredCredit = rows.reduce((acc, sale) => acc + parseFloat(sale.credit), 0);
+    const filteredComputer = rows.reduce((acc, sale) => acc + parseFloat(sale.computer), 0);
+    const filteredFoodAndDrinks = rows.reduce((acc, sale) => acc + parseFloat(sale.subtotal), 0);
 
     const responseData = {
-      sales: {
-        data: salesData,
-        income: totalIncome,
-        expenses: totalExpenses,
-        net: totalNet,
-        computer: totalComputer,
-        food_and_drinks: totalFoodAndDrinks,
-        credit: totalCredit
+      salesData: {
+        data: rows,
+        income: filteredIncome,
+        expenses: filteredExpenses,
+        net: filteredNet,
+        computer: filteredComputer,
+        food_and_drinks: filteredFoodAndDrinks,
+        credit: filteredCredit,
       }
     };
 
     res.json(responseData);
+
   } catch (error) {
-    console.error('Error fetching sales by date range:', error);
+    console.error('Error fetching sales by date range and customer:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -133,6 +155,38 @@ async function getSalesForCurrentDate() {
   return rows;
 }
 
+async function getSalesFromDatabase() {
+    const queryText = 'SELECT * FROM sales ORDER BY id DESC';
+    const { rows } = await pool.query(queryText);
+    return rows;
+   }
+
+   async function getSumOfTotalSales() {
+    const queryText = 'SELECT SUM(total::numeric) AS total_sum FROM sales';
+    const { rows } = await pool.query(queryText);
+    return rows[0].total_sum;
+  }
+  
+  async function getSumOfTotalSalesToday() {
+    const queryText = `
+      SELECT COALESCE(SUM(total::numeric), 0) AS total_sum_today
+      FROM sales
+      WHERE DATE(datetime) = CURRENT_DATE;
+    `;
+    const { rows } = await pool.query(queryText);
+    return rows[0].total_sum_today;
+  }
+  
+async function getSumOfFoodAndDrinksToday() {
+   const queryText = `
+    SELECT COALESCE(SUM(subtotal::numeric), 0) AS total_food_and_drinks_today
+     FROM sales
+    WHERE DATE(datetime) = CURRENT_DATE;
+   `;
+  const { rows } = await pool.query(queryText);
+  return rows[0].total_food_and_drinks_today;
+}
+
 async function getSalesForMember(member) {
   const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
   const selectSalesQuery = `
@@ -145,38 +199,6 @@ async function getSalesForMember(member) {
 
   await pool.query(setTimezoneQuery);
   const { rows } = await pool.query(selectSalesQuery, values);
-  return rows;
-}
-
-async function getSumOfTotalSales() {
-  const queryText = 'SELECT SUM(total::numeric) AS total_sum FROM sales';
-  const { rows } = await pool.query(queryText);
-  return rows[0].total_sum;
-}
-
-async function getSumOfTotalSalesToday() {
-  const queryText = `
-    SELECT COALESCE(SUM(total::numeric), 0) AS total_sum_today
-    FROM sales
-    WHERE DATE(datetime) = CURRENT_DATE;
-  `;
-  const { rows } = await pool.query(queryText);
-  return rows[0].total_sum_today;
-}
-
-async function getSumOfFoodAndDrinksToday() {
-  const queryText = `
-    SELECT COALESCE(SUM(subtotal::numeric), 0) AS total_food_and_drinks_today
-    FROM sales
-    WHERE DATE(datetime) = CURRENT_DATE;
-  `;
-  const { rows } = await pool.query(queryText);
-  return rows[0].total_food_and_drinks_today;
-}
-
-async function getSalesFromDatabase() {
-  const queryText = 'SELECT * FROM sales ORDER BY id DESC';
-  const { rows } = await pool.query(queryText);
   return rows;
 }
 
@@ -195,6 +217,25 @@ async function getSalesByDateRange(startDate, endDate) {
     return { salesData: rows, totalIncome: totalIncome };
   } catch (error) {
     console.error('Error in getSalesByDateRange query:', error);
+    throw error;
+  }
+}
+
+async function getSalesByDateRangeAndCustomer(startDate, endDate, customer) {
+  const queryText = `
+    SELECT customer, qty, datetime, computer, credit, total
+    FROM sales
+    WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2 AND customer = $3
+    ORDER BY datetime DESC;
+  `;
+  const values = [startDate, endDate, customer];
+
+  try {
+    const { rows } = await pool.query(queryText, values);
+    const totalIncome = rows.reduce((acc, sale) => acc + parseFloat(sale.total), 0);
+    return { salesData: rows, totalIncome: totalIncome };
+  } catch (error) {
+    console.error('Error in getSalesByDateRangeAndCustomer query:', error);
     throw error;
   }
 }
