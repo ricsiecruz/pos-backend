@@ -82,8 +82,8 @@ async function getSalesAndExpensesSummary() {
     return rows;
 }
 
-async function getTopSpenders() {
-    const queryText = `
+async function getTopSpenders(today = false) {
+    let queryText = `
         SELECT 
             customer,
             SUM(total::numeric) AS total_spent,
@@ -91,11 +91,19 @@ async function getTopSpenders() {
             SUM(computer::numeric) AS total_computer
         FROM 
             sales
+    `;
+
+    if (today) {
+        queryText += ` WHERE DATE(datetime AT TIME ZONE 'Asia/Manila') = CURRENT_DATE `;
+    }
+
+    queryText += `
         GROUP BY 
             customer
         ORDER BY 
             total_spent DESC;
     `;
+
     const { rows } = await pool.query(queryText);
     
     const formatter = new Intl.NumberFormat('en-US', {
@@ -195,6 +203,16 @@ router.get('/top-spenders', async (req, res) => {
         res.json({ top_spenders: topSpenders });
     } catch (error) {
         console.error('Error fetching top spenders:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.get('/top-spenders-today', async (req, res) => {
+    try {
+        const topSpendersToday = await getTopSpenders(true);
+        res.json({ top_spenders_today: topSpendersToday });
+    } catch (error) {
+        console.error('Error fetching top spenders for today:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
