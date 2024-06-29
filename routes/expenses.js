@@ -71,7 +71,7 @@ module.exports = function(wss) {
     if (!req.file) {
         return res.status(400).send('No file uploaded.');
     }
-    res.json({ imagePath: req.file.path });
+    res.json({ imagePath: `/uploads/${req.file.filename}` });
   });
 
   return router;

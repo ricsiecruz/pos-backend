@@ -139,7 +139,7 @@ wss.on('connection', (ws) => {
         .catch((error) => {
             console.error('Error adding expenses in database:', error);
         });
-    break;   
+    break;
       case 'addExpensesResponse':
         handleAddExpensesResponse(data);
         break;
@@ -240,7 +240,6 @@ function addMemberToDatabase(newMember) {
 }
 
 function addExpenses(newExpenses) {
-  console.log('newExpenses', newExpenses)
   return new Promise((resolve, reject) => {
       const { expense, month, date, amount, channel, image_path } = newExpenses;
       pool.query(

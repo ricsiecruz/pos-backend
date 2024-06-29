@@ -11,7 +11,7 @@ const salesRoutes = require('./routes/sales');
 const membersRoutes = require('./routes/members')
 const foodsRoutes = require('./routes/foods');
 const port = 3000;
-
+const path = require('path');
 const WebSocket = require('ws');
 
 const server = app.listen(port, () => {
@@ -29,6 +29,9 @@ app.use(
     extended: true,
   })
 );
+
+// Serve the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API' });
