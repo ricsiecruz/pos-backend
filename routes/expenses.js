@@ -3,6 +3,20 @@ const pool = require('../db');
 const router = express.Router();
 const WebSocket = require('ws');
 
+const multer = require('multer');
+const path = require('path');
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+      cb(null, 'uploads/'); // Folder where images will be saved
+  },
+  filename: (req, file, cb) => {
+      cb(null, Date.now() + path.extname(file.originalname)); // Appending extension
+  }
+});
+
+const upload = multer({ storage: storage });
+
 // Function to get the sum of expenses for the current date
 async function getSumOfExpensesForCurrentDate() {
   const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
@@ -51,6 +65,13 @@ module.exports = function(wss) {
       console.error('Error executing query:', error);
       response.status(500).json({ error: 'Internal Server Error' });
     }
+  });
+
+  router.post('/upload', upload.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).send('No file uploaded.');
+    }
+    res.json({ imagePath: req.file.path });
   });
 
   return router;

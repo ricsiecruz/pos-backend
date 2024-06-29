@@ -15,7 +15,25 @@ const foodsHandler = require('./handlers/foodsHandler');
 const salesHandler = require('./handlers/salesHandler');
 const membersHandler = require('./handlers/membersHandler');
 const broadcasts = require('./broadcasts');
+const uploadExpenses = require('./routes/expenses')
+
+const multer = require('multer');
+const path = require('path');
+
+// Set up multer for file storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/'); // Folder where images will be saved
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname)); // Appending extension
+    }
+});
+
+const upload = multer({ storage: storage });
+
 app.use(cors());
+app.use('/upload', uploadExpenses)
 
 wss.on('listening', () => { 
   console.log(`WebSocket server is listening on port ${port}`); 
@@ -112,16 +130,16 @@ wss.on('connection', (ws) => {
             console.error('Error adding food stock:', error)
           });
         break;
-      case 'addExpenses':
-        addExpenses(data.expense)
-          .then(async (newExpense) => {
+        case 'addExpenses':
+    addExpenses(data.expense)
+        .then(async (newExpense) => {
             const totalExpenses = await getSumOfExpensesForCurrentDate();
             broadcastExpenses({ newExpense, totalExpenses });
-          })
-          .catch((error) => {
+        })
+        .catch((error) => {
             console.error('Error adding expenses in database:', error);
-          });
-        break;        
+        });
+    break;   
       case 'addExpensesResponse':
         handleAddExpensesResponse(data);
         break;
@@ -222,27 +240,27 @@ function addMemberToDatabase(newMember) {
 }
 
 function addExpenses(newExpenses) {
+  console.log('newExpenses', newExpenses)
   return new Promise((resolve, reject) => {
-    const { expense, month, date, amount, channel } = newExpenses;
-    pool.query(
-      'INSERT INTO expenses (expense, month, date, amount, channel) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [expense, month, date, amount, channel],
-      (error, results) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        const newExpense = results.rows[0];
-        resolve(newExpense);
+      const { expense, month, date, amount, channel, image_path } = newExpenses;
+      pool.query(
+          'INSERT INTO expenses (expense, month, date, amount, channel, image_path) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+          [expense, month, date, amount, channel, image_path],
+          (error, results) => {
+              if (error) {
+                  reject(error);
+                  return;
+              }
+              const newExpense = results.rows[0];
+              resolve(newExpense);
 
-        // Broadcast to clients that an expense has been added
-        wss.clients.forEach(client => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({ action: 'addExpensesResponse', expense: newExpense }));
+              wss.clients.forEach(client => {
+                  if (client.readyState === WebSocket.OPEN) {
+                      client.send(JSON.stringify({ action: 'addExpensesResponse', expense: newExpense }));
+                  }
+              });
           }
-        });
-      }
-    );
+      );
   });
 }
 
