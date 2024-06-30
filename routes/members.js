@@ -3,7 +3,7 @@ const pool = require('../db');
 const router = express.Router();
 
 router.get('/', (request, response) => {
-  pool.query('SELECT * FROM members ORDER BY id DESC', (error, results) => {
+  pool.query('SELECT * FROM members ORDER BY name ASC', (error, results) => {
     if (error) {
       console.error('Error fetching members from database:', error);
       return response.status(500).json({ error: 'Internal server error' });

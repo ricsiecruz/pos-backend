@@ -153,15 +153,17 @@ wss.on('connection', (ws) => {
             console.log('Error adding sale to database:', error);
           });
         break;
-      case 'addMember':
-        addMemberToDatabase(data.member)
-          .then(() => {
-            broadcastMembers(wss);
-          })
-          .catch((error) => {
-            console.error('Error adding member to database:', error);
-          });
-        break;
+        case 'addMember':
+          addMemberToDatabase(data.member)
+            .then(() => {
+              broadcastMembers(wss);
+            })
+            .catch((error) => {
+              console.error('Error adding member to database:', error);
+              // Send error message to the client
+              ws.send(JSON.stringify({ action: 'errorResponse', error: error }));
+            });
+          break;        
       default:
         break;
     }
@@ -218,33 +220,59 @@ function editFood(updatedFood) {
 function addMemberToDatabase(newMember) {
   return new Promise((resolve, reject) => {
     const { name, date_joined, coffee, total_load, total_spent, last_spent } = newMember;
+    
+    // Check if the member already exists
     pool.query(
-      'INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, date_joined, coffee, total_load, total_spent, last_spent',
-      [name, date_joined, coffee, total_load, total_spent, last_spent],
+      'SELECT id FROM members WHERE name = $1',
+      [name],
       (error, results) => {
         if (error) {
+          console.log('aaa', error)
           reject(error);
           return;
         }
-        pool.query('SELECT * FROM members ORDER BY id DESC', (error, results) => {
-          if (error) {
-            reject(error);
-            return;
+        
+        // If member with the same name exists, reject with a custom error
+        if (results.rows.length > 0) {
+          const errorMessage = 'Member already exists';
+          console.log('error', errorMessage)
+          reject(errorMessage);
+          return;
+        }
+
+        // Otherwise, insert the new member
+        pool.query(
+          'INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, date_joined, coffee, total_load, total_spent, last_spent',
+          [name, date_joined, coffee, total_load, total_spent, last_spent],
+          (error, results) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+            // Fetch updated list of members after insertion
+            pool.query('SELECT * FROM members ORDER BY name ASC', (error, results) => {
+              if (error) {
+                reject(error);
+                return;
+              }
+              const updatedMembers = results.rows;
+              console.log('add member', updatedMembers)
+              broadcastMembers(updatedMembers);
+              resolve(updatedMembers); // Resolve with updated member list
+            });
           }
-          const updatedMembers = results.rows;
-          broadcastMembers(updatedMembers);
-        });
+        );
       }
-    )
-  })
+    );
+  });
 }
 
 function addExpenses(newExpenses) {
   return new Promise((resolve, reject) => {
-      const { expense, month, date, amount, channel, image_path } = newExpenses;
+      const { expense, month, date, amount, channel, image_path, credit } = newExpenses;
       pool.query(
-          'INSERT INTO expenses (expense, month, date, amount, channel, image_path) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-          [expense, month, date, amount, channel, image_path],
+          'INSERT INTO expenses (expense, month, date, amount, channel, image_path, credit) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+          [expense, month, date, amount, channel, image_path, credit],
           (error, results) => {
               if (error) {
                   reject(error);

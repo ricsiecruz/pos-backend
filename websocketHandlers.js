@@ -139,14 +139,26 @@ function sendInventoryToClient(client) {
 }
 
 function sendExpensesToClient(client) {
-  pool.query('SELECT * FROM expenses ORDER BY id DESC', (error, results) => {
-    if(error) {
-      console.error('Error fetching expenses from database:', error);
-      return;
-    }
-    const expenses = results.rows;
-    client.send(JSON.stringify({ action: 'initialize', expenses }));
+  Promise.all([
+    getSumOfCredit()
+  ])
+  .then(([expensesData, totalCreditAmount]) => {
+    client.send(JSON.stringify({ action: 'initialize', expenses: expensesData, total_credit_amount: totalCreditAmount }));
+  })
+  .catch(error => {
+    console.error('Error fetching expenses and credit amount:', error);
+    // Handle error if needed
   });
+}
+
+async function getSumOfCredit() {
+  const queryText = `
+      SELECT SUM(amount::numeric) AS total_credit_amount
+      FROM expenses
+      WHERE credit = true;
+  `;
+  const { rows } = await pool.query(queryText);
+  return rows[0].total_credit_amount;
 }
 
 module.exports = {
