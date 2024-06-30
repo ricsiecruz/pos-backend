@@ -138,17 +138,24 @@ function sendInventoryToClient(client) {
   });
 }
 
-function sendExpensesToClient(client) {
-  Promise.all([
-    getSumOfCredit()
-  ])
-  .then(([expensesData, totalCreditAmount]) => {
-    client.send(JSON.stringify({ action: 'initialize', expenses: expensesData, total_credit_amount: totalCreditAmount }));
-  })
-  .catch(error => {
-    console.error('Error fetching expenses and credit amount:', error);
-    // Handle error if needed
-  });
+async function sendExpensesToClient(client) {
+  try {
+      const [expensesData, totalCreditAmount] = await Promise.all([
+          getExpensesData(),
+          getSumOfCredit()
+      ]);
+
+      const responseData = {
+          action: 'initialize',
+          expenses: expensesData,
+          total_credit_amount: totalCreditAmount
+      };
+
+      client.send(JSON.stringify(responseData));
+  } catch (error) {
+      console.error('Error fetching expenses data:', error);
+      client.send(JSON.stringify({ action: 'error', message: 'Error fetching expenses data' }));
+  }
 }
 
 async function getSumOfCredit() {
@@ -159,6 +166,13 @@ async function getSumOfCredit() {
   `;
   const { rows } = await pool.query(queryText);
   return rows[0].total_credit_amount;
+}
+
+// Function to get expenses data
+async function getExpensesData() {
+  const queryText = 'SELECT * FROM expenses ORDER BY id DESC';
+  const { rows } = await pool.query(queryText);
+  return rows;
 }
 
 module.exports = {
