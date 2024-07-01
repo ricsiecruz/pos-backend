@@ -137,12 +137,26 @@ module.exports = function (wss) {
         }
     });
 
+    // local
+    // router.post('/upload', upload.single('image'), (req, res) => {
+    //     if (!req.file) {
+    //         return res.status(400).send('No file uploaded.');
+    //     }
+    //     res.json({ imagePath: `/uploads/${req.file.filename}` });
+    // });
+
+    // prod
     router.post('/upload', upload.single('image'), (req, res) => {
         if (!req.file) {
             return res.status(400).send('No file uploaded.');
         }
-        res.json({ imagePath: `/uploads/${req.file.filename}` });
+        const file = req.file;
+        console.log({file});
+        const blob = put(file.originalname, file, { access: 'public' , token : process.env.BLOB_READ_WRITE_TOKEN,  });
+        console.log({blob});
+        res.json({blob});
     });
+    
 
     router.put('/:id/pay', async (req, res) => {
         try {

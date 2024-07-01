@@ -1,4 +1,5 @@
 to update, push in main
+nned to push package also
 <!--  -->
 pg_dump -Fc -v -d <source_database_connection_string> -f <dump_file_name>a
 postgresql://myuser:mypassword@localhost:5432/mydatabase
