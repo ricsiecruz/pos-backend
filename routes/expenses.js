@@ -8,7 +8,7 @@ const path = require('path');
 
 const { put } = require('@vercel/blob'); // Ensure you have the @vercel/blob package installed
 
-require('dotenv').config();
+// require('dotenv').config();
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -142,36 +142,36 @@ module.exports = function (wss) {
     });
 
     // local
-    // router.post('/upload', upload.single('image'), (req, res) => {
-    //     if (!req.file) {
-    //         return res.status(400).send('No file uploaded.');
-    //     }
-    //     res.json({ imagePath: `/uploads/${req.file.filename}` });
-    // });
-
-    // prod
     router.post('/upload', upload.single('image'), (req, res) => {
         if (!req.file) {
             return res.status(400).send('No file uploaded.');
         }
-        try {
-            const file = req.file;
-            console.log({ file });
-    
-            // Upload file to Vercel Blob
-            const blob = put(file.originalname, file, {
-                access: 'public',
-                token: process.env.BLOB_READ_WRITE_TOKEN,
-            });
-            console.log({ blob });
-    
-            // Respond with blob details
-            res.json({ blob });
-        } catch (error) {
-            console.error('Error uploading file to Vercel Blob:', error);
-            res.status(500).json({ error: 'Failed to upload file to Vercel Blob' });
-        }
+        res.json({ imagePath: `/uploads/${req.file.filename}` });
     });
+
+    // prod
+    // router.post('/upload', upload.single('image'), (req, res) => {
+    //     if (!req.file) {
+    //         return res.status(400).send('No file uploaded.');
+    //     }
+    //     try {
+    //         const file = req.file;
+    //         console.log({ file });
+    
+    //         // Upload file to Vercel Blob
+    //         const blob = put(file.originalname, file, {
+    //             access: 'public',
+    //             token: process.env.BLOB_READ_WRITE_TOKEN,
+    //         });
+    //         console.log({ blob });
+    
+    //         // Respond with blob details
+    //         res.json({ blob });
+    //     } catch (error) {
+    //         console.error('Error uploading file to Vercel Blob:', error);
+    //         res.status(500).json({ error: 'Failed to upload file to Vercel Blob' });
+    //     }
+    // });
 
     router.put('/:id/pay', async (req, res) => {
         try {
