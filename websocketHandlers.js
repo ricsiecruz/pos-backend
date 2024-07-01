@@ -9,10 +9,16 @@ async function getSumOfExpensesForCurrentDate() {
     WHERE DATE(date AT TIME ZONE 'Asia/Manila') = CURRENT_DATE;
   `;
 
-  await pool.query(setTimezoneQuery);
-  const { rows } = await pool.query(queryText);
-  return rows[0].total_expenses;
+  try {
+    await pool.query(setTimezoneQuery);
+    const { rows } = await pool.query(queryText);
+    return rows[0].total_expenses;
+  } catch (error) {
+    console.error('Error executing getSumOfExpensesForCurrentDate query:', error);
+    throw error;
+  }
 }
+
 
 async function getSalesFromDatabase() {
   const queryText = `
