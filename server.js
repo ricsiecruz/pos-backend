@@ -131,8 +131,10 @@ wss.on('connection', (ws) => {
           });
         break;
         case 'addExpenses':
+    console.log('Received addExpenses action:', data.expense);
     addExpenses(data.expense)
         .then(async (newExpense) => {
+            console.log('Expense added successfully:', newExpense);
             const totalExpenses = await getSumOfExpensesForCurrentDate();
             broadcastExpenses({ newExpense, totalExpenses });
         })
@@ -140,9 +142,9 @@ wss.on('connection', (ws) => {
             console.error('Error adding expenses in database:', error);
         });
     break;
-      case 'addExpensesResponse':
-        handleAddExpensesResponse(data);
-        break;
+case 'addExpensesResponse':
+    handleAddExpensesResponse(data);
+    break;
       case 'addSales':
         addTransactionSalesToDatabase(data.sale)
           .then((newSale) => {
@@ -275,11 +277,12 @@ function addExpenses(newExpenses) {
           [expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by],
           (error, results) => {
               if (error) {
+                  console.error('Database query error:', error);
                   reject(error);
                   return;
               }
               const newExpense = results.rows[0];
-              console.log('newExpense', newExpense)
+              console.log('New expense added:', newExpense);
               resolve(newExpense);
 
               wss.clients.forEach(client => {
