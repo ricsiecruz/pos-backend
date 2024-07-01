@@ -279,6 +279,7 @@ function addExpenses(newExpenses) {
                   return;
               }
               const newExpense = results.rows[0];
+              console.log('newExpense', newExpense)
               resolve(newExpense);
 
               wss.clients.forEach(client => {

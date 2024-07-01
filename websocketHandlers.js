@@ -19,7 +19,6 @@ async function getSumOfExpensesForCurrentDate() {
   }
 }
 
-
 async function getSalesFromDatabase() {
   const queryText = `
   SELECT *
