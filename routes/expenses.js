@@ -133,7 +133,7 @@ module.exports = function (wss) {
             res.status(201).json({ id: insertedId });
         } catch (error) {
             console.error('Error executing query:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
+            res.status(500).json({ error: 'Internal Server Error add expense' });
         }
     });
 
