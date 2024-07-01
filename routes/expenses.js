@@ -126,6 +126,44 @@ module.exports = function (wss) {
         }
     });
 
+    router.post('/', async (req, res) => {
+        try {
+            const { expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by } = req.body;
+            const formattedDate = new Date(date);
+
+            const result = await pool.query(
+                'INSERT INTO expenses (expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id',
+                [expense, month, formattedDate, amount, mode_of_payment, image_path, credit, paid_by, settled_by]
+            );
+
+            const insertedId = result.rows[0].id;
+            const totalExpenses = await getSumOfExpensesForCurrentDate();
+
+            // Deduct credit amount if the expense is marked as credit
+            if (credit) {
+                const deductedAmount = await deductCreditAmount(amount);
+                const totalCreditAmount = await getSumOfCredit();
+
+                wss.clients.forEach(client => {
+                    if (client.readyState === WebSocket.OPEN) {
+                        client.send(JSON.stringify({ action: 'addExpenses', expense: insertedId, totalExpenses, totalCreditAmount }));
+                    }
+                });
+            } else {
+                wss.clients.forEach(client => {
+                    if (client.readyState === WebSocket.OPEN) {
+                        client.send(JSON.stringify({ action: 'addExpenses', expense: insertedId, totalExpenses }));
+                    }
+                });
+            }
+
+            res.status(201).json({ id: insertedId });
+        } catch (error) {
+            console.error('Error executing query:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
+    });
+
     router.put('/:id/pay', async (req, res) => {
         try {
             const expenseId = req.params.id;
