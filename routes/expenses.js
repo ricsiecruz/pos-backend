@@ -95,7 +95,7 @@ module.exports = function (wss) {
                 data: expensesData,
                 total_credit_amount: totalCreditAmount
             };
-            console.log('expenses', responseData.total_credit_amount);
+            // console.log('expenses', responseData.total_credit_amount);
             res.status(200).json(responseData);
         } catch (error) {
             console.error('Error fetching expenses data:', error);

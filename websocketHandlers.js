@@ -177,7 +177,7 @@ async function getSumOfCredit() {
 async function getExpensesData() {
   const queryText = 'SELECT * FROM expenses ORDER BY id DESC';
   const { rows } = await pool.query(queryText);
-  console.log('expenses', rows)
+  // console.log('expenses', rows)
   return rows;
 }
 
