@@ -52,11 +52,11 @@ async function getModeOfPayment() {
 }
 
 // Function to get expenses data
-async function getExpensesData() {
-    const queryText = 'SELECT * FROM expenses ORDER BY id DESC';
-    const { rows } = await pool.query(queryText);
-    return rows;
-}
+// async function getExpensesData() {
+//     const queryText = 'SELECT * FROM expenses ORDER BY id DESC';
+//     const { rows } = await pool.query(queryText);
+//     return rows;
+// }
 
 // Function to deduct credit amount
 async function deductCreditAmount(amount) {
@@ -77,6 +77,13 @@ async function deductCreditAmount(amount) {
 }
 
 module.exports = function (wss) {
+
+    async function getExpensesData() {
+        const queryText = 'SELECT * FROM expenses ORDER BY id DESC';
+        const { rows } = await pool.query(queryText);
+        return rows;
+    }
+
     router.get('/', async (req, res) => {
         try {
             const [expensesData, totalCreditAmount] = await Promise.all([
