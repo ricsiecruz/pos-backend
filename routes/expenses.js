@@ -6,6 +6,10 @@ const WebSocket = require('ws');
 const multer = require('multer');
 const path = require('path');
 
+const { put } = require('@vercel/blob'); // Ensure you have the @vercel/blob package installed
+
+require('dotenv').config();
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'uploads/'); // Folder where images will be saved
