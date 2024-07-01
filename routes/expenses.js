@@ -6,18 +6,11 @@ const WebSocket = require('ws');
 const multer = require('multer');
 const path = require('path');
 
-// const { put } = require('@vercel/blob'); // Ensure you have the @vercel/blob package installed
+const { put } = require('@vercel/blob'); // Ensure you have the @vercel/blob package installed
 
-// require('dotenv').config();
+require('dotenv').config();
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/'); // Folder where images will be saved
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname)); // Appending extension
-    }
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({ storage: storage });
 
@@ -103,75 +96,28 @@ module.exports = function (wss) {
         }
     });
 
-    router.post('/', async (req, res) => {
-        try {
-            const { expense, month, date, amount, mode_of_payment, credit, paid_by, settled_by } = req.body;
-            const formattedDate = new Date(date);
-
-            const result = await pool.query(
-                'INSERT INTO expenses (expense, month, date, amount, mode_of_payment, credit, paid_by, settled_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
-                [expense, month, formattedDate, amount, mode_of_payment, credit, paid_by, settled_by]
-            );
-
-            const insertedId = result.rows[0].id;
-            const totalExpenses = await getSumOfExpensesForCurrentDate();
-
-            // Deduct credit amount if the expense is marked as credit
-            if (credit) {
-                const deductedAmount = await deductCreditAmount(amount);
-                const totalCreditAmount = await getSumOfCredit();
-
-                wss.clients.forEach(client => {
-                    if (client.readyState === WebSocket.OPEN) {
-                        client.send(JSON.stringify({ action: 'addExpenses', expense: insertedId, totalExpenses, totalCreditAmount }));
-                    }
-                });
-            } else {
-                wss.clients.forEach(client => {
-                    if (client.readyState === WebSocket.OPEN) {
-                        client.send(JSON.stringify({ action: 'addExpenses', expense: insertedId, totalExpenses }));
-                    }
-                });
-            }
-
-            res.status(201).json({ id: insertedId });
-        } catch (error) {
-            console.error('Error executing query:', error);
-            res.status(500).json({ error: 'Internal Server Error add expense' });
-        }
-    });
-
-    // local
-    router.post('/upload', upload.single('image'), (req, res) => {
+    router.post('/upload', upload.single('image'), async (req, res) => {
         if (!req.file) {
             return res.status(400).send('No file uploaded.');
         }
-        res.json({ imagePath: `/uploads/${req.file.filename}` });
+    
+        try {
+            const { buffer, originalname } = req.file;
+            const extension = path.extname(originalname);
+            const key = `uploads/${Date.now()}${extension}`;
+            
+            // Upload the file to Vercel Blob
+            const { url } = await put(key, buffer, {
+                access: 'public',
+                token: process.env.BLOB_READ_WRITE_TOKEN
+            });
+    
+            res.json({ imagePath: url });
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            res.status(500).send('Error uploading file.');
+        }
     });
-
-    // prod
-    // router.post('/upload', upload.single('image'), (req, res) => {
-    //     if (!req.file) {
-    //         return res.status(400).send('No file uploaded.');
-    //     }
-    //     try {
-    //         const file = req.file;
-    //         console.log({ file });
-    
-    //         // Upload file to Vercel Blob
-    //         const blob = put(file.originalname, file, {
-    //             access: 'public',
-    //             token: process.env.BLOB_READ_WRITE_TOKEN,
-    //         });
-    //         console.log({ blob });
-    
-    //         // Respond with blob details
-    //         res.json({ blob });
-    //     } catch (error) {
-    //         console.error('Error uploading file to Vercel Blob:', error);
-    //         res.status(500).json({ error: 'Failed to upload file to Vercel Blob' });
-    //     }
-    // });
 
     router.put('/:id/pay', async (req, res) => {
         try {

@@ -269,38 +269,12 @@ function addMemberToDatabase(newMember) {
   });
 }
 
-// function addExpenses(newExpenses) {
-//   return new Promise((resolve, reject) => {
-//       const { expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by } = newExpenses;
-//       pool.query(
-//           'INSERT INTO expenses (expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-//           [expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by],
-//           (error, results) => {
-//               if (error) {
-//                   console.error('Database query error:', error);
-//                   reject(error);
-//                   return;
-//               }
-//               const newExpense = results.rows[0];
-//               console.log('New expense added:', newExpense);
-//               resolve(newExpense);
-
-//               wss.clients.forEach(client => {
-//                   if (client.readyState === WebSocket.OPEN) {
-//                       client.send(JSON.stringify({ action: 'addExpensesResponse', expense: newExpense }));
-//                   }
-//               });
-//           }
-//       );
-//   });
-// }
-
 function addExpenses(newExpenses) {
   return new Promise((resolve, reject) => {
-      const { expense, month, date, amount, mode_of_payment, credit, paid_by, settled_by } = newExpenses;
+      const { expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by } = newExpenses;
       pool.query(
-          'INSERT INTO expenses (expense, month, date, amount, mode_of_payment, credit, paid_by, settled_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-          [expense, month, date, amount, mode_of_payment, credit, paid_by, settled_by],
+          'INSERT INTO expenses (expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+          [expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by],
           (error, results) => {
               if (error) {
                   console.error('Database query error:', error);
