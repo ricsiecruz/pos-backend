@@ -1,5 +1,7 @@
 to update, push in main
-nned to push package also
+need to push package also
+
+glitch uses only 1 port. run index.js only
 <!--  -->
 pg_dump -Fc -v -d <source_database_connection_string> -f <dump_file_name>a
 postgresql://myuser:mypassword@localhost:5432/mydatabase
