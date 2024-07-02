@@ -245,7 +245,8 @@ async function getSumOfExpensesForCurrentDate() {
   const queryText = `
     SELECT COALESCE(SUM(amount::numeric), 0) AS total_expenses
     FROM expenses
-    WHERE DATE(date AT TIME ZONE 'Asia/Manila') = CURRENT_DATE;
+    WHERE DATE(date AT TIME ZONE 'Asia/Manila') = CURRENT_DATE
+    AND credit IS NOT TRUE;  -- Exclude records where credit is true
   `;
 
   await pool.query(setTimezoneQuery);
