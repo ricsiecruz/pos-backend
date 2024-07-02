@@ -165,12 +165,19 @@ async function sendExpensesToClient(client) {
 
 async function getSumOfCredit() {
   const queryText = `
-      SELECT SUM(amount::numeric) AS total_credit_amount
-      FROM expenses
-      WHERE credit = true;
+    SELECT 
+      SUM(amount::numeric) AS total_credit_amount,
+      COUNT(*) AS credit_count
+    FROM 
+      expenses
+    WHERE 
+      credit = true;
   `;
   const { rows } = await pool.query(queryText);
-  return rows[0].total_credit_amount;
+  return {
+    totalCreditAmount: rows[0].total_credit_amount,
+    creditCount: rows[0].credit_count
+  };
 }
 
 // Function to get expenses data
