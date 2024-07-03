@@ -24,6 +24,9 @@ router.get('/', async (req, res) => {
     const currentCashTotal = await getSumOfTotalSalesTodayByPayment('cash');
     const currentGcashTotal = await getSumOfTotalSalesTodayByPayment('gcash');
 
+    // Count sales with non-zero credit for all sales
+    const creditCount = sales.reduce((acc, sale) => acc + (parseFloat(sale.credit) !== 0 ? 1 : 0), 0);
+
     const responseData = {
       current_sales: {
         data: currentSalesData,
@@ -43,7 +46,8 @@ router.get('/', async (req, res) => {
         net: totalNet,
         computer: await getSumOfComputers(),
         food_and_drinks: await getSumOfFoodAndDrinks(),
-        credit: await getSumOfCredits()
+        credit: await getSumOfCredits(),
+        credit_count: creditCount, // Add the count to the sales response
       }
     };
 
@@ -151,7 +155,7 @@ async function getSalesForCurrentDate() {
     SELECT *
     FROM sales
     WHERE DATE(datetime AT TIME ZONE 'Asia/Manila') = CURRENT_DATE
-    ORDER BY id DESC;
+    ORDER BY credit DESC, id DESC;
   `;
 
   await pool.query(setTimezoneQuery);
@@ -183,7 +187,11 @@ async function getSumOfTotalSalesToday() {
 }
 
 async function getSalesFromDatabase() {
-    const queryText = 'SELECT * FROM sales ORDER BY id DESC';
+    const queryText = `
+      SELECT *
+      FROM sales
+      ORDER BY credit DESC, id DESC;
+    `;
     const { rows } = await pool.query(queryText);
     return rows;
    }

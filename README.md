@@ -2,6 +2,7 @@ to update, push in main
 need to push package also
 
 glitch uses only 1 port. run index.js only
+need to update affected files in glitch when adding columns
 <!--  -->
 pg_dump -Fc -v -d <source_database_connection_string> -f <dump_file_name>a
 postgresql://myuser:mypassword@localhost:5432/mydatabase
