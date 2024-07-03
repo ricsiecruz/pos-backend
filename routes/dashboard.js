@@ -5,7 +5,8 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
     try {
-        const [mostOrdered, salesAndExpensesSummary, topSpenders, updatedMembers] = await Promise.all([
+        const [mostOrderedToday, mostOrdered, salesAndExpensesSummary, topSpenders, updatedMembers] = await Promise.all([
+            getMostOrderedToday(),
             getMostOrdered(),
             getSalesAndExpensesSummary(),
             getTopSpenders(),
@@ -13,6 +14,7 @@ router.get('/', async (req, res) => {
         ]);
 
         const responseData = {
+            mostOrderedToday: mostOrderedToday,
             mostOrdered: mostOrdered,
             salesAndExpensesSummary: salesAndExpensesSummary,
             topSpenders: topSpenders,
@@ -25,6 +27,25 @@ router.get('/', async (req, res) => {
         res.status(500).json({ error: 'Internal server error - dashboard' });
     }
 });
+
+async function getMostOrderedToday() {
+    const queryText = `
+        WITH expanded_orders AS (
+            SELECT 
+                jsonb_array_elements(sales.orders::jsonb) AS order_detail
+            FROM sales
+            WHERE DATE(sales.datetime AT TIME ZONE 'Asia/Manila') = CURRENT_DATE
+        )
+        SELECT 
+            order_detail ->> 'product' AS product,
+            SUM((order_detail ->> 'quantity')::integer) AS total_quantity
+        FROM expanded_orders
+        GROUP BY order_detail ->> 'product'
+        ORDER BY total_quantity DESC;
+    `
+    const { rows } = await pool.query(queryText);
+    return rows;
+}
 
 async function getMostOrdered() {
     const queryText = `

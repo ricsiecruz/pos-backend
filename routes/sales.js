@@ -258,6 +258,7 @@ async function getSumOfExpensesByDateRange(startDate, endDate) {
   let queryText = `
     SELECT COALESCE(SUM(amount::numeric), 0) AS total_expenses
     FROM expenses
+    WHERE credit = false;
   `;
   const values = [];
 
