@@ -179,14 +179,13 @@ case 'addExpensesResponse':
 function editSalesLoad(updatedLoad) {
   console.log('sales id', updatedLoad.id)
   return new Promise((resolve, reject) => {
-    const { id, transactionid, orders, qty, datetime, customer, computer, subtotal, credit } = updatedLoad;
+    const { id, transactionid, orders, qty, datetime, customer, computer, subtotal, credit, mode_of_payment } = updatedLoad;
     const total = parseFloat(subtotal) + parseFloat(computer);
 
     pool.query(
       `UPDATE sales
-       SET transactionid = $1, orders = $2, qty = $3, total = $4, datetime = $5, customer = $6, computer = $7, subtotal = $8, credit = $9
-       WHERE id = $10`,
-      [transactionid, JSON.stringify(orders), qty, total, datetime, customer, computer, subtotal, credit, id],
+       SET transactionid = $1, orders = $2, qty = $3, total = $4, datetime = $5, customer = $6, computer = $7, subtotal = $8, credit = $9, mode_of_payment = $10 WHERE id = $11`,
+      [transactionid, JSON.stringify(orders), qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, id],
       (error, results) => {
         if (error) {
           console.error('Error updating sales:', error);
@@ -273,7 +272,7 @@ function addExpenses(newExpenses) {
   return new Promise((resolve, reject) => {
       const { expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by } = newExpenses;
       pool.query(
-          'INSERT INTO expenses (expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+          'INSERT INTO expenses (expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
           [expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by],
           (error, results) => {
               if (error) {
@@ -319,8 +318,8 @@ function addTransactionSalesToDatabase(sale) {
     const localDatetime = moment().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss'); // Convert to local time
 
     const query = `
-      INSERT INTO sales (transactionId, orders, qty, total, datetime, customer, computer, subtotal, credit)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO sales (transactionId, orders, qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
     `;
     const values = [
@@ -332,7 +331,8 @@ function addTransactionSalesToDatabase(sale) {
       sale.customer,
       sale.computer,
       sale.subtotal,
-      sale.credit
+      sale.credit,
+      sale.mode_of_payment
     ];
 
     pool.query(query, values, (error, results) => {

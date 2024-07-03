@@ -21,6 +21,8 @@ router.get('/', async (req, res) => {
     const currentCredit = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.credit), 0);
     const currentComputer = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.computer), 0);
     const currentFoodAndDrinks = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.subtotal), 0);
+    const currentCashTotal = await getSumOfTotalSalesTodayByPayment('cash');
+    const currentGcashTotal = await getSumOfTotalSalesTodayByPayment('gcash');
 
     const responseData = {
       current_sales: {
@@ -31,6 +33,8 @@ router.get('/', async (req, res) => {
         computer: currentComputer,
         food_and_drinks: currentFoodAndDrinks,
         credit: currentCredit,
+        cash: currentCashTotal,
+        gcash: currentGcashTotal,
       },
       sales: {
         data: sales,
@@ -130,7 +134,7 @@ router.post('/member-sales-today', async (req, res) => {
         income: totalIncome,
         computer: totalComputer,
         food_and_drinks: totalFoodAndDrinks,
-        credit: totalCredit,
+        credit: totalCredit
       }
     };
 
@@ -153,6 +157,29 @@ async function getSalesForCurrentDate() {
   await pool.query(setTimezoneQuery);
   const { rows } = await pool.query(selectSalesQuery);
   return rows;
+}
+
+// Function to get sum of total sales for current date by mode of payment
+async function getSumOfTotalSalesTodayByPayment(modeOfPayment) {
+  const queryText = `
+    SELECT COALESCE(SUM(total::numeric), 0) AS total_sum_today
+    FROM sales
+    WHERE DATE(datetime) = CURRENT_DATE
+    AND mode_of_payment = $1;
+  `;
+  const { rows } = await pool.query(queryText, [modeOfPayment]);
+  return rows[0].total_sum_today;
+}
+
+// Function to get the sum of total sales today
+async function getSumOfTotalSalesToday() {
+  const queryText = `
+    SELECT COALESCE(SUM(total::numeric), 0) AS total_sum_today
+    FROM sales
+    WHERE DATE(datetime) = CURRENT_DATE;
+  `;
+  const { rows } = await pool.query(queryText);
+  return rows[0].total_sum_today;
 }
 
 async function getSalesFromDatabase() {

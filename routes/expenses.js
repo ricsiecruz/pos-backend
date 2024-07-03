@@ -59,7 +59,11 @@ async function getModeOfPayment() {
 
 // Function to get expenses data
 async function getExpensesData() {
-    const queryText = 'SELECT * FROM expenses ORDER BY id DESC';
+    const queryText = `
+        SELECT *
+        FROM expenses
+        ORDER BY credit DESC, id DESC;
+    `;
     const { rows } = await pool.query(queryText);
     return rows;
 }
@@ -81,100 +85,6 @@ async function deductCreditAmount(amount) {
     const { rows } = await pool.query(queryText);
     return rows[0].amount;
 }
-
-// router.get('/', async (req, res) => {
-//     try {
-//         const [expensesData, totalCreditAmount] = await Promise.all([
-//             getExpensesData(),
-//             getSumOfCredit()
-//         ]);
-
-//         const responseData = {
-//             data: expensesData,
-//             total_credit_amount: totalCreditAmount
-//         };
-//         // console.log('expenses', responseData.total_credit_amount);
-//         res.status(200).json(responseData);
-//     } catch (error) {
-//         console.error('Error fetching expenses data:', error);
-//         res.status(500).json({ error: 'Internal Server Error' });
-//     }
-// });
-
-// router.post('/upload', upload.single('image'), async (req, res) => {
-//     if (!req.file) {
-//         return res.status(400).send('No file uploaded.');
-//     }
-
-//     try {
-//         const { buffer, originalname } = req.file;
-//         const extension = path.extname(originalname);
-//         const key = `uploads/${Date.now()}${extension}`;
-        
-//         // Upload the file to Vercel Blob
-//         const { url } = await put(key, buffer, {
-//             access: 'public',
-//             token: process.env.BLOB_READ_WRITE_TOKEN
-//         });
-
-//         res.json({ imagePath: url });
-//     } catch (error) {
-//         console.error('Error uploading file:', error);
-//         res.status(500).send('Error uploading file.');
-//     }
-// });
-
-// router.put('/:id/pay', async (req, res) => {
-//     try {
-//         const expenseId = req.params.id;
-
-//         // Update the expense to mark it as paid and set 'settled_by'
-//         const result = await pool.query(
-//             'UPDATE expenses SET credit = false, settled_by = $1 WHERE id = $2 RETURNING amount::numeric',
-//             ['Tech Hybe', expenseId]
-//         );
-
-//         if (result.rows.length === 0) {
-//             return res.status(404).json({ error: 'Expense not found' });
-//         }
-
-//         const deductedAmount = result.rows[0].amount;
-//         const totalCreditAmount = await getSumOfCredit();
-
-//         wss.clients.forEach(client => {
-//             if (client.readyState === WebSocket.OPEN) {
-//                 client.send(JSON.stringify({ action: 'deductCredit', expense: expenseId, totalCreditAmount }));
-//             }
-//         });
-
-//         res.status(200).json({ deductedAmount, totalCreditAmount });
-//     } catch (error) {
-//         console.error('Error executing query:', error);
-//         res.status(500).json({ error: 'Internal Server Error' });
-//     }
-// });
-
-// router.get('/paid-by', async(req, res) => {
-//     try {
-//         const paidBy = await getPaidBy();
-//         res.json({ paid_by: paidBy });
-//     } catch(error) {
-//         console.log('Error fetching paid by from database:', error);
-//         res.status(500).json({ error: 'Internal server error - paid by' })
-//     }
-// })
-
-// router.get('/mode-of-payment', async(req, res) => {
-//     try {
-//         const modeOfPayment = await getModeOfPayment();
-//         res.json({ mode_of_payment: modeOfPayment });
-//     } catch(error) {
-//         console.log('Error fetching mode of payment from database:', error);
-//         res.status(500).json({ error: 'Internal server error - mode of payment' })
-//     }
-// })
-
-// module.exports = router;
 
 module.exports = function (wss) {
     router.get('/', async (req, res) => {
