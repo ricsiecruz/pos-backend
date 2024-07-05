@@ -293,12 +293,12 @@ async function getSumOfExpensesByDateRange(startDate, endDate) {
   let queryText = `
     SELECT COALESCE(SUM(amount::numeric), 0) AS total_expenses
     FROM expenses
-    WHERE credit = false;
+    WHERE credit = false
   `;
   const values = [];
 
   if (startDate && endDate) {
-    queryText += ' WHERE date >= $1 AND date <= $2';
+    queryText += ' AND date >= $1 AND date <= $2';
     values.push(startDate, endDate);
   }
 
