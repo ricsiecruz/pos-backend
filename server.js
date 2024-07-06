@@ -479,11 +479,22 @@ function broadcastInventory(addInventory) {
   })
 }
 
-function broadcastSales(addSales) {
+// function broadcastSales(addSales) {
+//   wss.clients.forEach((client) => {
+//     if (client.readyState === WebSocket.OPEN) {
+//       websocketHandlers.sendSalesToClient(client, addSales);
+//       console.log('Broadcasting updated sales to client:', addSales)
+//     }
+//   })
+// }
+
+function broadcastSales(newSale) {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      websocketHandlers.sendSalesToClient(client, addSales);
-      console.log('Broadcasting updated sales to client:', addSales)
+      client.send(JSON.stringify({
+        action: 'newSale',
+        data: newSale
+      }));
     }
-  })
+  });
 }
