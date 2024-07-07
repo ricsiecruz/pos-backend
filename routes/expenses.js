@@ -132,11 +132,17 @@ module.exports = function (wss) {
     router.put('/:id/pay', async (req, res) => {
         try {
             const expenseId = req.params.id;
+            
+            // Get the current timestamp
+            const currentDate = new Date().toISOString();
     
-            // Update the expense to mark it as paid and set 'settled_by'
+            // Update the expense to mark it as paid, set 'settled_by' and 'date_settled'
             const result = await pool.query(
-                'UPDATE expenses SET credit = false, settled_by = $1 WHERE id = $2 RETURNING amount::numeric',
-                ['Tech Hybe', expenseId]
+                `UPDATE expenses
+                SET credit = false, settled_by = $1, date_settled = $2
+                WHERE id = $3
+                RETURNING amount::numeric`,
+                ['Tech Hybe', currentDate, expenseId]
             );
     
             if (result.rows.length === 0) {
@@ -157,7 +163,7 @@ module.exports = function (wss) {
             console.error('Error executing query:', error);
             res.status(500).json({ error: 'Internal Server Error' });
         }
-    });
+    });    
 
     router.get('/paid-by', async(req, res) => {
         try {
