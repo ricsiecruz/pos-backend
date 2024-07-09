@@ -130,21 +130,20 @@ wss.on('connection', (ws) => {
             console.error('Error adding food stock:', error)
           });
         break;
-        case 'addExpenses':
-    console.log('Received addExpenses action:', data.expense);
-    addExpenses(data.expense)
-        .then(async (newExpense) => {
-            console.log('Expense added successfully:', newExpense);
-            const totalExpenses = await getSumOfExpensesForCurrentDate();
-            broadcastExpenses({ newExpense, totalExpenses });
-        })
-        .catch((error) => {
-            console.error('Error adding expenses in database:', error);
-        });
-    break;
-case 'addExpensesResponse':
-    handleAddExpensesResponse(data);
-    break;
+      case 'addExpenses':
+        addExpenses(data.expense)
+            .then(async (newExpense) => {
+                console.log('Expense added successfully:', newExpense);
+                const totalExpenses = await getSumOfExpensesForCurrentDate();
+                broadcastExpenses({ newExpense, totalExpenses });
+            })
+            .catch((error) => {
+                console.error('Error adding expenses in database:', error);
+            });
+        break;
+      case 'addExpensesResponse':
+        handleAddExpensesResponse(data);
+        break;
       case 'addSales':
         addTransactionSalesToDatabase(data.sale)
           .then((newSale) => {
@@ -155,22 +154,21 @@ case 'addExpensesResponse':
             console.log('Error adding sale to database:', error);
           });
         break;
-        case 'addMember':
-          addMemberToDatabase(data.member)
-            .then(() => {
-              broadcastMembers(wss);
-            })
-            .catch((error) => {
-              console.error('Error adding member to database:', error);
-              // Send error message to the client
-              ws.send(JSON.stringify({ action: 'errorResponse', error: error }));
-            });
-          break;        
+      case 'addMember':
+        addMemberToDatabase(data.member)
+          .then(() => {
+            broadcastMembers(wss);
+          })
+          .catch((error) => {
+            console.error('Error adding member to database:', error);
+            // Send error message to the client
+            ws.send(JSON.stringify({ action: 'errorResponse', error: error }));
+          });
+        break;        
       default:
         break;
     }
   });
-
   ws.on('close', () => {
     console.log('Client disconnected');
   });
@@ -339,7 +337,26 @@ function addTransactionSalesToDatabase(sale) {
       if (error) {
         reject(error);
       } else {
-        resolve(results.rows[0]);
+        const insertedSale = results.rows[0];
+        if (sale.computer !== 0) { // Check if computer is not 0 before updating inventory
+          // Decrement the headset cover inventory with a safeguard to prevent negative stocks
+          const updateInventoryQuery = `
+            UPDATE inventory
+            SET stocks = GREATEST(stocks - 1, 0)  -- Ensures stocks don't go below 0
+            WHERE product = 'headset cover'
+            RETURNING *
+          `;
+          
+          pool.query(updateInventoryQuery, (updateError, updateResults) => {
+            if (updateError) {
+              reject(updateError);
+            } else {
+              resolve(insertedSale);
+            }
+          });
+        } else {
+          resolve(insertedSale); // Resolve without updating inventory if computer is 0
+        }
       }
     });
   });
