@@ -6,9 +6,16 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const inventory = await getInventoryFromDatabase();
-    res.json(inventory);
+    const lowStockCount = inventory.filter(item => item.stocks < 50).length;
+
+    // Prepare the response object
+    const response = {
+      data: inventory,
+      low: lowStockCount
+    };
+
+    res.json(response);
   } catch (error) {
-    console.error('Error fetching inventory from database:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

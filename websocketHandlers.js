@@ -134,12 +134,19 @@ function sendFoodsToClient(client) {
 
 function sendInventoryToClient(client) {
   pool.query('SELECT * FROM inventory ORDER BY id DESC', (error, results) => {
-    if(error) {
+    if (error) {
       console.error('Error fetching inventory from database:', error);
       return;
     }
     const inventory = results.rows;
-    client.send(JSON.stringify({ action: 'initialize', inventory }));
+    const lowStockCount = inventory.filter(item => item.stocks < 50).length;
+
+    const response = {
+      data: inventory,
+      low: lowStockCount
+    };
+
+    client.send(JSON.stringify(response));
   });
 }
 
