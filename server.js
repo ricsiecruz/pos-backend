@@ -71,7 +71,7 @@ wss.on('connection', (ws) => {
           });
         break;
       case 'addFood':
-        foodsHandler.addFoodToDatabase(data.food)
+        addFoodToDatabase(data.food)
           .then((updatedFoodStock) => {
             broadcastFoods(updatedFoodStock);
           })
@@ -103,15 +103,15 @@ wss.on('connection', (ws) => {
             broadcastSales();
           });
         break;
-      case 'addInventory':
-        addInventory(data.inventory)
-          .then(() => {
-            broadcastInventory();
-          })
-          .catch((error) => {
-            console.error('Error adding inventory to database:', error);
-          });
-        break;
+        case 'addInventory':
+          addInventory(data.inventory)
+            .then((updatedInventory) => {
+              broadcastInventory(updatedInventory); // Broadcast updated inventory after adding new item
+            })
+            .catch((error) => {
+              console.error('Error adding inventory to database:', error);
+            });
+          break;
       case 'addStock':
         addStock(data.inventory)
           .then(() => {
@@ -173,6 +173,32 @@ wss.on('connection', (ws) => {
     console.log('Client disconnected');
   });
 });
+
+function addFoodToDatabase(newFood) {
+  return new Promise((resolve, reject) => {
+    const { product, price, stocks } = newFood;
+    pool.query(
+      'INSERT INTO foods (product, price, stocks) VALUES ($1, $2, $3) RETURNING id, product, price, stocks',
+      [product, price, stocks],
+      (error, results) => {
+        if(error) {
+          reject(error);
+          return;
+        }
+        const { id, product, price, stocks } = results.rows[0];
+        pool.query('SELECT * FROM foods ORDER BY id DESC', (error, results) => {
+          if(error) {
+            reject(error);
+            return
+          }
+          const updatedFoods = results.rows;
+          broadcastFoods(updatedFoods);
+          resolve({ id, product, price, stocks })
+        })
+      }
+    )
+  })
+}
 
 function editSalesLoad(updatedLoad) {
   console.log('sales id', updatedLoad.id)
@@ -380,10 +406,10 @@ function addInventory(newInventory) {
             return;
           }
           const updatedInventory = results.rows;
-          broadcastInventory(updatedInventory);
-          resolve({ id, product, category, brand, stocks });
+          resolve(updatedInventory);
         });
-    });
+      }
+    );
   });
 }
 
@@ -488,22 +514,17 @@ function updateMembersAfterSale() {
   });
 }
 
-function broadcastInventory(addInventory) {
+function broadcastInventory(updatedInventory) {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      websocketHandlers.sendInventoryToClient(client);
+      // websocketHandlers.sendInventoryToClient(client, updatedInventory);
+      client.send(JSON.stringify({
+        action: 'updatedInventory',
+        data: updatedInventory
+      }))
     }
-  })
+  });
 }
-
-// function broadcastSales(addSales) {
-//   wss.clients.forEach((client) => {
-//     if (client.readyState === WebSocket.OPEN) {
-//       websocketHandlers.sendSalesToClient(client, addSales);
-//       console.log('Broadcasting updated sales to client:', addSales)
-//     }
-//   })
-// }
 
 function broadcastSales(newSale) {
   wss.clients.forEach((client) => {
