@@ -337,7 +337,7 @@ async function getSumOfExpensesForCurrentDate() {
   return rows[0].total_expenses;
 }
 
-function addTransactionSalesToDatabase(sale) {
+const addTransactionSalesToDatabase = (sale) => {
   return new Promise((resolve, reject) => {
     const localDatetime = moment().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss'); // Convert to local time
 
@@ -364,29 +364,45 @@ function addTransactionSalesToDatabase(sale) {
         reject(error);
       } else {
         const insertedSale = results.rows[0];
-        if (sale.computer !== 0) { // Check if computer is not 0 before updating inventory
-          // Decrement the headset cover inventory with a safeguard to prevent negative stocks
-          const updateInventoryQuery = `
-            UPDATE inventory
-            SET stocks = GREATEST(stocks - 1, 0)  -- Ensures stocks don't go below 0
-            WHERE product = 'headset cover'
-            RETURNING *
-          `;
-          
-          pool.query(updateInventoryQuery, (updateError, updateResults) => {
-            if (updateError) {
-              reject(updateError);
+        const productNames = sale.orders.map(order => order.product);
+
+        // Fetch product details to check for barista flag
+        const productsQuery = 'SELECT product, barista FROM products WHERE product = ANY($1)';
+        pool.query(productsQuery, [productNames], (productsError, productsResults) => {
+          if (productsError) {
+            reject(productsError);
+          } else {
+            // Filter barista products and calculate total quantity of barista items
+            const baristaProducts = productsResults.rows.filter(product => product.barista);
+            const totalBaristaQuantity = sale.orders
+              .filter(order => baristaProducts.some(bp => bp.product === order.product))
+              .reduce((sum, order) => sum + order.quantity, 0);
+            
+            if (totalBaristaQuantity > 0) {
+              // Deduct inventory for "straw", "lids", and "cups" based on the totalBaristaQuantity
+              const updateInventoryQuery = `
+                UPDATE inventory
+                SET stocks = GREATEST(stocks - $1, 0)
+                WHERE product IN ('straw', 'lids', 'cups')
+                RETURNING *
+              `;
+              
+              pool.query(updateInventoryQuery, [totalBaristaQuantity], (updateError, updateResults) => {
+                if (updateError) {
+                  reject(updateError);
+                } else {
+                  resolve(insertedSale);
+                }
+              });
             } else {
-              resolve(insertedSale);
+              resolve(insertedSale); // No barista products, resolve immediately
             }
-          });
-        } else {
-          resolve(insertedSale); // Resolve without updating inventory if computer is 0
-        }
+          }
+        });
       }
     });
   });
-}
+};
 
 function addInventory(newInventory) {
   return new Promise((resolve, reject) => {
