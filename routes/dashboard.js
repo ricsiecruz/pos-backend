@@ -100,7 +100,15 @@ async function getSalesAndExpensesSummary() {
             date DESC;
     `;
     const { rows } = await pool.query(queryText);
-    return rows;
+    
+    // Return an object with 'data', 'all_time_low', and 'all_time_high' properties
+    const summary = {
+        data: rows.slice(), // Assuming you want all rows for 'data'
+        all_time_low: rows[rows.length - 1], // Last row for all_time_low
+        all_time_high: rows[0] // First row for all_time_high
+    };
+    
+    return summary;
 }
 
 async function getTopSpenders(today = false) {
