@@ -1,7 +1,9 @@
 const express = require('express');
 const pool = require('../db');
 const router = express.Router();
+const moment = require('moment-timezone');
 
+// Route to fetch all members
 router.get('/', (request, response) => {
   pool.query('SELECT * FROM members ORDER BY name ASC', (error, results) => {
     if (error) {
@@ -13,22 +15,30 @@ router.get('/', (request, response) => {
   });
 });
 
-router.get('/:id', (request, response) => {
+// Route to fetch a specific member by ID
+router.get('/:id', async (request, response) => {
   const id = parseInt(request.params.id);
 
-  pool.query('SELECT * FROM members WHERE id = $1', [id], (error, results) => {
-    if (error) {
-      console.error('Error fetching product from database:', error);
-      return response.status(500).json({ error: 'Internal server error' });
+  try {
+    const memberQuery = 'SELECT * FROM members WHERE id = $1';
+    const memberResults = await pool.query(memberQuery, [id]);
+    const member = memberResults.rows[0];
+
+    if (!member) {
+      return response.status(404).json({ error: 'Member not found' });
     }
-    const product = results.rows[0];
-    if (!product) {
-      return response.status(404).json({ error: 'Product not found' });
-    }
-    response.status(200).json(product);
-  });
+
+    const transactions = await getMemberSales(member.name);
+    member.transactions = transactions;
+
+    response.status(200).json(member);
+  } catch (error) {
+    console.error('Error fetching member and transactions from database:', error);
+    response.status(500).json({ error: 'Internal server error' });
+  }
 });
 
+// Route to add a new member
 router.post('/', (request, response) => {
   try {
     const { name, date_joined, coffee, total_load, total_spent, last_spent } = request.body;
@@ -50,8 +60,8 @@ router.post('/', (request, response) => {
     console.log('Formatted last_spent:', formattedLastSpent);
 
     pool.query(
-      'INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id', 
-      [name, formattedDate, coffee, total_load, total_spent, formattedLastSpent], 
+      'INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+      [name, formattedDate, coffee, total_load, total_spent, formattedLastSpent],
       (error, results) => {
         if (error) {
           throw error;
@@ -66,51 +76,51 @@ router.post('/', (request, response) => {
   }
 });
 
-
-router.put('/:id', (request, response) => {
-  const id = parseInt(request.params.id);
-  const { price } = request.body;
-
-  pool.query(
-    'UPDATE members SET price = $1 WHERE id = $2',
-    [price, id],
-    (error, results) => {
-      if (error) {
-        console.error('Error updating product in database:', error);
-        return response.status(500).json({ error: 'Internal server error' });
-      }
-      response.status(200).json({ message: `Product modified with ID: ${id}` });
-    }
-  );
-});
-
-router.put('/add-stocks/:id', (request, response) => {
-  const id = parseInt(request.params.id);
-  const { stocks } = request.body;
-
-  pool.query(
-    'UPDATE members SET stocks = stocks + $1 WHERE id = $2',
-    [stocks, id],
-    (error, results) => {
-      if (error) {
-        console.error('Error updating stocks for product in database:', error);
-        return response.status(500).json({ error: 'Internal server error' });
-      }
-      response.status(200).json({ message: `Stocks updated for product with ID: ${id}` });
-    }
-  );
-});
-
+// Route to delete a member by ID
 router.delete('/:id', (request, response) => {
   const id = parseInt(request.params.id);
 
   pool.query('DELETE FROM members WHERE id = $1', [id], (error, results) => {
     if (error) {
-      console.error('Error deleting product from database:', error);
+      console.error('Error deleting member from database:', error);
       return response.status(500).json({ error: 'Internal server error' });
     }
-    response.status(200).json({ message: `Product deleted with ID: ${id}` });
+    response.status(200).json({ message: `Member deleted with ID: ${id}` });
   });
 });
+
+// Function to get sales of a specific member
+async function getMemberSales(memberName) {
+  const queryText = `
+    SELECT 
+      datetime AT TIME ZONE 'Asia/Manila' AS datetime,
+      total::numeric AS total,
+      subtotal::numeric AS subtotal,
+      computer::numeric AS computer,
+      orders::jsonb AS orders
+    FROM 
+      sales
+    WHERE 
+      customer = $1
+    ORDER BY 
+      datetime DESC;
+  `;
+  const { rows } = await pool.query(queryText, [memberName]);
+
+  // Format the data if needed
+  const formatter = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  rows.forEach(row => {
+    row.total = formatter.format(row.total);
+    row.subtotal = formatter.format(row.subtotal);
+    row.computer = formatter.format(row.computer);
+    row.datetime = moment(row.datetime).tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
+  });
+
+  return rows;
+}
 
 module.exports = router;
