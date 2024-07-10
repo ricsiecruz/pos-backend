@@ -69,45 +69,53 @@ async function getMostOrdered() {
 
 async function getSalesAndExpensesSummary() {
     const queryText = `
-        WITH sales_summary AS (
-            SELECT 
-                DATE(datetime) AS date,
-                SUM(total::numeric) AS total_sales
-            FROM 
-                sales
-            GROUP BY 
-                DATE(datetime)
-        ),
-        expenses_summary AS (
-            SELECT 
-                DATE(date) AS date,
-                SUM(amount::numeric) AS total_expenses
-            FROM 
-                expenses
-            GROUP BY 
-                DATE(date)
-        )
+    WITH sales_summary AS (
         SELECT 
-            COALESCE(sales_summary.date, expenses_summary.date) AS date,
-            sales_summary.total_sales,
-            expenses_summary.total_expenses,
-            COALESCE(sales_summary.total_sales, 0) - COALESCE(expenses_summary.total_expenses, 0) AS net
+            DATE(datetime AT TIME ZONE 'Asia/Manila') AS date,
+            SUM(total::numeric) AS total_sales
         FROM 
-            sales_summary
-        FULL OUTER JOIN 
-            expenses_summary 
-        ON 
-            sales_summary.date = expenses_summary.date
-        ORDER BY 
-            date DESC;
+            sales
+        GROUP BY 
+            DATE(datetime AT TIME ZONE 'Asia/Manila')
+    ),
+    expenses_summary AS (
+        SELECT 
+            DATE(date AT TIME ZONE 'Asia/Manila') AS date,
+            SUM(amount::numeric) AS total_expenses
+        FROM 
+            expenses
+        GROUP BY 
+            DATE(date AT TIME ZONE 'Asia/Manila')
+    )
+    SELECT 
+        COALESCE(sales_summary.date, expenses_summary.date) AS date,
+        COALESCE(sales_summary.total_sales, 0) AS total_sales,
+        COALESCE(expenses_summary.total_expenses, 0) AS total_expenses,
+        COALESCE(sales_summary.total_sales, 0) - COALESCE(expenses_summary.total_expenses, 0) AS net
+    FROM 
+        sales_summary
+    FULL OUTER JOIN 
+        expenses_summary 
+    ON 
+        sales_summary.date = expenses_summary.date
+    ORDER BY 
+        total_sales DESC;
+    
     `;
     const { rows } = await pool.query(queryText);
 
-    // Return an object with 'data', 'all_time_low', and 'all_time_high' properties
+    if (rows.length === 0) {
+        return {
+            data: [],
+            all_time_low: null,
+            all_time_high: null
+        };
+    }
+
     const summary = {
-        data: rows.slice(), // Assuming you want all rows for 'data'
-        all_time_low: rows[rows.length - 1], // Last row for all_time_low
-        all_time_high: rows[0] // First row for all_time_high
+        data: rows,
+        all_time_low: rows[rows.length - 1],
+        all_time_high: rows[0]
     };
 
     return summary;
