@@ -1,5 +1,6 @@
 const pool = require('../db');
 const WebSocket = require('ws');
+const broadcasts = require('../broadcasts')
 
 function sendProductsToClient(client) {
   pool.query('SELECT * FROM products ORDER BY id DESC', (error, results) => {
@@ -19,16 +20,16 @@ function sendProductsToClient(client) {
 
 function addProductToDatabase(newProduct) {
   return new Promise((resolve, reject) => {
-    const { product, price } = newProduct;
+    const { product, price, barista } = newProduct;
     pool.query(
-      'INSERT INTO products (product, price) VALUES ($1, $2) RETURNING id, product, price',
-      [product, price],
+      'INSERT INTO products (product, price, barista) VALUES ($1, $2, $3) RETURNING id, product, price, barista',
+      [product, price, barista],
       (error, results) => {
         if (error) {
           reject(error);
           return;
         }
-        const { id, product, price } = results.rows[0];
+        const { id, product, price, barista } = results.rows[0];
         pool.query('SELECT * FROM products ORDER BY id DESC', (error, results) => {
           if (error) {
             reject(error);
@@ -36,7 +37,7 @@ function addProductToDatabase(newProduct) {
           }
           const updatedProducts = results.rows;
           broadcasts.broadcastProducts(updatedProducts);
-          resolve({ id, product: product, price });
+          resolve({ id, product: product, price, barista });
         });
       }
     );
@@ -46,10 +47,10 @@ function addProductToDatabase(newProduct) {
 function editProductInDatabase(updatedProduct) {
   return new Promise((resolve, reject) => {
     console.log('updated products', updatedProduct);
-    const { id, product, price } = updatedProduct;
+    const { id, product, price, barista } = updatedProduct;
     pool.query(
-      'UPDATE products SET product = $1, price = $2 WHERE id = $3',
-      [product, price, id],
+      'UPDATE products SET product = $1, price = $2, barista = $3 WHERE id = $4',
+      [product, price, barista, id],
       (error, results) => {
         if (error) {
           reject(error);

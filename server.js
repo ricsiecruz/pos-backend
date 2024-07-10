@@ -55,7 +55,7 @@ wss.on('connection', (ws) => {
       case 'addProduct':
         productsHandler.addProductToDatabase(data.product)
           .then(() => {
-            broadcasts.broadcastProducts(wss);
+            broadcastProducts(wss);
           })
           .catch((error) => {
             console.error('Error adding product to database:', error);
@@ -64,7 +64,7 @@ wss.on('connection', (ws) => {
       case 'editProduct':
         productsHandler.editProductInDatabase(data.product)
           .then(() => {
-            broadcasts.broadcastProducts(wss);
+            broadcastProducts(wss);
           })
           .catch((error) => {
             console.error('Error editing product in database:', error);
@@ -511,6 +511,19 @@ function updateMembersAfterSale() {
         membersHandler.sendMembersToClient(client);
       }
     });
+  });
+}
+
+function broadcastProducts() {
+  if (!wss || !wss.clients) {
+    console.error('WebSocket Server or clients are not defined.');
+    return;
+  }
+  
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      productsHandler.sendProductsToClient(client);
+    }
   });
 }
 
