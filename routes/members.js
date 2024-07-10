@@ -89,7 +89,6 @@ router.delete('/:id', (request, response) => {
   });
 });
 
-// Function to get sales of a specific member
 async function getMemberSales(memberName) {
   const queryText = `
     SELECT 
@@ -97,7 +96,11 @@ async function getMemberSales(memberName) {
       total::numeric AS total,
       subtotal::numeric AS subtotal,
       computer::numeric AS computer,
-      orders::jsonb AS orders
+      orders::jsonb AS orders,
+      (
+        SELECT SUM((order_item->>'quantity')::numeric)
+        FROM jsonb_array_elements(orders) AS order_item
+      ) AS qty
     FROM 
       sales
     WHERE 
@@ -117,6 +120,7 @@ async function getMemberSales(memberName) {
     row.total = formatter.format(row.total);
     row.subtotal = formatter.format(row.subtotal);
     row.computer = formatter.format(row.computer);
+    row.qty = row.qty;
     row.datetime = moment(row.datetime).tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
   });
 
