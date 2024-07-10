@@ -176,16 +176,16 @@ wss.on('connection', (ws) => {
 
 function addFoodToDatabase(newFood) {
   return new Promise((resolve, reject) => {
-    const { product, price, stocks } = newFood;
+    const { product, price, stocks, utensils } = newFood;
     pool.query(
-      'INSERT INTO foods (product, price, stocks) VALUES ($1, $2, $3) RETURNING id, product, price, stocks',
-      [product, price, stocks],
+      'INSERT INTO foods (product, price, stocks, utensils) VALUES ($1, $2, $3, $4) RETURNING id, product, price, stocks, utensils',
+      [product, price, stocks, utensils],
       (error, results) => {
         if(error) {
           reject(error);
           return;
         }
-        const { id, product, price, stocks } = results.rows[0];
+        const { id, product, price, stocks, utensils } = results.rows[0];
         pool.query('SELECT * FROM foods ORDER BY id DESC', (error, results) => {
           if(error) {
             reject(error);
@@ -193,7 +193,7 @@ function addFoodToDatabase(newFood) {
           }
           const updatedFoods = results.rows;
           broadcastFoods(updatedFoods);
-          resolve({ id, product, price, stocks })
+          resolve({ id, product, price, stocks, utensils })
         })
       }
     )
@@ -226,10 +226,10 @@ function editSalesLoad(updatedLoad) {
 
 function editFood(updatedFood) {
   return new Promise((resolve, reject) => {
-    const { id, product, stocks, price } = updatedFood;
+    const { id, product, stocks, price, utensils } = updatedFood;
     pool.query(
-      'UPDATE foods SET product = $1, stocks = $2, price = $3 WHERE id = $4',
-      [product, stocks, price, id],
+      'UPDATE foods SET product = $1, stocks = $2, price = $3, utensils = $4 WHERE id = $5',
+      [product, stocks, price, utensils, id],
       (error, results) => {
         if (error) {
           reject(error);
@@ -366,37 +366,76 @@ const addTransactionSalesToDatabase = (sale) => {
         const insertedSale = results.rows[0];
         const productNames = sale.orders.map(order => order.product);
 
-        // Fetch product details to check for barista flag
-        const productsQuery = 'SELECT product, barista FROM products WHERE product = ANY($1)';
-        pool.query(productsQuery, [productNames], (productsError, productsResults) => {
-          if (productsError) {
-            reject(productsError);
+        // Fetch product details to check for barista and utensils flags
+        const baristaProductsQuery = 'SELECT product FROM products WHERE product = ANY($1) AND barista = true';
+        const utensilsProductsQuery = 'SELECT product FROM foods WHERE product = ANY($1) AND utensils = true';
+
+        pool.query(baristaProductsQuery, [productNames], (baristaError, baristaResults) => {
+          if (baristaError) {
+            reject(baristaError);
           } else {
-            // Filter barista products and calculate total quantity of barista items
-            const baristaProducts = productsResults.rows.filter(product => product.barista);
-            const totalBaristaQuantity = sale.orders
-              .filter(order => baristaProducts.some(bp => bp.product === order.product))
-              .reduce((sum, order) => sum + order.quantity, 0);
-            
-            if (totalBaristaQuantity > 0) {
-              // Deduct inventory for "straw", "lids", and "cups" based on the totalBaristaQuantity
-              const updateInventoryQuery = `
-                UPDATE inventory
-                SET stocks = GREATEST(stocks - $1, 0)
-                WHERE product IN ('straw', 'lids', 'cups')
-                RETURNING *
-              `;
-              
-              pool.query(updateInventoryQuery, [totalBaristaQuantity], (updateError, updateResults) => {
-                if (updateError) {
-                  reject(updateError);
-                } else {
-                  resolve(insertedSale);
+            pool.query(utensilsProductsQuery, [productNames], (utensilsError, utensilsResults) => {
+              if (utensilsError) {
+                reject(utensilsError);
+              } else {
+                // Calculate total quantities for barista and utensils products
+                const totalBaristaQuantity = sale.orders
+                  .filter(order => baristaResults.rows.some(bp => bp.product === order.product))
+                  .reduce((sum, order) => sum + order.quantity, 0);
+
+                const totalUtensilsQuantity = sale.orders
+                  .filter(order => utensilsResults.rows.some(up => up.product === order.product))
+                  .reduce((sum, order) => sum + order.quantity, 0);
+
+                let baristaPromise = Promise.resolve();
+                let utensilsPromise = Promise.resolve();
+
+                if (totalBaristaQuantity > 0) {
+                  // Deduct inventory for "straw", "lids", and "cups" based on the totalBaristaQuantity
+                  const updateInventoryBaristaQuery = `
+                    UPDATE inventory
+                    SET stocks = GREATEST(stocks - $1, 0)
+                    WHERE product IN ('straw', 'lids', 'cups')
+                    RETURNING *
+                  `;
+
+                  baristaPromise = new Promise((resolve, reject) => {
+                    pool.query(updateInventoryBaristaQuery, [totalBaristaQuantity], (updateError, updateResults) => {
+                      if (updateError) {
+                        reject(updateError);
+                      } else {
+                        resolve();
+                      }
+                    });
+                  });
                 }
-              });
-            } else {
-              resolve(insertedSale); // No barista products, resolve immediately
-            }
+
+                if (totalUtensilsQuantity > 0) {
+                  // Deduct inventory for "forks" based on the totalUtensilsQuantity
+                  const updateInventoryUtensilsQuery = `
+                    UPDATE inventory
+                    SET stocks = GREATEST(stocks - $1, 0)
+                    WHERE product = 'forks'
+                    RETURNING *
+                  `;
+
+                  utensilsPromise = new Promise((resolve, reject) => {
+                    pool.query(updateInventoryUtensilsQuery, [totalUtensilsQuantity], (updateError, updateResults) => {
+                      if (updateError) {
+                        reject(updateError);
+                      } else {
+                        resolve();
+                      }
+                    });
+                  });
+                }
+
+                // Wait for both promises to resolve before resolving the main promise
+                Promise.all([baristaPromise, utensilsPromise])
+                  .then(() => resolve(insertedSale))
+                  .catch(reject);
+              }
+            });
           }
         });
       }

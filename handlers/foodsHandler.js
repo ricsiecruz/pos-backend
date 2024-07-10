@@ -2,16 +2,16 @@ const pool = require('../db');
 
 function addFoodToDatabase(newFood) {
     return new Promise((resolve, reject) => {
-      const { product, price, stocks } = newFood;
+      const { product, price, stocks, utensils } = newFood;
       pool.query(
-        'INSERT INTO foods (product, price, stocks) VALUES ($1, $2, $3) RETURNING id, product, price, stocks',
-        [product, price, stocks],
+        'INSERT INTO foods (product, price, stocks, utensils) VALUES ($1, $2, $3, $4) RETURNING id, product, price, stocks, utensils',
+        [product, price, stocks, utensils],
         (error, results) => {
           if(error) {
             reject(error);
             return;
           }
-          const { id, product, price, stocks } = results.rows[0];
+          const { id, product, price, stocks, utensils } = results.rows[0];
           pool.query('SELECT * FROM foods ORDER BY id DESC', (error, results) => {
             if(error) {
               reject(error);
@@ -19,7 +19,7 @@ function addFoodToDatabase(newFood) {
             }
             const updatedFoods = results.rows;
             broadcastFoods(updatedFoods);
-            resolve({ id, product, price, stocks })
+            resolve({ id, product, price, stocks, utensils })
           })
         }
       )
@@ -29,10 +29,10 @@ function addFoodToDatabase(newFood) {
 function editFood(updatedFood) {
   return new Promise((resolve, reject) => {
     console.log('updated foods', updatedFood);
-    const { id, product, price } = updatedFood;
+    const { id, product, price, utensils } = updatedFood;
     pool.query(
-      'UPDATE foods SET product = $1, price = $2 WHERE id = $3',
-      [product, price, id],
+      'UPDATE foods SET product = $1, price = $2, utensils = $3 WHERE id = $4',
+      [product, price, utensils, id],
       (error, results) => {
         if (error) {
           reject(error);
