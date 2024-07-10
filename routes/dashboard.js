@@ -5,12 +5,13 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
     try {
-        const [mostOrderedToday, mostOrdered, salesAndExpensesSummary, topSpenders, updatedMembers] = await Promise.all([
+        const [mostOrderedToday, mostOrdered, salesAndExpensesSummary, topSpenders, updatedMembers, startDate] = await Promise.all([
             getMostOrderedToday(),
             getMostOrdered(),
             getSalesAndExpensesSummary(),
             getTopSpenders(),
-            updateMemberData()
+            updateMemberData(),
+            getStartDate()
         ]);
 
         const responseData = {
@@ -18,7 +19,8 @@ router.get('/', async (req, res) => {
             mostOrdered: mostOrdered,
             salesAndExpensesSummary: salesAndExpensesSummary,
             topSpenders: topSpenders,
-            updatedMembers: updatedMembers
+            updatedMembers: updatedMembers,
+            startDate: startDate
         };
 
         res.json(responseData);
@@ -42,7 +44,7 @@ async function getMostOrderedToday() {
         FROM expanded_orders
         GROUP BY order_detail ->> 'product'
         ORDER BY total_quantity DESC;
-    `
+    `;
     const { rows } = await pool.query(queryText);
     return rows;
 }
@@ -100,14 +102,14 @@ async function getSalesAndExpensesSummary() {
             date DESC;
     `;
     const { rows } = await pool.query(queryText);
-    
+
     // Return an object with 'data', 'all_time_low', and 'all_time_high' properties
     const summary = {
         data: rows.slice(), // Assuming you want all rows for 'data'
         all_time_low: rows[rows.length - 1], // Last row for all_time_low
         all_time_high: rows[0] // First row for all_time_high
     };
-    
+
     return summary;
 }
 
@@ -134,12 +136,12 @@ async function getTopSpenders(today = false) {
     `;
 
     const { rows } = await pool.query(queryText);
-    
+
     const formatter = new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
-    
+
     rows.forEach(row => {
         row.total_spent = formatter.format(row.total_spent);
         row.total_subtotal = formatter.format(row.total_subtotal);
@@ -190,12 +192,12 @@ async function updateMemberData() {
             total_spent DESC;
     `;
     const { rows } = await pool.query(fetchUpdatedMembersQueryText);
-    
+
     const formatter = new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
-    
+
     rows.forEach(row => {
         row.total_load = formatter.format(row.total_load);
         row.coffee = formatter.format(row.coffee);
@@ -204,6 +206,18 @@ async function updateMemberData() {
     });
 
     return rows;
+}
+
+async function getStartDate() {
+    const queryText = `
+        SELECT 
+            MIN(datetime AT TIME ZONE 'Asia/Manila') AS start_date
+        FROM 
+            sales;
+    `;
+    const { rows } = await pool.query(queryText);
+    const startDate = rows[0].start_date;
+    return moment(startDate).tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
 }
 
 router.get('/most-ordered', async (req, res) => {
