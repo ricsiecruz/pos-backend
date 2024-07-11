@@ -163,12 +163,11 @@ router.post('/member-sales-today', async (req, res) => {
 });
 
 async function getSalesForCurrentDate() {
-  const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
   const selectSalesQuery = `
   SELECT 
   sales.id AS sale_id,
   sales.customer,
-  sales.datetime, 
+  to_char(sales.datetime AT TIME ZONE 'Asia/Manila', 'YYYY-MM-DD HH24:MI:SS') AS datetime,
   sales.total, 
   sales.credit, 
   sales.computer, 
@@ -181,13 +180,18 @@ async function getSalesForCurrentDate() {
   members.id AS member_id
 FROM sales
 LEFT JOIN members ON sales.customer = members.name
-    WHERE DATE(datetime AT TIME ZONE 'Asia/Manila') = CURRENT_DATE
-    ORDER BY credit DESC, sale_id DESC;
+WHERE DATE(datetime AT TIME ZONE 'Asia/Manila') = CURRENT_DATE
+ORDER BY credit DESC, sale_id DESC;
+
   `;
 
-  await pool.query(setTimezoneQuery);
-  const { rows } = await pool.query(selectSalesQuery);
-  return rows;
+  try {
+    const { rows } = await pool.query(selectSalesQuery);
+    return rows;
+  } catch (err) {
+    console.error('Error retrieving sales:', err);
+    throw err;
+  }
 }
 
 // Function to get sum of total sales for current date by mode of payment
