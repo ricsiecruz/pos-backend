@@ -1,4 +1,5 @@
 const express = require('express');
+const moment = require('moment-timezone');
 const pool = require('../db');
 const router = express.Router();
 
@@ -72,27 +73,33 @@ router.post('/date-range', async (req, res) => {
           sales.subtotal, 
           members.id AS member_id
       FROM sales
-      JOIN members ON sales.customer = members.name
+      LEFT JOIN members ON sales.customer = members.name
     `;
     const values = [];
 
     // If customer is provided, filter by customer
     if (customer) {
-      queryText += ' WHERE customer = $1';
+      queryText += ' WHERE sales.customer = $1';
       values.push(customer);
     }
 
     // If both startDate and endDate are provided, filter by date range
     if (startDate && endDate) {
+      const startDateManila = moment.tz(startDate, 'Asia/Manila').startOf('day').format('YYYY-MM-DD HH:mm:ss');
+      const endDateManila = moment.tz(endDate, 'Asia/Manila').endOf('day').format('YYYY-MM-DD HH:mm:ss');
+
       if (values.length > 0) {
-        queryText += ' AND DATE(datetime) >= $' + (values.length + 1) + ' AND DATE(datetime) <= $' + (values.length + 2);
+        queryText += ' AND sales.datetime >= $' + (values.length + 1) + ' AND sales.datetime <= $' + (values.length + 2);
       } else {
-        queryText += ' WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2';
+        queryText += ' WHERE sales.datetime >= $1 AND sales.datetime <= $2';
       }
-      values.push(startDate, endDate);
+      values.push(startDateManila, endDateManila);
     }
 
-    queryText += ' ORDER BY datetime DESC';
+    queryText += ' ORDER BY sales.datetime DESC';
+
+    console.log('Final Query Text:', queryText); // Debug
+    console.log('Query Values:', values); // Debug
 
     // Execute the query
     const { rows } = await pool.query(queryText, values);
