@@ -203,13 +203,13 @@ function addFoodToDatabase(newFood) {
 function editSalesLoad(updatedLoad) {
   console.log('sales id', updatedLoad.id)
   return new Promise((resolve, reject) => {
-    const { id, transactionid, orders, qty, datetime, customer, computer, subtotal, credit, mode_of_payment } = updatedLoad;
+    const { id, transactionid, orders, qty, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount } = updatedLoad;
     const total = parseFloat(subtotal) + parseFloat(computer);
 
     pool.query(
       `UPDATE sales
-       SET transactionid = $1, orders = $2, qty = $3, total = $4, datetime = $5, customer = $6, computer = $7, subtotal = $8, credit = $9, mode_of_payment = $10 WHERE id = $11`,
-      [transactionid, JSON.stringify(orders), qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, id],
+       SET transactionid = $1, orders = $2, qty = $3, total = $4, datetime = $5, customer = $6, computer = $7, subtotal = $8, credit = $9, mode_of_payment = $10, student_discount = $11, discount = $12 WHERE id = $13`,
+      [transactionid, JSON.stringify(orders), qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount, id],
       (error, results) => {
         if (error) {
           console.error('Error updating sales:', error);
@@ -342,8 +342,8 @@ const addTransactionSalesToDatabase = (sale) => {
     const localDatetime = moment().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss'); // Convert to local time
 
     const query = `
-      INSERT INTO sales (transactionId, orders, qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      INSERT INTO sales (transactionId, orders, qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
     `;
     const values = [
@@ -356,8 +356,12 @@ const addTransactionSalesToDatabase = (sale) => {
       sale.computer,
       sale.subtotal,
       sale.credit,
-      sale.mode_of_payment
+      sale.mode_of_payment,
+      sale.student_discount,
+      sale.discount
     ];
+
+    console.log('bbb', values)
 
     pool.query(query, values, (error, results) => {
       if (error) {
@@ -365,6 +369,8 @@ const addTransactionSalesToDatabase = (sale) => {
       } else {
         const insertedSale = results.rows[0];
         const productNames = sale.orders.map(order => order.product);
+
+        console.log('ccc', insertedSale, productNames)
 
         // Fetch product details to check for barista and utensils flags
         const baristaProductsQuery = 'SELECT product FROM products WHERE product = ANY($1) AND barista = true';

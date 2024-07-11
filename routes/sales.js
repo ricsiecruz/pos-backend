@@ -211,6 +211,8 @@ async function getSalesFromDatabase() {
     sales.orders, 
     sales.qty, 
     sales.mode_of_payment,
+    sales.student_discount, 
+    sales.discount,
     members.id AS member_id
   FROM sales
   LEFT JOIN members ON sales.customer = members.name
