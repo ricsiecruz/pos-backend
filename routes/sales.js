@@ -62,8 +62,17 @@ router.post('/date-range', async (req, res) => {
   try {
     const { startDate, endDate, customer } = req.body;
     let queryText = `
-      SELECT customer, qty, datetime, computer, credit, total, subtotal
+      SELECT 
+          sales.customer, 
+          sales.qty, 
+          sales.datetime, 
+          sales.computer, 
+          sales.credit, 
+          sales.total, 
+          sales.subtotal, 
+          members.id AS member_id
       FROM sales
+      JOIN members ON sales.customer = members.name
     `;
     const values = [];
 
@@ -152,8 +161,11 @@ router.post('/member-sales-today', async (req, res) => {
 async function getSalesForCurrentDate() {
   const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
   const selectSalesQuery = `
-    SELECT *
+    SELECT 
+        sales.*, 
+        members.id AS member_id
     FROM sales
+    JOIN members ON sales.customer = members.name
     WHERE DATE(datetime AT TIME ZONE 'Asia/Manila') = CURRENT_DATE
     ORDER BY credit DESC, id DESC;
   `;
@@ -187,14 +199,26 @@ async function getSumOfTotalSalesToday() {
 }
 
 async function getSalesFromDatabase() {
-    const queryText = `
-      SELECT *
-      FROM sales
-      ORDER BY credit DESC, id DESC;
-    `;
-    const { rows } = await pool.query(queryText);
-    return rows;
-   }
+  const queryText = `
+    SELECT 
+    sales.id AS sale_id,
+    sales.customer,
+    sales.datetime, 
+    sales.total, 
+    sales.credit, 
+    sales.computer, 
+    sales.subtotal, 
+    sales.orders, 
+    sales.qty, 
+    sales.mode_of_payment,
+    members.id AS member_id
+  FROM sales
+  LEFT JOIN members ON sales.customer = members.name
+  ORDER BY sales.id DESC;
+  `;
+  const { rows } = await pool.query(queryText);
+  return rows;
+}
 
    async function getSumOfTotalSales() {
     const queryText = 'SELECT SUM(total::numeric) AS total_sum FROM sales';
