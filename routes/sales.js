@@ -101,7 +101,13 @@ router.post('/date-range', async (req, res) => {
     // Execute the query
     const { rows } = await pool.query(queryText, values);
     
-    // Calculate the totals
+    // Format datetime in rows before sending response
+    const formattedRows = rows.map(row => ({
+      ...row,
+      datetime: moment(row.datetime).format('YYYY-MM-DD HH:mm:ss')
+    }));
+
+    // Calculate totals (unchanged from your original code)
     const filteredIncome = rows.reduce((acc, sale) => acc + parseFloat(sale.total), 0);
     const filteredExpenses = await getSumOfExpensesByDateRange(startDate, endDate);
     const filteredNet = filteredIncome - filteredExpenses;
@@ -111,7 +117,7 @@ router.post('/date-range', async (req, res) => {
 
     const responseData = {
       salesData: {
-        data: rows,
+        data: formattedRows, // Use formattedRows instead of rows
         income: filteredIncome,
         expenses: filteredExpenses,
         net: filteredNet,
