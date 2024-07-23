@@ -86,22 +86,33 @@ async function getSalesAndExpensesSummary() {
             expenses
         GROUP BY 
             DATE(date AT TIME ZONE 'Asia/Manila')
+    ),
+    summary AS (
+        SELECT 
+            COALESCE(sales_summary.date, expenses_summary.date) AS date,
+            COALESCE(sales_summary.total_sales, 0) AS total_sales,
+            COALESCE(expenses_summary.total_expenses, 0) AS total_expenses,
+            COALESCE(sales_summary.total_sales, 0) - COALESCE(expenses_summary.total_expenses, 0) AS net
+        FROM 
+            sales_summary
+        FULL OUTER JOIN 
+            expenses_summary 
+        ON 
+            sales_summary.date = expenses_summary.date
     )
     SELECT 
-        COALESCE(sales_summary.date, expenses_summary.date) AS date,
-        COALESCE(sales_summary.total_sales, 0) AS total_sales,
-        COALESCE(expenses_summary.total_expenses, 0) AS total_expenses,
-        COALESCE(sales_summary.total_sales, 0) - COALESCE(expenses_summary.total_expenses, 0) AS net
+        date,
+        total_sales,
+        total_expenses,
+        net
     FROM 
-        sales_summary
-    FULL OUTER JOIN 
-        expenses_summary 
-    ON 
-        sales_summary.date = expenses_summary.date
+        summary
+    WHERE 
+        total_sales > 0
     ORDER BY 
         total_sales DESC;
-    
     `;
+
     const { rows } = await pool.query(queryText);
 
     if (rows.length === 0) {
@@ -112,14 +123,18 @@ async function getSalesAndExpensesSummary() {
         };
     }
 
+    const all_time_low = rows[rows.length - 1];
+    const all_time_high = rows[0];
+
     const summary = {
         data: rows,
-        all_time_low: rows[rows.length - 1],
-        all_time_high: rows[0]
+        all_time_low,
+        all_time_high
     };
 
     return summary;
 }
+
 
 async function getTopSpenders(today = false) {
     let queryText = `
