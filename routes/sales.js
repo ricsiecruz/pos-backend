@@ -241,7 +241,7 @@ async function getSalesFromDatabase() {
         members.id AS member_id
       FROM sales
       LEFT JOIN members ON sales.customer = members.name
-      ORDER BY sales.id DESC;
+      ORDER BY sales.credit DESC, sales.id DESC;
     `;
 
     console.log('Query Text:', queryText); // Log the query being executed
