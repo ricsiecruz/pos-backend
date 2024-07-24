@@ -2,7 +2,7 @@ const pool = require('../db');
 const WebSocket = require('ws');
 
 function sendMembersToClient(client) {
-    pool.query('SELECT * FROM members ORDER BY id DESC', (error, results) => {
+    pool.query('SELECT * FROM members ORDER BY name', (error, results) => {
         if(error) {
             console.error('Error fetching members from database:', error);
             return;
@@ -10,7 +10,6 @@ function sendMembersToClient(client) {
         const members = results.rows;
         if(client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({ action: 'initialize', members }));
-            // console.log('Sending initial members to client:', members);
         } else {
             console.error('Client is not in open state, unable to send data.');
         }

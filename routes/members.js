@@ -1,7 +1,61 @@
 const express = require('express');
 const pool = require('../db');
 const router = express.Router();
-const moment = require('moment-timezone');
+const multer = require('multer');
+const xlsx = require('xlsx');
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+router.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    // Check if file is provided
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Parse the Excel file
+    const buffer = req.file.buffer;
+    const workbook = xlsx.read(buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+
+    console.log('Parsed data:', data);
+
+    // Update the database
+    for (const row of data) {
+      // Adjust indices based on actual data structure
+      const username = (row[7] || '').toLowerCase();  // Column H (7)
+      const balance = row[41];  // Column AP (41)
+
+      // Validate row data
+      if (!username || !balance) {
+        console.warn('Skipping row due to missing data:', row);
+        continue;
+      }
+
+      const balanceNumeric = parseFloat(balance.replace(/[^0-9.-]+/g, ""));
+      if (isNaN(balanceNumeric)) {
+        console.warn('Skipping row due to invalid balance:', row);
+        continue;
+      }
+
+      const queryText = `
+        UPDATE members
+        SET current_load = $1
+        WHERE LOWER(name) = LOWER($2)
+      `;
+      const result = await pool.query(queryText, [balanceNumeric, username]);
+
+      console.log('Query result for', username, ':', result.rowCount);
+    }
+
+    res.status(200).json({ message: 'Members updated successfully.' });
+  } catch (error) {
+    console.error('Error updating members:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Route to fetch all members
 router.get('/', (request, response) => {
@@ -41,7 +95,7 @@ router.get('/:id', async (request, response) => {
 // Route to add a new member
 router.post('/', (request, response) => {
   try {
-    const { name, date_joined, coffee, total_load, total_spent, last_spent } = request.body;
+    const { name, date_joined, coffee, total_load, total_spent, last_spent, current_load } = request.body;
 
     if (!date_joined || isNaN(Date.parse(date_joined))) {
       console.error('Invalid or missing date_joined:', date_joined);
@@ -60,8 +114,8 @@ router.post('/', (request, response) => {
     console.log('Formatted last_spent:', formattedLastSpent);
 
     pool.query(
-      'INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-      [name, formattedDate, coffee, total_load, total_spent, formattedLastSpent],
+      'INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent, current_load) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+      [name, formattedDate, coffee, total_load, total_spent, formattedLastSpent, current_load],
       (error, results) => {
         if (error) {
           throw error;

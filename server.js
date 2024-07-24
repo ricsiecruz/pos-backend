@@ -2,19 +2,15 @@
 const moment = require('moment-timezone');
 const express = require('express');
 const cors = require('cors');
-const http = require('http');
 const WebSocket = require('ws');
 const pool = require('./db');
 const app = express();
-const server = http.createServer(app);
 const port = 8080;
 const wss = new WebSocket.Server({ port });
 const websocketHandlers = require('./websocketHandlers');
 const productsHandler = require('./handlers/productsHandler');
-const foodsHandler = require('./handlers/foodsHandler');
 const salesHandler = require('./handlers/salesHandler');
 const membersHandler = require('./handlers/membersHandler');
-const broadcasts = require('./broadcasts');
 const uploadExpenses = require('./routes/expenses')
 
 const multer = require('multer');
@@ -244,7 +240,7 @@ function editFood(updatedFood) {
 
 function addMemberToDatabase(newMember) {
   return new Promise((resolve, reject) => {
-    const { name, date_joined, coffee, total_load, total_spent, last_spent } = newMember;
+    const { name, date_joined, coffee, total_load, total_spent, last_spent, current_load } = newMember;
     
     // Check if the member already exists
     pool.query(
@@ -267,8 +263,8 @@ function addMemberToDatabase(newMember) {
 
         // Otherwise, insert the new member
         pool.query(
-          'INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, date_joined, coffee, total_load, total_spent, last_spent',
-          [name, date_joined, coffee, total_load, total_spent, last_spent],
+          'INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent, current_load) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, date_joined, coffee, total_load, total_spent, last_spent, current_load',
+          [name, date_joined, coffee, total_load, total_spent, last_spent, current_load],
           (error, results) => {
             if (error) {
               reject(error);
@@ -361,7 +357,7 @@ const addTransactionSalesToDatabase = (sale) => {
       sale.discount
     ];
 
-    console.log('bbb', values)
+    console.log('new sale', values)
 
     pool.query(query, values, (error, results) => {
       if (error) {
@@ -369,8 +365,6 @@ const addTransactionSalesToDatabase = (sale) => {
       } else {
         const insertedSale = results.rows[0];
         const productNames = sale.orders.map(order => order.product);
-
-        console.log('ccc', insertedSale, productNames)
 
         // Fetch product details to check for barista and utensils flags
         const baristaProductsQuery = 'SELECT product FROM products WHERE product = ANY($1) AND barista = true';

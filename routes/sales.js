@@ -244,8 +244,6 @@ async function getSalesFromDatabase() {
       ORDER BY sales.credit DESC, sales.id DESC;
     `;
 
-    console.log('Query Text:', queryText); // Log the query being executed
-
     const { rows } = await pool.query(queryText);
     return rows;
 }
