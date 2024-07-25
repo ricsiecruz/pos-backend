@@ -28,22 +28,42 @@ async function getSumOfExpensesForCurrentDate() {
     return rows[0].total_expenses;
 }
 
-async function getSumOfCredit() {
-    const queryText = `
+async function getSumOfCredit(paid_by = null) {
+    let queryText = `
       SELECT 
-        SUM(amount::numeric) AS total_credit_amount,
+        COALESCE(SUM(amount::numeric), 0) AS total_credit_amount,
         COUNT(*) AS credit_count
       FROM 
         expenses
       WHERE 
-        credit = true;
+        credit = true
     `;
-    const { rows } = await pool.query(queryText);
-    return {
-      totalCreditAmount: rows[0].total_credit_amount,
-      creditCount: rows[0].credit_count
-    };
-  }  
+    
+    const queryParams = [];
+
+    if (paid_by) {
+        queryText += ' AND paid_by = $1';
+        queryParams.push(paid_by);
+    }
+
+    try {
+        const { rows } = await pool.query(queryText, queryParams);
+        console.log('credit query text:', queryText);
+        console.log('credit query params:', queryParams);
+        console.log('credit rows:', rows);
+        return {
+          totalCreditAmount: rows[0]?.total_credit_amount || '0',
+          creditCount: rows[0]?.credit_count || '0'
+        };
+    } catch (error) {
+        console.error('Error executing getSumOfCredit query:', error);
+        return {
+            totalCreditAmount: '0',
+            creditCount: '0'
+        };
+    }
+}
+
 
 async function getPaidBy() {
     const queryText = 'SELECT * FROM paid_by';
@@ -184,6 +204,43 @@ module.exports = function (wss) {
             res.status(500).json({ error: 'Internal server error - mode of payment' })
         }
     })
+
+    router.post('/filter-by-paid-by', async (req, res) => {
+        const { paid_by } = req.body;
+    
+        if (!paid_by) {
+            return res.status(400).json({ error: 'paid_by parameter is required' });
+        }
+    
+        try {
+            const [expensesData, totalCreditAmount] = await Promise.all([
+                (async () => {
+                    const queryText = `
+                        SELECT *
+                        FROM expenses
+                        WHERE paid_by = $1
+                          AND credit = true
+                        ORDER BY id DESC;
+                    `;
+                    const { rows } = await pool.query(queryText, [paid_by]);
+                    return rows;
+                })(),
+                getSumOfCredit(paid_by)
+            ]);
+    
+            console.log('expenses filter by paid by', expensesData);
+    
+            const responseData = {
+                data: expensesData,
+                total_credit_amount: totalCreditAmount
+            };
+    
+            res.status(200).json(responseData);
+        } catch (error) {
+            console.error('Error fetching filtered expenses data:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
+    });    
 
     return router;
 };
