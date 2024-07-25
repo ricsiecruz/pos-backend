@@ -25,10 +25,11 @@ router.get('/ip', (req, res) => {
 
 router.get('/', async (req, res) => {
     try {
-        const clientIp = normalizeIp(req.ip); // Normalize the IP address
+        const clientIp = normalizeIp(req.ip).trim(); // Normalize and trim the IP address
         console.log('Client IP:', clientIp);
+        console.log('Client IP Length:', clientIp.length);
 
-        const queryText = 'SELECT * FROM whitelist WHERE ip = $1 AND enabled = true';
+        const queryText = 'SELECT * FROM whitelist WHERE TRIM(ip) = $1 AND enabled = true';
         const { rows } = await pool.query(queryText, [clientIp]);
         console.log('Whitelist query result:', rows);
 
