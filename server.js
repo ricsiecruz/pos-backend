@@ -87,7 +87,7 @@ wss.on('connection', (ws) => {
       case 'updateSales':
         salesHandler.updateSalesInDatabase(data.sales)
           .then((updatedSale) => {
-            broadcastSales(updatedSale);
+            broadcastSalesCredit(updatedSale);
           })
           .catch((error) => {
             console.error('Error updating sales in database:', error);
@@ -601,6 +601,14 @@ function broadcastSales(newSale) {
         action: 'newSale',
         data: newSale
       }));
+    }
+  });
+}
+
+function broadcastSalesCredit(updatedSale) {
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({ action: 'updateSale', data: updatedSale }));
     }
   });
 }

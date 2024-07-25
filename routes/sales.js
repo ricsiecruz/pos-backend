@@ -227,6 +227,7 @@ async function getSalesFromDatabase() {
   const queryText = `
       SELECT 
         sales.id AS sale_id,
+        sales.transactionid,
         sales.customer,
         sales.datetime, 
         sales.total, 

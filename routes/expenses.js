@@ -48,9 +48,6 @@ async function getSumOfCredit(paid_by = null) {
 
     try {
         const { rows } = await pool.query(queryText, queryParams);
-        console.log('credit query text:', queryText);
-        console.log('credit query params:', queryParams);
-        console.log('credit rows:', rows);
         return {
           totalCreditAmount: rows[0]?.total_credit_amount || '0',
           creditCount: rows[0]?.credit_count || '0'
@@ -118,7 +115,6 @@ module.exports = function (wss) {
                 data: expensesData,
                 total_credit_amount: totalCreditAmount
             };
-            // console.log('expenses', responseData.total_credit_amount);
             res.status(200).json(responseData);
         } catch (error) {
             console.error('Error fetching expenses data:', error);
@@ -227,8 +223,6 @@ module.exports = function (wss) {
                 })(),
                 getSumOfCredit(paid_by)
             ]);
-    
-            console.log('expenses filter by paid by', expensesData);
     
             const responseData = {
                 data: expensesData,
