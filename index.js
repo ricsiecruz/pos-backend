@@ -11,6 +11,7 @@ const expensesRoutes = require('./routes/expenses');
 const salesRoutes = require('./routes/sales');
 const membersRoutes = require('./routes/members')
 const foodsRoutes = require('./routes/foods');
+const whitelistRoutes = require('./routes/whitelist');
 const port = 3000;
 const path = require('path');
 const WebSocket = require('ws');
@@ -47,3 +48,4 @@ app.use('/expenses', expensesRoutes(wss));
 app.use('/sales', salesRoutes);
 app.use('/members', membersRoutes);
 app.use('/foods', foodsRoutes);
+app.use('/whitelist', whitelistRoutes);
