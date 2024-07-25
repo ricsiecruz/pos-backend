@@ -171,24 +171,23 @@ router.post('/member-sales-today', async (req, res) => {
 async function getSalesForCurrentDate() {
   const selectSalesQuery = `
   SELECT 
-  sales.id AS sale_id,
-  sales.customer,
-  to_char(sales.datetime AT TIME ZONE 'Asia/Manila', 'YYYY-MM-DD HH24:MI:SS') AS datetime,
-  sales.total, 
-  sales.credit, 
-  sales.computer, 
-  sales.subtotal, 
-  sales.orders, 
-  sales.qty, 
-  sales.mode_of_payment,
-  sales.student_discount, 
-  sales.discount,
-  members.id AS member_id
-FROM sales
-LEFT JOIN members ON sales.customer = members.name
-WHERE DATE(datetime AT TIME ZONE 'Asia/Manila') = CURRENT_DATE
-ORDER BY credit DESC, sale_id DESC;
-
+    sales.id AS sale_id,
+    sales.customer,
+    sales.datetime AS datetime,
+    sales.total, 
+    sales.credit, 
+    sales.computer, 
+    sales.subtotal, 
+    sales.orders, 
+    sales.qty, 
+    sales.mode_of_payment,
+    sales.student_discount, 
+    sales.discount,
+    members.id AS member_id
+  FROM sales
+  LEFT JOIN members ON sales.customer = members.name
+  WHERE DATE(datetime) = CURRENT_DATE
+  ORDER BY credit DESC, sale_id DESC;
   `;
 
   try {
