@@ -35,42 +35,24 @@ wss.on('listening', () => {
   console.log(`WebSocket server is listening on port ${port}`); 
 });
 
-async function getWhitelistFromDatabase(req) {
-  const normalizeIp = (ip) => {
-    if (ip === '::1') {
-      return '127.0.0.1';
-    }
-    if (ip.includes('::ffff:')) {
-      return ip.split('::ffff:')[1];
-    }
-    return ip;
-  };
-
-  const clientIp = normalizeIp(req.ip);
-  const imei = req.headers['x-imei'];
-
-  const queryText = 'SELECT * FROM whitelist WHERE (ip = $1 OR imei = $2) AND enabled = true';
-  const { rows } = await pool.query(queryText, [clientIp, imei]);
-
-  if (rows.length > 0) {
-    return { message: 'success', ip: clientIp, imei: imei };
-  } else {
-    return { message: 'fail' };
+const normalizeIp = (ip) => {
+  if (ip === '::1') {
+    return '127.0.0.1';
   }
-}
+  if (ip.includes('::ffff:')) {
+    return ip.split('::ffff:')[1];
+  }
+  return ip;
+};
 
 wss.on('connection', (ws, req) => {
   console.log('Client connected');
 
-  // const clientIP = req.socket.remoteAddress;
-  // console.log('Client connected from IP:', clientIP);
+  const clientIp = normalizeIp(req.socket.remoteAddress);
+  const imei = req.headers['x-imei'];
 
-  // // Check if the client IP is in the whitelist
-  // if (!whitelist.includes(clientIP)) {
-  //     console.log('Unauthorized connection attempt from IP:', clientIP);
-  //     // ws.close(); // Close the connection if not in the whitelist
-  //     return;
-  // }
+  console.log('Client IP:', clientIp);
+  console.log('Client IMEI:', imei);
 
   // websocketHandlers.sendAccessToClient(ws);
   productsHandler.sendProductsToClient(ws);
@@ -83,18 +65,29 @@ wss.on('connection', (ws, req) => {
   ws.on('message', async (message) => {
     console.log('Received:', message);
     const data = JSON.parse(message);
-    console.log('data', data)
-    console.log('checkAccess', parsedMessage.action)
-    if (parsedMessage.action === 'checkAccess') {
+
+    if (data.action === 'checkAccess') {
       try {
-        const access = await getWhitelistFromDatabase(req);
-        console.log('access', access)
+        const access = await websocketHandlers.getWhitelistFromDatabase(req);
         ws.send(JSON.stringify(access));
       } catch (error) {
-        console.log('error', error)
         ws.send(JSON.stringify({ message: 'fail' }));
       }
+      return;
     }
+
+    try {
+      await handleWebSocketAction(ws, data);
+    } catch (error) {
+      console.error('Error handling action:', error);
+      ws.send(JSON.stringify({ action: 'error', message: error.message }));
+    }
+  });
+
+  ws.on('close', () => console.log('Client disconnected'));
+});
+
+  async function handleWebSocketAction(ws, data) {
     switch (data.action) {
       case 'addProduct':
         productsHandler.addProductToDatabase(data.product)
@@ -212,11 +205,7 @@ wss.on('connection', (ws, req) => {
       default:
         break;
     }
-  });
-  ws.on('close', () => {
-    console.log('Client disconnected');
-  });
-});
+  }
 
 function addFoodToDatabase(newFood) {
   return new Promise((resolve, reject) => {
