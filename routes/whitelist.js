@@ -26,21 +26,26 @@ router.get('/ip', (req, res) => {
 router.get('/', async (req, res) => {
     try {
         const clientIp = normalizeIp(req.ip); // Normalize the IP address
-        const imei = req.headers['x-imei']; // Assume IMEI is sent in a custom header
+        const imei = req.headers['x-imei'] || ''; // Assume IMEI is sent in a custom header, default to empty string
 
         console.log('Client IP:', clientIp);
         console.log('Client IMEI:', imei);
 
-        const queryText = 'SELECT * FROM whitelist WHERE (ip = $1 OR imei = $2) AND enabled = true';
+        const queryText = `
+            SELECT ip, LENGTH(ip) as ip_length, imei, LENGTH(imei) as imei_length, enabled 
+            FROM whitelist 
+            WHERE (TRIM(ip) = $1 OR TRIM(imei) = $2) 
+            AND enabled = true
+        `;
         const { rows } = await pool.query(queryText, [clientIp, imei]);
         console.log('Whitelist query result:', rows);
 
         if (rows.length > 0) {
             console.log('You have access');
-            res.json({ message: 'success', ip: {clientIp: clientIp, imei: imei} }); // IP or IMEI is whitelisted and enabled
+            res.json({ message: 'success', ip: { clientIp: clientIp, imei: imei } }); // IP or IMEI is whitelisted and enabled
         } else {
             console.log('You shall not pass');
-            res.status(403).json({ error: 'Access denied test', ip: {clientIp: clientIp, imei: imei }}); // IP or IMEI is not whitelisted or not enabled
+            res.status(403).json({ error: 'Access denied test', ip: { clientIp: clientIp, imei: imei } }); // IP or IMEI is not whitelisted or not enabled
         }
     } catch (error) {
         console.error('Error checking whitelist:', error);
