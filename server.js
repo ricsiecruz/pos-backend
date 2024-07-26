@@ -35,9 +35,44 @@ wss.on('listening', () => {
   console.log(`WebSocket server is listening on port ${port}`); 
 });
 
-wss.on('connection', (ws) => {
+async function getWhitelistFromDatabase(req) {
+  const normalizeIp = (ip) => {
+    if (ip === '::1') {
+      return '127.0.0.1';
+    }
+    if (ip.includes('::ffff:')) {
+      return ip.split('::ffff:')[1];
+    }
+    return ip;
+  };
+
+  const clientIp = normalizeIp(req.ip);
+  const imei = req.headers['x-imei'];
+
+  const queryText = 'SELECT * FROM whitelist WHERE (ip = $1 OR imei = $2) AND enabled = true';
+  const { rows } = await pool.query(queryText, [clientIp, imei]);
+
+  if (rows.length > 0) {
+    return { message: 'success', ip: clientIp, imei: imei };
+  } else {
+    return { message: 'fail' };
+  }
+}
+
+wss.on('connection', (ws, req) => {
   console.log('Client connected');
-  websocketHandlers.sendAccessToClient(ws);
+
+  // const clientIP = req.socket.remoteAddress;
+  // console.log('Client connected from IP:', clientIP);
+
+  // // Check if the client IP is in the whitelist
+  // if (!whitelist.includes(clientIP)) {
+  //     console.log('Unauthorized connection attempt from IP:', clientIP);
+  //     // ws.close(); // Close the connection if not in the whitelist
+  //     return;
+  // }
+
+  // websocketHandlers.sendAccessToClient(ws);
   productsHandler.sendProductsToClient(ws);
   websocketHandlers.sendSalesToClient(ws);
   websocketHandlers.sendInventoryToClient(ws);
@@ -45,9 +80,17 @@ wss.on('connection', (ws) => {
   websocketHandlers.sendExpensesToClient(ws);
   membersHandler.sendMembersToClient(ws);
 
-  ws.on('message', (message) => {
+  ws.on('message', async (message) => {
     console.log('Received:', message);
     const data = JSON.parse(message);
+    if (parsedMessage.action === 'checkAccess') {
+      try {
+        const access = await getWhitelistFromDatabase(req);
+        ws.send(JSON.stringify(access));
+      } catch (error) {
+        ws.send(JSON.stringify({ message: 'fail' }));
+      }
+    }
     switch (data.action) {
       case 'addProduct':
         productsHandler.addProductToDatabase(data.product)
