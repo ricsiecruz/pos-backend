@@ -37,6 +37,7 @@ wss.on('listening', () => {
 
 wss.on('connection', (ws) => {
   console.log('Client connected');
+  websocketHandlers.sendAccessToClient(ws);
   productsHandler.sendProductsToClient(ws);
   websocketHandlers.sendSalesToClient(ws);
   websocketHandlers.sendInventoryToClient(ws);
