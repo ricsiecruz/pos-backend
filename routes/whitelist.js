@@ -35,13 +35,13 @@ router.get('/', async (req, res) => {
         const { rows } = await pool.query(queryText, [clientIp, imei]);
         console.log('Whitelist query result:', rows);
 
-        // if (rows.length > 0) {
-        //     console.log('You have access');
-        //     res.json({ message: 'success' }); // IP or IMEI is whitelisted and enabled
-        // } else {
-        //     console.log('You shall not pass');
-        //     res.status(403).json({ error: 'Access denied' }); // IP or IMEI is not whitelisted or not enabled
-        // }
+        if (rows.length > 0) {
+            console.log('You have access');
+            res.json({ message: 'success' }); // IP or IMEI is whitelisted and enabled
+        } else {
+            console.log('You shall not pass');
+            res.status(403).json({ error: 'Access denied' }); // IP or IMEI is not whitelisted or not enabled
+        }
     } catch (error) {
         console.error('Error checking whitelist:', error);
         res.status(500).json({ error: 'Internal server error' });
