@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
             res.json({ message: 'success', ip: {clientIp: clientIp, imei: imei} }); // IP or IMEI is whitelisted and enabled
         } else {
             console.log('You shall not pass');
-            res.status(403).json({ error: 'Access denied test' }); // IP or IMEI is not whitelisted or not enabled
+            res.status(403).json({ error: 'Access denied test', ip: {clientIp: clientIp, imei: imei }}); // IP or IMEI is not whitelisted or not enabled
         }
     } catch (error) {
         console.error('Error checking whitelist:', error);

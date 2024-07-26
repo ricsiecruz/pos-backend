@@ -83,11 +83,15 @@ wss.on('connection', (ws, req) => {
   ws.on('message', async (message) => {
     console.log('Received:', message);
     const data = JSON.parse(message);
+    console.log('data', data)
+    console.log('checkAccess', parsedMessage.action)
     if (parsedMessage.action === 'checkAccess') {
       try {
         const access = await getWhitelistFromDatabase(req);
+        console.log('access', access)
         ws.send(JSON.stringify(access));
       } catch (error) {
+        console.log('error', error)
         ws.send(JSON.stringify({ message: 'fail' }));
       }
     }
