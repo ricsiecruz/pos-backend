@@ -35,26 +35,8 @@ wss.on('listening', () => {
   console.log(`WebSocket server is listening on port ${port}`); 
 });
 
-const normalizeIp = (ip) => {
-  if (ip === '::1') {
-    return '127.0.0.1';
-  }
-  if (ip.includes('::ffff:')) {
-    return ip.split('::ffff:')[1];
-  }
-  return ip;
-};
-
 wss.on('connection', (ws, req) => {
   console.log('Client connected');
-
-  const clientIp = normalizeIp(req.socket.remoteAddress);
-  const imei = req.headers['x-imei'];
-
-  console.log('Client IP:', clientIp);
-  console.log('Client IMEI:', imei);
-
-  // websocketHandlers.sendAccessToClient(ws);
   productsHandler.sendProductsToClient(ws);
   websocketHandlers.sendSalesToClient(ws);
   websocketHandlers.sendInventoryToClient(ws);
@@ -65,29 +47,18 @@ wss.on('connection', (ws, req) => {
   ws.on('message', async (message) => {
     console.log('Received:', message);
     const data = JSON.parse(message);
-
-    if (data.action === 'checkAccess') {
+    console.log('data', data)
+    console.log('checkAccess', parsedMessage.action)
+    if (parsedMessage.action === 'checkAccess') {
       try {
-        const access = await websocketHandlers.getWhitelistFromDatabase(req);
+        const access = await getWhitelistFromDatabase(req);
+        console.log('access', access)
         ws.send(JSON.stringify(access));
       } catch (error) {
+        console.log('error', error)
         ws.send(JSON.stringify({ message: 'fail' }));
       }
-      return;
     }
-
-    try {
-      await handleWebSocketAction(ws, data);
-    } catch (error) {
-      console.error('Error handling action:', error);
-      ws.send(JSON.stringify({ action: 'error', message: error.message }));
-    }
-  });
-
-  ws.on('close', () => console.log('Client disconnected'));
-});
-
-  async function handleWebSocketAction(ws, data) {
     switch (data.action) {
       case 'addProduct':
         productsHandler.addProductToDatabase(data.product)
@@ -205,7 +176,11 @@ wss.on('connection', (ws, req) => {
       default:
         break;
     }
-  }
+  });
+  ws.on('close', () => {
+    console.log('Client disconnected');
+  });
+});
 
 function addFoodToDatabase(newFood) {
   return new Promise((resolve, reject) => {

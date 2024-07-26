@@ -86,30 +86,6 @@ async function sendSalesToClient(client) {
   }
 }
 
-async function getWhitelistFromDatabase(clientIp, imei) {
-  const queryText = 'SELECT * FROM whitelist WHERE (ip = $1 OR imei = $2) AND enabled = true';
-  const { rows } = await pool.query(queryText, [clientIp, imei]);
-
-  if (rows.length > 0) {
-    return { message: 'success', ip: clientIp, imei: imei };
-  } else {
-    return { message: 'fail' };
-  }
-}
-
-// async function sendAccessToClient(client) {
-//   try {
-//     const access = await getWhitelistFromDatabase();
-//     client.send(JSON.stringify({
-//       actions: 'initialize',
-//       access
-//     }))
-//   } catch (error) {
-//       console.error('Error checking whitelist:', error);
-//       res.status(500).json({ error: 'Internal server error' });
-//   }
-// }
-
 async function sendMembersToClient(ws) {
   try {
     const membersQuery = `
@@ -220,7 +196,6 @@ async function getExpensesData() {
 }
 
 module.exports = {
-  getWhitelistFromDatabase,
   sendSalesToClient,
   sendInventoryToClient,
   sendExpensesToClient,
