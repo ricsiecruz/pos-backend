@@ -31,17 +31,13 @@ async function getSalesFromDatabase() {
 }
 
 async function getSalesForCurrentDate() {
-  const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
   const selectSalesQuery = `
     SELECT *
     FROM sales
-    WHERE DATE(datetime AT TIME ZONE 'Asia/Manila') = CURRENT_DATE
     ORDER BY id DESC;
   `;
 
   try {
-    await pool.query(setTimezoneQuery);
-
     const { rows } = await pool.query(selectSalesQuery);
     return rows;
   } catch (err) {
