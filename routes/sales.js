@@ -234,7 +234,7 @@ async function getSalesFromDatabase() {
         sales.id AS sale_id,
         sales.transactionid,
         sales.customer,
-        sales.datetime, 
+        sales.datetime AT TIME ZONE 'Asia/Manila' AS datetime,
         sales.total, 
         sales.credit, 
         sales.computer, 
@@ -247,10 +247,15 @@ async function getSalesFromDatabase() {
         members.id AS member_id
       FROM sales
       LEFT JOIN members ON sales.customer = members.name
+      WHERE DATE(sales.datetime AT TIME ZONE 'Asia/Manila') = CURRENT_DATE
       ORDER BY sales.credit DESC, sales.id DESC;
     `;
 
     const { rows } = await pool.query(queryText);
+    // Convert datetime to Asia/Manila timezone
+    rows.forEach(row => {
+      row.datetime = moment(row.datetime).tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
+    });
     return rows;
 }
 
