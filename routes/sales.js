@@ -186,6 +186,7 @@ async function getSalesForCurrentDate() {
     members.id AS member_id
   FROM sales
   LEFT JOIN members ON sales.customer = members.name
+  WHERE DATE(datetime) = CURRENT_DATE
   ORDER BY credit DESC, sale_id DESC;
   `;
 
