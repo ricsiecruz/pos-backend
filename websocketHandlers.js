@@ -1,5 +1,6 @@
 // websockethandlers.js
 const pool = require('./db');
+const moment = require('moment-timezone');
 
 async function getSumOfExpensesForCurrentDate() {
   const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
@@ -40,6 +41,12 @@ async function getSalesForCurrentDate() {
 
   try {
     const { rows } = await pool.query(selectSalesQuery);
+
+    // Convert datetime to Asia/Manila timezone
+    rows.forEach(row => {
+      row.datetime = moment(row.datetime).tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
+    });
+
     return rows;
   } catch (err) {
     console.error('Error executing query', err.stack);
@@ -78,6 +85,7 @@ async function sendSalesToClient(client) {
       total_sum_today: totalSumToday,
       expenses_current_date: expensesCurrentDate
     }));
+
   } catch (error) {
     console.error('Error sending sales to client:', error);
   }
@@ -188,7 +196,6 @@ async function getSumOfCredit() {
 async function getExpensesData() {
   const queryText = 'SELECT * FROM expenses ORDER BY id DESC';
   const { rows } = await pool.query(queryText);
-  // console.log('expenses', rows)
   return rows;
 }
 
