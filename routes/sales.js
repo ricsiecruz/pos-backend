@@ -186,12 +186,17 @@ async function getSalesForCurrentDate() {
     members.id AS member_id
   FROM sales
   LEFT JOIN members ON sales.customer = members.name
-  WHERE DATE(datetime) = CURRENT_DATE
   ORDER BY credit DESC, sale_id DESC;
   `;
 
   try {
     const { rows } = await pool.query(selectSalesQuery);
+
+    // Convert datetime to Asia/Manila timezone
+    rows.forEach(row => {
+      row.datetime = moment(row.datetime).tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
+    });
+
     return rows;
   } catch (err) {
     console.error('Error retrieving sales:', err);
