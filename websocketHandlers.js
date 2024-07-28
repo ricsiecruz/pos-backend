@@ -34,6 +34,7 @@ async function getSalesForCurrentDate() {
   const selectSalesQuery = `
     SELECT *
     FROM sales
+    WHERE DATE(datetime) = CURRENT_DATE
     ORDER BY id DESC;
   `;
 
