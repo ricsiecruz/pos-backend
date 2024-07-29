@@ -247,7 +247,6 @@ async function getSalesFromDatabase() {
         members.id AS member_id
       FROM sales
       LEFT JOIN members ON sales.customer = members.name
-      WHERE DATE(sales.datetime AT TIME ZONE 'Asia/Manila') = CURRENT_DATE
       ORDER BY sales.credit DESC, sales.id DESC;
     `;
 
