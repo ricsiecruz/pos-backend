@@ -202,24 +202,30 @@ module.exports = function (wss) {
     router.post('/filter-by-paid-by', async (req, res) => {
         const { paid_by } = req.body;
     
-        if (!paid_by) {
-            return res.status(400).json({ error: 'paid_by parameter is required' });
-        }
-    
         try {
+            // Define base query
+            let queryText = `
+                SELECT *
+                FROM expenses
+            `;
+            const queryParams = [];
+            
+            // Add condition based on paid_by
+            if (paid_by !== null) {
+                queryText += ' WHERE paid_by = $1';
+                queryParams.push(paid_by);
+            }
+    
+            // Always include ORDER BY clause
+            queryText += ' ORDER BY credit DESC, id DESC';
+    
+            // Execute queries
             const [expensesData, totalCreditAmount] = await Promise.all([
                 (async () => {
-                    const queryText = `
-                        SELECT *
-                        FROM expenses
-                        WHERE paid_by = $1
-                          AND credit = true
-                        ORDER BY id DESC;
-                    `;
-                    const { rows } = await pool.query(queryText, [paid_by]);
+                    const { rows } = await pool.query(queryText, queryParams);
                     return rows;
                 })(),
-                getSumOfCredit(paid_by)
+                getSumOfCredit(paid_by) // Pass paid_by as is, even if it's null
             ]);
     
             const responseData = {
