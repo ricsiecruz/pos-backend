@@ -28,7 +28,6 @@ function addFoodToDatabase(newFood) {
 
 function editFood(updatedFood) {
   return new Promise((resolve, reject) => {
-    console.log('updated foods', updatedFood);
     const { id, product, price, utensils } = updatedFood;
     pool.query(
       'UPDATE foods SET product = $1, price = $2, utensils = $3 WHERE id = $4',

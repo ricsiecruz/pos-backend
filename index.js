@@ -62,10 +62,8 @@ wss.on('connection', (ws, req) => {
     if (message.action === 'checkAccess') {
       try {
         const access = await getWhitelistFromDatabase(req);
-        console.log('access', access)
         ws.send(JSON.stringify(access));
       } catch (error) {
-        console.log('error', error)
         ws.send(JSON.stringify({ message: 'fail' }));
       }
     }
@@ -219,7 +217,6 @@ function addFoodToDatabase(newFood) {
 }
 
 function editSalesLoad(updatedLoad) {
-  console.log('sales id', updatedLoad.id)
   return new Promise((resolve, reject) => {
     const { id, transactionid, orders, qty, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount } = updatedLoad;
     const total = parseFloat(subtotal) + parseFloat(computer);
@@ -230,11 +227,9 @@ function editSalesLoad(updatedLoad) {
       [transactionid, JSON.stringify(orders), qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount, id],
       (error, results) => {
         if (error) {
-          console.error('Error updating sales:', error);
           reject(error);
           return;
         }
-        console.log('data', updatedLoad)
         resolve();
         broadcastSales();
       }
@@ -264,26 +259,21 @@ function addMemberToDatabase(newMember) {
   return new Promise((resolve, reject) => {
     const { name, date_joined, coffee, total_load, total_spent, last_spent, current_load } = newMember;
     
-    // Check if the member already exists
     pool.query(
       'SELECT id FROM members WHERE name = $1',
       [name],
       (error, results) => {
         if (error) {
-          console.log('aaa', error)
           reject(error);
           return;
         }
         
-        // If member with the same name exists, reject with a custom error
         if (results.rows.length > 0) {
           const errorMessage = 'Member already exists';
-          console.log('error', errorMessage)
           reject(errorMessage);
           return;
         }
 
-        // Otherwise, insert the new member
         pool.query(
           'INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent, current_load) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, date_joined, coffee, total_load, total_spent, last_spent, current_load',
           [name, date_joined, coffee, total_load, total_spent, last_spent, current_load],
@@ -292,16 +282,15 @@ function addMemberToDatabase(newMember) {
               reject(error);
               return;
             }
-            // Fetch updated list of members after insertion
+            
             pool.query('SELECT * FROM members ORDER BY name ASC', (error, results) => {
               if (error) {
                 reject(error);
                 return;
               }
               const updatedMembers = results.rows;
-              console.log('add member', updatedMembers)
               broadcastMembers(updatedMembers);
-              resolve(updatedMembers); // Resolve with updated member list
+              resolve(updatedMembers);
             });
           }
         );
@@ -318,12 +307,10 @@ function addExpenses(newExpenses) {
           [expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by],
           (error, results) => {
               if (error) {
-                  console.error('Database query error:', error);
                   reject(error);
                   return;
               }
               const newExpense = results.rows[0];
-              console.log('New expense added:', newExpense);
               resolve(newExpense);
 
               wss.clients.forEach(client => {
@@ -378,8 +365,6 @@ const addTransactionSalesToDatabase = (sale) => {
       sale.student_discount,
       sale.discount
     ];
-
-    console.log('new sale', values)
 
     pool.query(query, values, (error, results) => {
       if (error) {
@@ -498,7 +483,6 @@ function addStock(updateInventory) {
       [stocks, id],
       (error, results) => {
         if (error) {
-          console.error('Error updating stock:', error);
           reject(error);
           return;
         }
@@ -517,7 +501,6 @@ function addFoodStock(updateFoodStock) {
       [stocks, id],
       (error, results) => {
         if (error) {
-          console.error('Error updating food stock:', error);
           reject(error);
           return;
         }
@@ -548,7 +531,6 @@ function broadcastFoods(addFood) {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       websocketHandlers.sendFoodsToClient(client, addFood);
-      console.log('Broadcasting updated foods to client:', addFood);
     }
   })
 }
@@ -578,7 +560,6 @@ function updateMembersAfterSale() {
       members.name = ms.customer;
   `, (error, results) => {
     if (error) {
-      console.error('Error updating members after sale:', error);
       return;
     }
     

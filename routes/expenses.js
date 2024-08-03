@@ -186,7 +186,6 @@ module.exports = function (wss) {
             const paidBy = await getPaidBy();
             res.json({ paid_by: paidBy });
         } catch(error) {
-            console.log('Error fetching paid by from database:', error);
             res.status(500).json({ error: 'Internal server error - paid by' })
         }
     })
@@ -196,7 +195,6 @@ module.exports = function (wss) {
             const modeOfPayment = await getModeOfPayment();
             res.json({ mode_of_payment: modeOfPayment });
         } catch(error) {
-            console.log('Error fetching mode of payment from database:', error);
             res.status(500).json({ error: 'Internal server error - mode of payment' })
         }
     })

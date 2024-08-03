@@ -1,7 +1,6 @@
 const pool = require('../db');
 
 function updateSalesInDatabase(updatedSale) {
-  console.log('updateSales', updatedSale);
   return new Promise((resolve, reject) => {
     const { id, transactionid, orders, qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount } = updatedSale;
     const formattedCredit = parseFloat(credit).toFixed(2); // Format credit with two decimal places
@@ -11,16 +10,13 @@ function updateSalesInDatabase(updatedSale) {
       [transactionid, JSON.stringify(orders), qty, total, datetime, customer, computer, subtotal, formattedCredit, mode_of_payment, student_discount, discount, id],
       (error, results) => {
         if (error) {
-          console.error('Error updating sales in database:', error);
           reject(error);
           return;
         }
 
         if (results.rowCount > 0) {
-          console.log('Update successful: Rows affected', results.rowCount);
           resolve({ success: true, message: 'Update successful' });
         } else {
-          console.log('Update failed: No rows were affected');
           resolve({ success: false, message: 'No rows were affected' });
         }
       }

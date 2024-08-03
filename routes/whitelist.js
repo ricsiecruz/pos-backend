@@ -45,9 +45,6 @@ router.get('/', async (req, res) => {
         const clientIp = normalizeIp(req.ip); // Normalize the IP address
         const imei = req.headers['x-imei'] || ''; // Assume IMEI is sent in a custom header, default to empty string
 
-        console.log('Client IP:', clientIp);
-        console.log('Client IMEI:', imei);
-
         let queryText, queryParam;
 
         if (imei) {
@@ -65,17 +62,13 @@ router.get('/', async (req, res) => {
         }
 
         const { rows } = await pool.query(queryText, [queryParam]);
-        console.log('Whitelist query result:', rows);
 
         if (rows.length > 0) {
-            console.log('You have access');
             res.json({ message: 'success', ip: { clientIp: clientIp, imei: imei || 'Not provided' } }); // IMEI or IP is whitelisted and enabled
         } else {
-            console.log('You shall not pass');
             res.status(403).json({ error: 'Access denied', ip: { clientIp: clientIp, imei: imei || 'Not provided' } }); // IMEI or IP is not whitelisted or not enabled
         }
     } catch (error) {
-        console.error('Error checking whitelist:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

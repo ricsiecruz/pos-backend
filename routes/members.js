@@ -21,8 +21,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     const sheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
 
-    console.log('Parsed data:', data);
-
     // Update the database
     for (const row of data) {
       // Adjust indices based on actual data structure
@@ -31,13 +29,11 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
       // Validate row data
       if (!username || !balance) {
-        console.warn('Skipping row due to missing data:', row);
         continue;
       }
 
       const balanceNumeric = parseFloat(balance.replace(/[^0-9.-]+/g, ""));
       if (isNaN(balanceNumeric)) {
-        console.warn('Skipping row due to invalid balance:', row);
         continue;
       }
 
@@ -48,12 +44,10 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       `;
       const result = await pool.query(queryText, [balanceNumeric, username]);
 
-      console.log('Query result for', username, ':', result.rowCount);
     }
 
     res.status(200).json({ message: 'Members updated successfully.' });
   } catch (error) {
-    console.error('Error updating members:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -62,7 +56,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 router.get('/', (request, response) => {
   pool.query('SELECT * FROM members ORDER BY name ASC', (error, results) => {
     if (error) {
-      console.error('Error fetching members from database:', error);
       return response.status(500).json({ error: 'Internal server error' });
     }
     const members = results.rows;
@@ -88,7 +81,6 @@ router.get('/:id', async (request, response) => {
 
     response.status(200).json(member);
   } catch (error) {
-    console.error('Error fetching member and transactions from database:', error);
     response.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -99,20 +91,15 @@ router.post('/', (request, response) => {
     const { name, date_joined, coffee, total_load, total_spent, last_spent, current_load } = request.body;
 
     if (!date_joined || isNaN(Date.parse(date_joined))) {
-      console.error('Invalid or missing date_joined:', date_joined);
       return response.status(400).json({ error: 'Invalid or missing date_joined' });
     }
 
     if (!last_spent || isNaN(Date.parse(last_spent))) {
-      console.error('Invalid or missing last_spent:', last_spent);
       return response.status(400).json({ error: 'Invalid or missing last_spent' });
     }
 
     const formattedDate = new Date(date_joined);
     const formattedLastSpent = new Date(last_spent);
-
-    console.log('Formatted date_joined:', formattedDate);
-    console.log('Formatted last_spent:', formattedLastSpent);
 
     pool.query(
       'INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent, current_load) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
@@ -126,7 +113,6 @@ router.post('/', (request, response) => {
       }
     );
   } catch (error) {
-    console.error('Error executing query:', error);
     response.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -137,7 +123,6 @@ router.delete('/:id', (request, response) => {
 
   pool.query('DELETE FROM members WHERE id = $1', [id], (error, results) => {
     if (error) {
-      console.error('Error deleting member from database:', error);
       return response.status(500).json({ error: 'Internal server error' });
     }
     response.status(200).json({ message: `Member deleted with ID: ${id}` });

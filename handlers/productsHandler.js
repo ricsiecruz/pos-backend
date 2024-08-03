@@ -11,7 +11,6 @@ function sendProductsToClient(client) {
     const products = results.rows;
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify({ action: 'initialize', products }));
-      // console.log('Sending initial products to client:', products);
     } else {
       console.error('Client is not in open state, unable to send data.');
     }
@@ -46,7 +45,6 @@ function addProductToDatabase(newProduct) {
 
 function editProductInDatabase(updatedProduct) {
   return new Promise((resolve, reject) => {
-    console.log('updated products', updatedProduct);
     const { id, product, price, barista } = updatedProduct;
     pool.query(
       'UPDATE products SET product = $1, price = $2, barista = $3 WHERE id = $4',
