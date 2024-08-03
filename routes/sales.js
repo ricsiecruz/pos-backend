@@ -77,13 +77,11 @@ router.post('/date-range', async (req, res) => {
     `;
     const values = [];
 
-    // If customer is provided, filter by customer
     if (customer) {
       queryText += ' WHERE sales.customer = $1';
       values.push(customer);
     }
 
-    // If both startDate and endDate are provided, filter by date range
     if (startDate && endDate) {
       const startDateManila = moment.tz(startDate, 'Asia/Manila').startOf('day').format('YYYY-MM-DD HH:mm:ss');
       const endDateManila = moment.tz(endDate, 'Asia/Manila').endOf('day').format('YYYY-MM-DD HH:mm:ss');
@@ -98,16 +96,13 @@ router.post('/date-range', async (req, res) => {
 
     queryText += ' ORDER BY sales.datetime DESC';
 
-    // Execute the query
     const { rows } = await pool.query(queryText, values);
     
-    // Format datetime in rows before sending response
     const formattedRows = rows.map(row => ({
       ...row,
       datetime: moment(row.datetime).format('YYYY-MM-DD HH:mm:ss')
     }));
 
-    // Calculate totals (unchanged from your original code)
     const filteredIncome = rows.reduce((acc, sale) => acc + parseFloat(sale.total), 0);
     const filteredExpenses = await getSumOfExpensesByDateRange(startDate, endDate);
     const filteredNet = filteredIncome - filteredExpenses;
@@ -117,7 +112,7 @@ router.post('/date-range', async (req, res) => {
 
     const responseData = {
       salesData: {
-        data: formattedRows, // Use formattedRows instead of rows
+        data: formattedRows,
         income: filteredIncome,
         expenses: filteredExpenses,
         net: filteredNet,
@@ -135,12 +130,10 @@ router.post('/date-range', async (req, res) => {
   }
 });
 
-// New route for fetching sales for a specific member on the current date
 router.post('/member-sales-today', async (req, res) => {
   try {
     const { member } = req.body;
 
-    // Validate the input member
     if (!member) {
       return res.status(400).json({ error: 'Please provide a member name' });
     }

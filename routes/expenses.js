@@ -1,12 +1,11 @@
 const express = require('express');
+const moment = require('moment-timezone');
+const multer = require('multer');
+const { put } = require('@vercel/blob');
 const pool = require('../db');
 const router = express.Router();
-const WebSocket = require('ws');
-
-const multer = require('multer');
 const path = require('path');
-
-const { put } = require('@vercel/blob'); // Ensure you have the @vercel/blob package installed
+const WebSocket = require('ws');
 
 require('dotenv').config();
 
@@ -14,7 +13,6 @@ const storage = multer.memoryStorage();
 
 const upload = multer({ storage: storage });
 
-// Function to get the sum of expenses for the current date
 async function getSumOfExpensesForCurrentDate() {
     const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
     const queryText = `
@@ -61,7 +59,6 @@ async function getSumOfCredit(paid_by = null) {
     }
 }
 
-
 async function getPaidBy() {
     const queryText = 'SELECT * FROM paid_by';
     const { rows } = await pool.query(queryText);
@@ -74,7 +71,6 @@ async function getModeOfPayment() {
     return rows;
 }
 
-// Function to get expenses data
 async function getExpensesData() {
     const queryText = `
         SELECT *
@@ -85,7 +81,6 @@ async function getExpensesData() {
     return rows;
 }
 
-// Function to deduct credit amount
 async function deductCreditAmount(amount) {
     const queryText = `
         UPDATE expenses
@@ -149,10 +144,8 @@ module.exports = function (wss) {
         try {
             const expenseId = req.params.id;
             
-            // Get the current timestamp
             const currentDate = new Date().toISOString();
     
-            // Update the expense to mark it as paid, set 'settled_by' and 'date_settled'
             const result = await pool.query(
                 `UPDATE expenses
                 SET credit = false, settled_by = $1, date_settled = $2
@@ -203,23 +196,19 @@ module.exports = function (wss) {
         const { paid_by } = req.body;
     
         try {
-            // Define base query
             let queryText = `
                 SELECT *
                 FROM expenses
             `;
             const queryParams = [];
             
-            // Add condition based on paid_by
             if (paid_by !== null) {
                 queryText += ' WHERE paid_by = $1';
                 queryParams.push(paid_by);
             }
     
-            // Always include ORDER BY clause
             queryText += ' ORDER BY credit DESC, id DESC';
     
-            // Execute queries
             const [expensesData, totalCreditAmount] = await Promise.all([
                 (async () => {
                     const { rows } = await pool.query(queryText, queryParams);
@@ -238,7 +227,78 @@ module.exports = function (wss) {
             console.error('Error fetching filtered expenses data:', error);
             res.status(500).json({ error: 'Internal Server Error' });
         }
-    });    
+    });
+    
+    router.post('/date-range', async (req, res) => {
+        try {
+            const { startDate, endDate, paidBy } = req.body;
+            let queryText = `
+                SELECT 
+                    id, 
+                    expense, 
+                    month, 
+                    date, 
+                    amount, 
+                    mode_of_payment, 
+                    credit, 
+                    paid_by, 
+                    settled_by, 
+                    image_path, 
+                    date_settled
+                FROM expenses
+            `;
+            const values = [];
+    
+            // Filter by paid_by if provided
+            if (paidBy) {
+                queryText += ' WHERE paid_by = $1';
+                values.push(paidBy);
+            }
+    
+            // Add date range filter if both dates are provided
+            if (startDate && endDate) {
+                const startDateManila = moment.tz(startDate, 'Asia/Manila').startOf('day').format('YYYY-MM-DD HH:mm:ss');
+                const endDateManila = moment.tz(endDate, 'Asia/Manila').endOf('day').format('YYYY-MM-DD HH:mm:ss');
+    
+                if (values.length > 0) {
+                    queryText += ' AND date >= $' + (values.length + 1) + ' AND date <= $' + (values.length + 2);
+                } else {
+                    queryText += ' WHERE date >= $1 AND date <= $2';
+                }
+                values.push(startDateManila, endDateManila);
+            }
+    
+            queryText += ' ORDER BY date DESC';
+    
+            const { rows } = await pool.query(queryText, values);
+    
+            // Format the date in the result rows
+            const formattedRows = rows.map(row => ({
+                ...row,
+                date: moment(row.date).format('YYYY-MM-DD'),
+                date_settled: row.date_settled ? moment(row.date_settled).format('YYYY-MM-DD') : null
+            }));
+    
+            // Calculate aggregates
+            const totalAmount = rows.reduce((acc, expense) => acc + parseFloat(expense.amount), 0);
+            const totalCredit = rows.reduce((acc, expense) => acc + parseFloat(expense.credit), 0);
+    
+            const responseData = {
+                expensesData: {
+                    data: formattedRows,
+                    total_amount: totalAmount,
+                    total_credit: totalCredit,
+                }
+            };
+    
+            res.json(responseData);
+    
+        } catch (error) {
+            console.error('Error fetching expenses by date range and paid_by:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    });
+    
 
     return router;
 };
