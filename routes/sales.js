@@ -165,6 +165,7 @@ async function getSalesForCurrentDate() {
   const selectSalesQuery = `
     SELECT 
       sales.id AS sale_id,
+      sales.transactionid,
       sales.customer,
       sales.datetime AT TIME ZONE 'Asia/Manila' AS datetime,
       sales.total, 
