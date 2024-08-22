@@ -135,7 +135,6 @@ async function getSalesAndExpensesSummary() {
     return summary;
 }
 
-
 async function getTopSpenders(today = false) {
     let queryText = `
         SELECT 

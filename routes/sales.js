@@ -3,17 +3,23 @@ const moment = require('moment-timezone');
 const pool = require('../db');
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const [sales, totalSum] = await Promise.all([
-      getSalesFromDatabase(),
+    // Check if page and limit are passed in the request body instead of query
+    const page = parseInt(req.body.page) || 1; // Default page is 1
+    const limit = parseInt(req.body.limit) || 10; // Default limit is 10 records per page
+    const offset = (page - 1) * limit;
+
+    const [sales, totalRecords, totalSum] = await Promise.all([
+      getSalesFromDatabase(limit, offset),
+      getTotalSalesCount(),
       getSumOfTotalSales(),
-      getSumOfTotalSalesToday(),
-      getSumOfFoodAndDrinksToday()
     ]);
 
     const totalExpenses = await getSumOfExpensesByDateRange(null, null);
     const totalNet = totalSum - totalExpenses;
+
+    const totalPages = Math.ceil(totalRecords / limit);
 
     const currentSalesData = await getSalesForCurrentDate();
     const currentIncome = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.total), 0);
@@ -39,6 +45,9 @@ router.get('/', async (req, res) => {
         credit: currentCredit,
         cash: currentCashTotal,
         gcash: currentGcashTotal,
+        totalRecords: totalRecords,
+        totalPages: totalPages,
+        pageNumber: page // Correct page number
       },
       sales: {
         data: sales,
@@ -48,7 +57,10 @@ router.get('/', async (req, res) => {
         computer: await getSumOfComputers(),
         food_and_drinks: await getSumOfFoodAndDrinks(),
         credit: await getSumOfCredits(),
-        credit_count: creditCount, // Add the count to the sales response
+        credit_count: creditCount,
+        totalRecords: totalRecords,
+        totalPages: totalPages,
+        pageNumber: page // Correct page number
       }
     };
 
@@ -58,6 +70,12 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Internal server error - sales' });
   }
 });
+
+async function getTotalSalesCount() {
+  const queryText = 'SELECT COUNT(*) FROM sales';
+  const { rows } = await pool.query(queryText);
+  return parseInt(rows[0].count, 10);
+}
 
 router.post('/date-range', async (req, res) => {
   try {
@@ -222,7 +240,7 @@ async function getSumOfTotalSalesToday() {
   return rows[0].total_sum_today;
 }
 
-async function getSalesFromDatabase() {
+async function getSalesFromDatabase(limit, offset) {
   const queryText = `
       SELECT 
         sales.id AS sale_id,
@@ -241,15 +259,16 @@ async function getSalesFromDatabase() {
         members.id AS member_id
       FROM sales
       LEFT JOIN members ON sales.customer = members.name
-      ORDER BY sales.credit DESC, sales.id DESC;
+      ORDER BY sales.credit DESC, sales.id DESC
+      LIMIT $1 OFFSET $2;
     `;
 
-    const { rows } = await pool.query(queryText);
-    // Convert datetime to Asia/Manila timezone
-    rows.forEach(row => {
-      row.datetime = moment(row.datetime).tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
-    });
-    return rows;
+  const { rows } = await pool.query(queryText, [limit, offset]);
+
+  rows.forEach(row => {
+    row.datetime = moment(row.datetime).tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
+  });
+  return rows;
 }
 
    async function getSumOfTotalSales() {

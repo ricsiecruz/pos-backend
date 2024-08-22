@@ -13,19 +13,6 @@ const storage = multer.memoryStorage();
 
 const upload = multer({ storage: storage });
 
-async function getSumOfExpensesForCurrentDate() {
-    const setTimezoneQuery = "SET TIME ZONE 'Asia/Manila';";
-    const queryText = `
-        SELECT COALESCE(SUM(amount::numeric), 0) AS total_expenses
-        FROM expenses
-        WHERE DATE(date AT TIME ZONE 'Asia/Manila') = CURRENT_DATE;
-    `;
-
-    await pool.query(setTimezoneQuery);
-    const { rows } = await pool.query(queryText);
-    return rows[0].total_expenses;
-}
-
 async function getSumOfCredit(paid_by = null) {
     let queryText = `
       SELECT 
