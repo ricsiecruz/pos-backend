@@ -271,30 +271,10 @@ async function getSalesFromDatabase(limit, offset) {
   return rows;
 }
 
-   async function getSumOfTotalSales() {
-    const queryText = 'SELECT SUM(total::numeric) AS total_sum FROM sales';
-    const { rows } = await pool.query(queryText);
-    return rows[0].total_sum;
-  }
-  
-  async function getSumOfTotalSalesToday() {
-    const queryText = `
-      SELECT COALESCE(SUM(total::numeric), 0) AS total_sum_today
-      FROM sales
-      WHERE DATE(datetime) = CURRENT_DATE;
-    `;
-    const { rows } = await pool.query(queryText);
-    return rows[0].total_sum_today;
-  }
-  
-async function getSumOfFoodAndDrinksToday() {
-   const queryText = `
-    SELECT COALESCE(SUM(subtotal::numeric), 0) AS total_food_and_drinks_today
-     FROM sales
-    WHERE DATE(datetime) = CURRENT_DATE;
-   `;
+async function getSumOfTotalSales() {
+  const queryText = 'SELECT SUM(total::numeric) AS total_sum FROM sales';
   const { rows } = await pool.query(queryText);
-  return rows[0].total_food_and_drinks_today;
+  return rows[0].total_sum;
 }
 
 async function getSalesForMember(member) {
@@ -310,44 +290,6 @@ async function getSalesForMember(member) {
   await pool.query(setTimezoneQuery);
   const { rows } = await pool.query(selectSalesQuery, values);
   return rows;
-}
-
-async function getSalesByDateRange(startDate, endDate) {
-  const queryText = `
-    SELECT customer, qty, datetime, computer, credit, total
-    FROM sales
-    WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2
-    ORDER BY datetime DESC;
-  `;
-  const values = [startDate, endDate];
-
-  try {
-    const { rows } = await pool.query(queryText, values);
-    const totalIncome = rows.reduce((acc, sale) => acc + parseFloat(sale.total), 0);
-    return { salesData: rows, totalIncome: totalIncome };
-  } catch (error) {
-    console.error('Error in getSalesByDateRange query:', error);
-    throw error;
-  }
-}
-
-async function getSalesByDateRangeAndCustomer(startDate, endDate, customer) {
-  const queryText = `
-    SELECT customer, qty, datetime, computer, credit, total
-    FROM sales
-    WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2 AND customer = $3
-    ORDER BY datetime DESC;
-  `;
-  const values = [startDate, endDate, customer];
-
-  try {
-    const { rows } = await pool.query(queryText, values);
-    const totalIncome = rows.reduce((acc, sale) => acc + parseFloat(sale.total), 0);
-    return { salesData: rows, totalIncome: totalIncome };
-  } catch (error) {
-    console.error('Error in getSalesByDateRangeAndCustomer query:', error);
-    throw error;
-  }
 }
 
 async function getSumOfExpensesForCurrentDate() {
