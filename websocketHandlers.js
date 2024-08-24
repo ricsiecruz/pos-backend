@@ -133,7 +133,7 @@ function sendFoodsToClient(client) {
       return;
     }
     const foods = results.rows;
-    client.send(JSON.stringify({ action: 'initialize', foods }));
+    client.send(JSON.stringify({ action: 'getFoods', foods }));
   });
 }
 
@@ -163,7 +163,7 @@ async function sendExpensesToClient(client) {
       ]);
 
       const responseData = {
-          action: 'initialize',
+          action: 'getExpenses',
           expenses: expensesData,
           total_credit_amount: totalCreditAmount
       };

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const moment = require('moment-timezone');
 const bodyParser = require('body-parser');
 const WebSocket = require('ws');
 const path = require('path');
@@ -17,6 +18,7 @@ const salesRoutes = require('./routes/sales');
 const membersRoutes = require('./routes/members');
 const foodsRoutes = require('./routes/foods');
 const whitelistRoutes = require('./routes/whitelist');
+const kahaRoutes = require('./routes/kaha');
 
 // WebSocket server setup
 const server = app.listen(port, () => {
@@ -46,6 +48,7 @@ app.use('/sales', salesRoutes);
 app.use('/members', membersRoutes);
 app.use('/foods', foodsRoutes);
 app.use('/whitelist', whitelistRoutes);
+// app.use('/kaha', kahaRoutes);
 
 wss.on('connection', (ws, req) => {
   console.log('Client connected');
@@ -190,30 +193,21 @@ wss.on('connection', (ws, req) => {
   });
 });
 
-function addFoodToDatabase(newFood) {
-  return new Promise((resolve, reject) => {
+async function addFoodToDatabase(newFood) {
+  try {
     const { product, price, stocks, utensils } = newFood;
-    pool.query(
+    const result = await pool.query(
       'INSERT INTO foods (product, price, stocks, utensils) VALUES ($1, $2, $3, $4) RETURNING id, product, price, stocks, utensils',
-      [product, price, stocks, utensils],
-      (error, results) => {
-        if(error) {
-          reject(error);
-          return;
-        }
-        const { id, product, price, stocks, utensils } = results.rows[0];
-        pool.query('SELECT * FROM foods ORDER BY id DESC', (error, results) => {
-          if(error) {
-            reject(error);
-            return
-          }
-          const updatedFoods = results.rows;
-          broadcastFoods(updatedFoods);
-          resolve({ id, product, price, stocks, utensils })
-        })
-      }
-    )
-  })
+      [product, price, stocks, utensils]
+    );
+    const { id } = result.rows[0];
+    const updatedFoods = await pool.query('SELECT * FROM foods ORDER BY id DESC');
+    broadcastFoods(updatedFoods.rows);
+    return { id, product, price, stocks, utensils };
+  } catch (error) {
+    console.error('Error adding food to database:', error);
+    throw error;
+  }
 }
 
 function editSalesLoad(updatedLoad) {
@@ -351,6 +345,7 @@ const addTransactionSalesToDatabase = (sale) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
     `;
+    console.log('sale', sale)
     const values = [
       sale.transactionId,
       JSON.stringify(sale.orders),
@@ -439,7 +434,10 @@ const addTransactionSalesToDatabase = (sale) => {
 
                 // Wait for both promises to resolve before resolving the main promise
                 Promise.all([baristaPromise, utensilsPromise])
-                  .then(() => resolve(insertedSale))
+                  .then(() => {
+                    console.log('New sale added successfully:', insertedSale);
+                    resolve(insertedSale);
+                  })
                   .catch(reject);
               }
             });

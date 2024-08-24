@@ -58,49 +58,57 @@ async function getModeOfPayment() {
     return rows;
 }
 
-async function getExpensesData() {
+async function getExpensesData(limit, offset) {
     const queryText = `
-        SELECT *
-        FROM expenses
-        ORDER BY credit DESC, id DESC;
+      SELECT *
+      FROM expenses
+      ORDER BY credit DESC, id DESC
+      LIMIT $1 OFFSET $2;
     `;
-    const { rows } = await pool.query(queryText);
+    const { rows } = await pool.query(queryText, [limit, offset]);
     return rows;
 }
 
-async function deductCreditAmount(amount) {
+async function getTotalExpensesCount() {
     const queryText = `
-        UPDATE expenses
-        SET credit = false
-        WHERE id = (
-            SELECT id
-            FROM expenses
-            WHERE credit = true
-            ORDER BY id
-            LIMIT 1
-        )
-        RETURNING amount::numeric;
+      SELECT COUNT(*) AS total_count
+      FROM expenses;
     `;
     const { rows } = await pool.query(queryText);
-    return rows[0].amount;
+    return parseInt(rows[0].total_count, 10);
 }
 
 module.exports = function (wss) {
-    router.get('/', async (req, res) => {
+    router.post('/', async (req, res) => {
         try {
-            const [expensesData, totalCreditAmount] = await Promise.all([
-                getExpensesData(),
-                getSumOfCredit()
-            ]);
-
-            const responseData = {
-                data: expensesData,
-                total_credit_amount: totalCreditAmount
-            };
-            res.status(200).json(responseData);
+          // Extract pagination details from the request body
+          const page = parseInt(req.body.page) || 1; // Default page is 1
+          const limit = parseInt(req.body.limit) || 10; // Default limit is 10 records per page
+          const offset = (page - 1) * limit;
+      
+          // Fetch expenses data with pagination and calculate total records
+          const [expensesData, totalRecords, totalCreditAmount] = await Promise.all([
+            getExpensesData(limit, offset), // Pass limit and offset for pagination
+            getTotalExpensesCount(), // Function to count the total records in expenses
+            getSumOfCredit()
+          ]);
+      
+          // Calculate total pages based on the total records and limit
+          const totalPages = Math.ceil(totalRecords / limit);
+      
+          // Prepare the response data including pagination details
+          const responseData = {
+            data: expensesData,
+            total_credit_amount: totalCreditAmount,
+            totalRecords: totalRecords,
+            totalPages: totalPages,
+            pageNumber: page // Correct page number
+          };
+      
+          res.status(200).json(responseData);
         } catch (error) {
-            console.error('Error fetching expenses data:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
+          console.error('Error fetching expenses data:', error);
+          res.status(500).json({ error: 'Internal Server Error' });
         }
     });
 
