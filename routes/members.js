@@ -52,22 +52,41 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-// Route to fetch all members
-router.get('/', (request, response) => {
-  pool.query('SELECT * FROM members ORDER BY name ASC', (error, results) => {
-    if (error) {
-      return response.status(500).json({ error: 'Internal server error' });
-    }
-    const members = results.rows;
-    response.status(200).json(members);
-  });
-});
-
-// Route to fetch a specific member by ID
-router.get('/:id', async (request, response) => {
-  const id = parseInt(request.params.id);
+router.post('/', async (request, response) => {
+  const { page = 1, limit = 10 } = request.body;
 
   try {
+      const offset = (page - 1) * limit;
+
+      const totalRecordsResult = await pool.query('SELECT COUNT(*) FROM members');
+      const totalRecords = parseInt(totalRecordsResult.rows[0].count, 10);
+      const totalPages = Math.ceil(totalRecords / limit);
+
+      const results = await pool.query(
+          'SELECT * FROM members ORDER BY name ASC LIMIT $1 OFFSET $2',
+          [limit, offset]
+      );
+
+      const members = results.rows;
+
+      response.status(200).json({
+          data: members,
+          totalRecords,
+          totalPages,
+          pageNumber: page
+      });
+  } catch (error) {
+      console.error('Error fetching members:', error);
+      response.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/:id', async (request, response) => {
+  const id = parseInt(request.params.id);
+  const { page = 1, limit = 10 } = request.body;
+
+  try {
+    // Query to get the member details
     const memberQuery = 'SELECT * FROM members WHERE id = $1';
     const memberResults = await pool.query(memberQuery, [id]);
     const member = memberResults.rows[0];
@@ -76,16 +95,75 @@ router.get('/:id', async (request, response) => {
       return response.status(404).json({ error: 'Member not found' });
     }
 
-    const transactions = await getMemberSales(member.name);
+    // Calculate pagination offset
+    const offset = (page - 1) * limit;
+
+    // Query to get paginated transactions
+    const transactionsQuery = `
+      SELECT 
+        datetime AT TIME ZONE 'Asia/Manila' AS datetime,
+        total::numeric AS total,
+        subtotal::numeric AS subtotal,
+        computer::numeric AS computer,
+        orders::jsonb AS orders,
+        (
+          SELECT SUM((order_item->>'quantity')::numeric)
+          FROM jsonb_array_elements(orders) AS order_item
+        ) AS qty
+      FROM 
+        sales
+      WHERE 
+        customer = $1
+      ORDER BY 
+        datetime DESC
+      LIMIT $2 OFFSET $3
+    `;
+
+    // Query to get total transaction count
+    const countQuery = `
+      SELECT COUNT(*) 
+      FROM sales
+      WHERE customer = $1
+    `;
+
+    // Execute queries
+    const transactionsResults = await pool.query(transactionsQuery, [member.name, limit, offset]);
+    const countResults = await pool.query(countQuery, [member.name]);
+
+    // Calculate pagination metadata
+    const totalRecords = parseInt(countResults.rows[0].count, 10);
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    // Format transaction data
+    const formatter = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    const transactions = transactionsResults.rows.map(row => {
+      return {
+        ...row,
+        total: formatter.format(row.total),
+        subtotal: formatter.format(row.subtotal),
+        computer: formatter.format(row.computer),
+        qty: row.qty,
+        datetime: moment(row.datetime).tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss'),
+      };
+    });
+
+    // Append transactions and pagination info to the member object
     member.transactions = transactions;
+    member.totalRecords = totalRecords;
+    member.totalPages = totalPages;
+    member.pageNumber = page;
 
     response.status(200).json(member);
   } catch (error) {
+    console.error('Error fetching member details or transactions:', error);
     response.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Route to add a new member
 router.post('/', (request, response) => {
   try {
     const { name, date_joined, coffee, total_load, total_spent, last_spent, current_load } = request.body;
