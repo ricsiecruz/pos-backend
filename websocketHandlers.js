@@ -142,7 +142,7 @@ function sendBeverageToClient(client) {
   pool.query(`
     CREATE TABLE IF NOT EXISTS beverage (
       id SERIAL PRIMARY KEY,
-      beverage VARCHAR(255) UNIQUE NOT NULL,
+      beverage VARCHAR(255) DEFAULT NULL,
       price NUMERIC(10, 2) DEFAULT NULL,
       stocks NUMERIC DEFAULT NULL
     );  

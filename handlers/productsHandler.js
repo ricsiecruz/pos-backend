@@ -60,9 +60,27 @@ function editProductInDatabase(updatedProduct) {
   });
 }
 
+function deleteProductFromDatabase(productId) {
+  return new Promise((resolve, reject) => {
+    pool.query(
+      'DELETE FROM products WHERE id = $1',
+      [productId],
+      (error, results) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      }
+    );
+  });
+}
+
 module.exports = {
-    sendProductsToClient,
-    addProductToDatabase,
-    editProductInDatabase
+  sendProductsToClient,
+  addProductToDatabase,
+  editProductInDatabase,
+  deleteProductFromDatabase
 };
+
   

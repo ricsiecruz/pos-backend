@@ -92,6 +92,15 @@ wss.on('connection', (ws, req) => {
             console.error('Error editing product in database:', error);
           });
         break;
+      case 'deleteProduct':
+        productsHandler.deleteProductFromDatabase(data.productId)
+          .then(() => {
+            broadcastProducts(wss);
+          })
+          .catch((error) => {
+            console.error('Error deleting product from database:', error);
+          });
+        break;
       case 'addFood':
         addFoodToDatabase(data.food)
           .then((updatedFoodStock) => {
@@ -248,10 +257,10 @@ async function addBeverageToDatabase(newBeverage) {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS beverage (
         id SERIAL PRIMARY KEY,
-        product VARCHAR(255) UNIQUE NOT NULL,
+        product VARCHAR(255) DEFAULT NULL,
         price NUMERIC(10, 2) DEFAULT NULL,
         stocks NUMERIC DEFAULT NULL
-      );    
+      );
     `);
 
     const result = await pool.query(
