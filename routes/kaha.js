@@ -8,7 +8,7 @@ router.get('/', (req, res) => {
       throw error;
     }
     res.status(200).json(results.rows);
-    console.log('get kaha', results)
+    // console.log('get kaha', results)
   });
 });
 
