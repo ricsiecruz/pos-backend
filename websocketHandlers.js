@@ -137,6 +137,28 @@ function sendFoodsToClient(client) {
   });
 }
 
+function sendBeverageToClient(client) {
+  // Ensure the table exists
+  pool.query(`
+    CREATE TABLE IF NOT EXISTS beverage (
+      id SERIAL PRIMARY KEY,
+      beverage VARCHAR(255) UNIQUE NOT NULL,
+      price NUMERIC(10, 2) DEFAULT NULL,
+      stocks NUMERIC DEFAULT NULL
+    );  
+  `);
+
+  // Query to fetch beverages
+  pool.query('SELECT * FROM beverage ORDER BY beverage', (error, results) => {
+    if (error) {
+      console.error('Error fetching beverage from database:', error);
+      return;
+    }
+    const beverage = results.rows;
+    client.send(JSON.stringify({ action: 'getBeverage', beverage }));
+  });
+}
+
 function sendInventoryToClient(client) {
   pool.query('SELECT * FROM inventory ORDER BY id DESC', (error, results) => {
     if (error) {
@@ -204,5 +226,6 @@ module.exports = {
   sendInventoryToClient,
   sendExpensesToClient,
   sendFoodsToClient,
+  sendBeverageToClient,
   sendMembersToClient
 };

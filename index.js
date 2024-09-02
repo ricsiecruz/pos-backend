@@ -17,6 +17,7 @@ const expensesRoutes = require('./routes/expenses');
 const salesRoutes = require('./routes/sales');
 const membersRoutes = require('./routes/members');
 const foodsRoutes = require('./routes/foods');
+const beverageRoutes = require('./routes/beverage');
 const whitelistRoutes = require('./routes/whitelist');
 const kahaRoutes = require('./routes/kaha');
 
@@ -47,6 +48,7 @@ app.use('/expenses', expensesRoutes(wss)); // Pass WebSocket server instance
 app.use('/sales', salesRoutes);
 app.use('/members', membersRoutes);
 app.use('/foods', foodsRoutes);
+app.use('/beverage', beverageRoutes);
 app.use('/whitelist', whitelistRoutes);
 app.use('/kaha', kahaRoutes);
 
@@ -56,6 +58,7 @@ wss.on('connection', (ws, req) => {
   websocketHandlers.sendSalesToClient(ws);
   websocketHandlers.sendInventoryToClient(ws);
   websocketHandlers.sendFoodsToClient(ws);
+  websocketHandlers.sendBeverageToClient(ws);
   websocketHandlers.sendExpensesToClient(ws);
   membersHandler.sendMembersToClient(ws);
 
@@ -107,6 +110,24 @@ wss.on('connection', (ws, req) => {
             console.error('Error editing food in database:', error);
           });
         break;
+      case 'addBeverage':
+        addBeverageToDatabase(data.beverage)
+          .then((updatedBeverageStock) => {
+            broadcastBeverage(updatedBeverageStock);
+          })
+          .catch((error) => {
+            console.error('Error adding beverage to database:', error);
+          });
+        break;
+      case 'editBeverage':
+        editBeverage(data.beverage)
+          .then(() => {
+            broadcastBeverage();
+          })
+          .catch((error) => {
+            console.error('Error editing beverage to database:', error);
+          });
+        break;
       case 'updateSales':
         salesHandler.updateSalesInDatabase(data.sales)
           .then((updatedSale) => {
@@ -147,6 +168,15 @@ wss.on('connection', (ws, req) => {
           })
           .catch((error) => {
             console.error('Error adding food stock:', error)
+          });
+        break;
+      case 'addBeverageStock':
+        addBeverageStock(data.beverage)
+          .then(() => {
+            broadcastBeverage();
+          })
+          .catch((error) => {
+            console.error('Error adding beverage stocks:', error)
           });
         break;
       case 'addExpenses':
@@ -213,6 +243,33 @@ async function addFoodToDatabase(newFood) {
   }
 }
 
+async function addBeverageToDatabase(newBeverage) {
+  try {
+    const { beverage, price, stocks } = newBeverage;
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS beverage (
+        id SERIAL PRIMARY KEY,
+        beverage VARCHAR(255) UNIQUE NOT NULL,
+        price NUMERIC(10, 2) DEFAULT NULL,
+        stocks NUMERIC DEFAULT NULL
+      );    
+    `);
+
+    const result = await pool.query(
+      'INSERT INTO beverage (beverage, price, stocks) VALUES ($1, $2, $3) RETURNING id, beverage, price, stocks', 
+      [beverage, price, stocks]
+    );
+    const { id } = result.rows[0];
+    const updatedBeverage = await pool.query('SELECT * FROM beverage ORDER BY id DESC');
+    broadcastBeverage(updatedBeverage.rows);
+    return { id, beverage, price, stocks };
+  } catch(error) {
+    console.error('Error adding beverage to database:', error);
+    throw error;
+  }
+}
+
 function editSalesLoad(updatedLoad) {
   return new Promise((resolve, reject) => {
     const { id, transactionid, orders, qty, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount } = updatedLoad;
@@ -247,6 +304,24 @@ function editFood(updatedFood) {
         }
         resolve();
         broadcastFoods();
+      }
+    )
+  })
+}
+
+function editBeverage(updatedBeverage) {
+  return new Promise((resolve, reject) => {
+    const { id, beverage, stocks, price } = updatedBeverage;
+    pool.query(
+      'UPDATE beverage SET beverage = $1, stocks = $2, price = $3 WHERE id = $4', 
+      [beverage, stocks, price, id],
+      (error, results) => {
+        if(error) {
+          reject(error);
+          return;
+        }
+        resolve();
+        broadcastBeverage();
       }
     )
   })
@@ -564,6 +639,24 @@ function addFoodStock(updateFoodStock) {
   })
 }
 
+function addBeverageStock(updateBeverageStock) {
+  return new Promise((resolve, reject) => {
+    const { id, stocks } = updateBeverageStock;
+    pool.query(
+      'UPDATE beverage SET stocks = $1 WHERE id = $2',
+      [stocks, id],
+      (error, results) => {
+        if(error) {
+          reject(error);
+          return;
+        }
+        resolve();
+        broadcastBeverage();
+      }
+    )
+  })
+}
+
 function broadcastExpenses(updatedExpenses) {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
@@ -584,6 +677,14 @@ function broadcastFoods(addFood) {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       websocketHandlers.sendFoodsToClient(client, addFood);
+    }
+  })
+}
+
+function broadcastBeverage(addBeverage) {
+  wss.clients.forEach((client) => {
+    if(client.readyState === WebSocket.OPEN) {
+      websocketHandlers.sendBeverageToClient(client, addBeverage)
     }
   })
 }
