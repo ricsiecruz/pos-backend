@@ -48,7 +48,7 @@ app.use('/sales', salesRoutes);
 app.use('/members', membersRoutes);
 app.use('/foods', foodsRoutes);
 app.use('/whitelist', whitelistRoutes);
-// app.use('/kaha', kahaRoutes);
+app.use('/kaha', kahaRoutes);
 
 wss.on('connection', (ws, req) => {
   console.log('Client connected');
