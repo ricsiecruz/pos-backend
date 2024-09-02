@@ -163,16 +163,19 @@ wss.on('connection', (ws, req) => {
       case 'addExpensesResponse':
         handleAddExpensesResponse(data);
         break;
-      case 'addSales':
-        addTransactionSalesToDatabase(data.sale)
-          .then((newSale) => {
-            broadcastSales(newSale);
-            updateMembersAfterSale();            
-          })
-          .catch((error) => {
-            console.log('Error adding sale to database:', error);
-          });
-        break;
+        case 'addSales':
+          console.log('Attempting to add sale to database:', data.sale);  // Log before calling the function
+          addTransactionSalesToDatabase(data.sale)
+              .then((newSale) => {
+                  console.log('Sale added to database successfully:', newSale);  // Log after success
+                  broadcastSales(newSale);
+                  updateMembersAfterSale();            
+              })
+              .catch((error) => {
+                  console.log('Error adding sale to database:', error);
+              });
+          break;
+      
       case 'addMember':
         addMemberToDatabase(data.member)
           .then(() => {
@@ -340,46 +343,85 @@ const addTransactionSalesToDatabase = (sale) => {
   return new Promise((resolve, reject) => {
     const localDatetime = moment().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss'); // Convert to local time
 
-    const query = `
-      INSERT INTO sales (transactionId, orders, qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-      RETURNING *
-    `;
-    console.log('sale', sale)
-    const values = [
-      sale.transactionId,
-      JSON.stringify(sale.orders),
-      sale.qty,
-      sale.total,
-      localDatetime, // Use the local datetime here
-      sale.customer,
-      sale.computer,
-      sale.subtotal,
-      sale.credit,
-      sale.mode_of_payment,
-      sale.student_discount,
-      sale.discount
-    ];
+    pool.connect((err, client, release) => {
+      if (err) return reject(err);
 
-    pool.query(query, values, (error, results) => {
-      if (error) {
-        reject(error);
-      } else {
-        const insertedSale = results.rows[0];
-        const productNames = sale.orders.map(order => order.product);
+      client.query('BEGIN', (beginError) => {
+        if (beginError) {
+          release();
+          return reject(beginError);
+        }
 
-        // Fetch product details to check for barista and utensils flags
-        const baristaProductsQuery = 'SELECT product FROM products WHERE product = ANY($1) AND barista = true';
-        const utensilsProductsQuery = 'SELECT product FROM foods WHERE product = ANY($1) AND utensils = true';
+        // Check if the transactionId already exists
+        const checkQuery = 'SELECT 1 FROM sales WHERE transactionId = $1';
+        client.query(checkQuery, [sale.transactionId], (checkError, checkResults) => {
+          if (checkError) {
+            return client.query('ROLLBACK', () => {
+              release();
+              reject(checkError);
+            });
+          }
 
-        pool.query(baristaProductsQuery, [productNames], (baristaError, baristaResults) => {
-          if (baristaError) {
-            reject(baristaError);
-          } else {
-            pool.query(utensilsProductsQuery, [productNames], (utensilsError, utensilsResults) => {
-              if (utensilsError) {
-                reject(utensilsError);
-              } else {
+          if (checkResults.rows.length > 0) {
+            console.log(`Sale with transactionId ${sale.transactionId} already exists.`);
+            return client.query('ROLLBACK', () => {
+              release();
+              resolve(null); // Skip insertion or handle as needed
+            });
+          }
+
+          // Proceed with insertion if no duplicate is found
+          const query = `
+            INSERT INTO sales (transactionId, orders, qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING *
+          `;
+          const values = [
+            sale.transactionId,
+            JSON.stringify(sale.orders),
+            sale.qty,
+            sale.total,
+            localDatetime,
+            sale.customer,
+            sale.computer,
+            sale.subtotal,
+            sale.credit,
+            sale.mode_of_payment,
+            sale.student_discount,
+            sale.discount
+          ];
+
+          client.query(query, values, (error, results) => {
+            if (error) {
+              return client.query('ROLLBACK', () => {
+                release();
+                reject(error);
+              });
+            }
+
+            const insertedSale = results.rows[0];
+            const productNames = sale.orders.map(order => order.product);
+
+            // Fetch product details to check for barista and utensils flags
+            const baristaProductsQuery = 'SELECT product FROM products WHERE product = ANY($1) AND barista = true';
+            const utensilsProductsQuery = 'SELECT product FROM foods WHERE product = ANY($1) AND utensils = true';
+
+            client.query(baristaProductsQuery, [productNames], (baristaError, baristaResults) => {
+              if (baristaError) {
+                return client.query('ROLLBACK', () => {
+                  release();
+                  reject(baristaError);
+                });
+              }
+
+              client.query(utensilsProductsQuery, [productNames], (utensilsError, utensilsResults) => {
+                if (utensilsError) {
+                  return client.query('ROLLBACK', () => {
+                    release();
+                    reject(utensilsError);
+                  });
+                }
+
                 // Calculate total quantities for barista and utensils products
                 const totalBaristaQuantity = sale.orders
                   .filter(order => baristaResults.rows.some(bp => bp.product === order.product))
@@ -402,7 +444,7 @@ const addTransactionSalesToDatabase = (sale) => {
                   `;
 
                   baristaPromise = new Promise((resolve, reject) => {
-                    pool.query(updateInventoryBaristaQuery, [totalBaristaQuantity], (updateError, updateResults) => {
+                    client.query(updateInventoryBaristaQuery, [totalBaristaQuantity], (updateError, updateResults) => {
                       if (updateError) {
                         reject(updateError);
                       } else {
@@ -422,7 +464,7 @@ const addTransactionSalesToDatabase = (sale) => {
                   `;
 
                   utensilsPromise = new Promise((resolve, reject) => {
-                    pool.query(updateInventoryUtensilsQuery, [totalUtensilsQuantity], (updateError, updateResults) => {
+                    client.query(updateInventoryUtensilsQuery, [totalUtensilsQuantity], (updateError, updateResults) => {
                       if (updateError) {
                         reject(updateError);
                       } else {
@@ -432,21 +474,34 @@ const addTransactionSalesToDatabase = (sale) => {
                   });
                 }
 
-                // Wait for both promises to resolve before resolving the main promise
+                // Wait for both promises to resolve before committing the transaction
                 Promise.all([baristaPromise, utensilsPromise])
                   .then(() => {
-                    console.log('New sale added successfully:', insertedSale);
-                    resolve(insertedSale);
+                    client.query('COMMIT', (commitError) => {
+                      release();
+                      if (commitError) {
+                        reject(commitError);
+                      } else {
+                        console.log('New sale added successfully');
+                        resolve(insertedSale);
+                      }
+                    });
                   })
-                  .catch(reject);
-              }
+                  .catch((error) => {
+                    client.query('ROLLBACK', () => {
+                      release();
+                      reject(error);
+                    });
+                  });
+              });
             });
-          }
+          });
         });
-      }
+      });
     });
   });
 };
+
 
 function addInventory(newInventory) {
   return new Promise((resolve, reject) => {
