@@ -1,16 +1,16 @@
+// kaha.js
 const express = require('express');
 const pool = require('../db');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-  console.log('kaha')
-  // pool.query('SELECT * FROM kaha', (error, results) => {
-  //   if (error) {
-  //     throw error;
-  //   }
-  //   res.status(200).json(results.rows);
-  //   // console.log('get kaha', results)
-  // });
+  pool.query('SELECT * FROM kaha', (error, results) => {
+    if (error) {
+      throw error;
+    }
+    res.status(200).json(results.rows);
+    // console.log('get kaha', results)
+  });
 });
 
 router.post('/', (req, res) => {
