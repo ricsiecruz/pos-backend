@@ -1,3 +1,4 @@
+// index.js
 const express = require('express');
 const cors = require('cors');
 const moment = require('moment-timezone');
@@ -152,7 +153,6 @@ wss.on('connection', (ws, req) => {
       case 'addExpenses':
         addExpenses(data.expense)
             .then(async (newExpense) => {
-                console.log('Expense added successfully:', newExpense);
                 const totalExpenses = await getSumOfExpensesForCurrentDate();
                 broadcastExpenses({ newExpense, totalExpenses });
             })
