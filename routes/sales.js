@@ -18,7 +18,7 @@ async function getSalesFromJson() {
   try {
     const data = await fs.promises.readFile(salesJsonPath, 'utf-8');
     const jsonData = JSON.parse(data);
-    console.log('Sales data from JSON:', jsonData);
+    console.log('Sales data from JSON:');
     return jsonData;
   } catch (error) {
     console.error('Error reading sales.json:', error);
@@ -222,7 +222,7 @@ router.post('/', async (req, res) => {
       }
     };
 
-    console.log('Sales data sent in response:', responseData);
+    console.log('Sales data sent in response:');
 
     res.json(responseData);
   } catch (error) {

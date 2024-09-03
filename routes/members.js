@@ -1,4 +1,6 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const moment = require('moment-timezone');
 const pool = require('../db');
 const router = express.Router();
@@ -95,10 +97,14 @@ router.post('/:id', async (request, response) => {
       return response.status(404).json({ error: 'Member not found' });
     }
 
-    // Calculate pagination offset
-    const offset = (page - 1) * limit;
+    // Load data from sales.json
+    const jsonFilePath = path.join(__dirname, '../sales.json');
+    const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf-8'));
 
-    // Query to get paginated transactions
+    // Filter the sales data from the JSON file for the member
+    const jsonSales = jsonData.filter(sale => sale.customer === member.name);
+
+    // Query to get transactions from the database
     const transactionsQuery = `
       SELECT 
         datetime AT TIME ZONE 'Asia/Manila' AS datetime,
@@ -116,23 +122,23 @@ router.post('/:id', async (request, response) => {
         customer = $1
       ORDER BY 
         datetime DESC
-      LIMIT $2 OFFSET $3
     `;
 
-    // Query to get total transaction count
-    const countQuery = `
-      SELECT COUNT(*) 
-      FROM sales
-      WHERE customer = $1
-    `;
+    // Execute the database query
+    const transactionsResults = await pool.query(transactionsQuery, [member.name]);
+    const dbSales = transactionsResults.rows;
 
-    // Execute queries
-    const transactionsResults = await pool.query(transactionsQuery, [member.name, limit, offset]);
-    const countResults = await pool.query(countQuery, [member.name]);
+    // Combine the JSON sales and DB sales
+    let allSales = [...jsonSales, ...dbSales];
 
-    // Calculate pagination metadata
-    const totalRecords = parseInt(countResults.rows[0].count, 10);
+    // Sort combined sales by datetime in descending order
+    allSales.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+
+    // Pagination calculations
+    const totalRecords = allSales.length;
     const totalPages = Math.ceil(totalRecords / limit);
+    const offset = (page - 1) * limit;
+    const paginatedSales = allSales.slice(offset, offset + limit);
 
     // Format transaction data
     const formatter = new Intl.NumberFormat('en-US', {
@@ -140,7 +146,7 @@ router.post('/:id', async (request, response) => {
       maximumFractionDigits: 2,
     });
 
-    const transactions = transactionsResults.rows.map(row => {
+    const transactions = paginatedSales.map(row => {
       return {
         ...row,
         total: formatter.format(row.total),
