@@ -3,6 +3,215 @@ const moment = require('moment-timezone');
 const pool = require('../db');
 const router = express.Router();
 
+const addTransactionSalesToDatabase = (sale) => {
+  return new Promise((resolve, reject) => {
+    const localDatetime = moment().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
+
+    pool.connect((err, client, release) => {
+      if (err) return reject(err);
+
+      client.query('BEGIN', (beginError) => {
+        if (beginError) {
+          release();
+          return reject(beginError);
+        }
+
+        const checkQuery = 'SELECT 1 FROM sales WHERE transactionId = $1';
+        client.query(checkQuery, [sale.transactionId], (checkError, checkResults) => {
+          if (checkError) {
+            return client.query('ROLLBACK', () => {
+              release();
+              reject(checkError);
+            });
+          }
+
+          if (checkResults.rows.length > 0) {
+            console.log(`Sale with transactionId ${sale.transactionId} already exists.`);
+            return client.query('ROLLBACK', () => {
+              release();
+              resolve(null);
+            });
+          }
+
+          const query = `
+            INSERT INTO sales (transactionId, orders, qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING *
+          `;
+          const values = [
+            sale.transactionId,
+            JSON.stringify(sale.orders),
+            sale.qty,
+            sale.total,
+            localDatetime,
+            sale.customer,
+            sale.computer,
+            sale.subtotal,
+            sale.credit,
+            sale.mode_of_payment,
+            sale.student_discount,
+            sale.discount
+          ];
+
+          client.query(query, values, (error, results) => {
+            if (error) {
+              return client.query('ROLLBACK', () => {
+                release();
+                reject(error);
+              });
+            }
+
+            const insertedSale = results.rows[0];
+            const productNames = sale.orders.map(order => order.product);
+
+            const baristaProductsQuery = 'SELECT product FROM products WHERE product = ANY($1) AND barista = true';
+            const utensilsProductsQuery = 'SELECT product FROM foods WHERE product = ANY($1) AND utensils = true';
+            const beveragesQuery = 'SELECT product FROM beverage WHERE product = ANY($1)';
+
+            client.query(baristaProductsQuery, [productNames], (baristaError, baristaResults) => {
+              if (baristaError) {
+                return client.query('ROLLBACK', () => {
+                  release();
+                  reject(baristaError);
+                });
+              }
+
+              client.query(utensilsProductsQuery, [productNames], (utensilsError, utensilsResults) => {
+                if (utensilsError) {
+                  return client.query('ROLLBACK', () => {
+                    release();
+                    reject(utensilsError);
+                  });
+                }
+
+                client.query(beveragesQuery, [productNames], (beveragesError, beveragesResults) => {
+                  if (beveragesError) {
+                    return client.query('ROLLBACK', () => {
+                      release();
+                      reject(beveragesError);
+                    });
+                  }
+
+                  const totalBaristaQuantity = sale.orders
+                    .filter(order => baristaResults.rows.some(bp => bp.product === order.product))
+                    .reduce((sum, order) => sum + order.quantity, 0);
+
+                  const totalUtensilsQuantity = sale.orders
+                    .filter(order => utensilsResults.rows.some(up => up.product === order.product))
+                    .reduce((sum, order) => sum + order.quantity, 0);
+
+                  const totalBeverageQuantity = sale.orders
+                    .filter(order => beveragesResults.rows.some(b => b.product === order.product))
+                    .reduce((sum, order) => sum + order.quantity, 0);
+
+                  let baristaPromise = Promise.resolve();
+                  let utensilsPromise = Promise.resolve();
+                  let beveragesPromise = Promise.resolve();
+
+                  if (totalBaristaQuantity > 0) {
+                    const updateInventoryBaristaQuery = `
+                      UPDATE inventory
+                      SET stocks = GREATEST(stocks - $1, 0)
+                      WHERE product IN ('straw', 'lids', 'cups')
+                      RETURNING *
+                    `;
+
+                    baristaPromise = new Promise((resolve, reject) => {
+                      client.query(updateInventoryBaristaQuery, [totalBaristaQuantity], (updateError, updateResults) => {
+                        if (updateError) {
+                          reject(updateError);
+                        } else {
+                          resolve();
+                        }
+                      });
+                    });
+                  }
+
+                  if (totalUtensilsQuantity > 0) {
+                    const updateInventoryUtensilsQuery = `
+                      UPDATE inventory
+                      SET stocks = GREATEST(stocks - $1, 0)
+                      WHERE product = 'forks'
+                      RETURNING *
+                    `;
+
+                    utensilsPromise = new Promise((resolve, reject) => {
+                      client.query(updateInventoryUtensilsQuery, [totalUtensilsQuantity], (updateError, updateResults) => {
+                        if (updateError) {
+                          reject(updateError);
+                        } else {
+                          resolve();
+                        }
+                      });
+                    });
+                  }
+
+                  if (totalBeverageQuantity > 0) {
+                    const updateBeverageStocksQuery = `
+                      UPDATE beverage
+                      SET stocks = GREATEST(stocks - $1, 0)
+                      WHERE product = ANY($2)
+                      RETURNING *
+                    `;
+
+                    beveragesPromise = new Promise((resolve, reject) => {
+                      client.query(updateBeverageStocksQuery, [totalBeverageQuantity, productNames], (updateError, updateResults) => {
+                        if (updateError) {
+                          reject(updateError);
+                        } else {
+                          // Assuming broadcastBeverage is a function that you have
+                          broadcastBeverage();
+                          resolve();
+                        }
+                      });
+                    });
+                  }
+
+                  Promise.all([baristaPromise, utensilsPromise, beveragesPromise])
+                    .then(() => {
+                      client.query('COMMIT', (commitError) => {
+                        release();
+                        if (commitError) {
+                          reject(commitError);
+                        } else {
+                          console.log('New sale added successfully');
+                          resolve(insertedSale);
+                        }
+                      });
+                    })
+                    .catch((error) => {
+                      client.query('ROLLBACK', () => {
+                        release();
+                        reject(error);
+                      });
+                    });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+};
+
+// POST route for adding a new sale transaction
+router.post('/add-sale', async (req, res) => {
+  try {
+    const sale = req.body;
+    const result = await addTransactionSalesToDatabase(sale);
+    
+    if (result) {
+      res.status(201).json({ message: 'Sale added successfully', sale: result });
+    } else {
+      res.status(409).json({ message: 'Sale with the given transactionId already exists' });
+    }
+  } catch (error) {
+    console.error('Error adding sale:', error);
+    res.status(500).json({ message: 'Failed to add sale', error: error.message });
+  }
+});
+
 router.post('/', async (req, res) => {
   try {
     // Check if page and limit are passed in the request body instead of query
