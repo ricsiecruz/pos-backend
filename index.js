@@ -1,3 +1,4 @@
+// index.js
 const express = require('express');
 const cors = require('cors');
 const moment = require('moment-timezone');
@@ -18,7 +19,7 @@ const salesRoutes = require('./routes/sales');
 const membersRoutes = require('./routes/members');
 const foodsRoutes = require('./routes/foods');
 const whitelistRoutes = require('./routes/whitelist');
-// const kahaRoutes = require('./routes/kaha');
+const kahaRoutes = require('./routes/kaha');
 
 // WebSocket server setup
 const server = app.listen(port, () => {
@@ -152,7 +153,6 @@ wss.on('connection', (ws, req) => {
       case 'addExpenses':
         addExpenses(data.expense)
             .then(async (newExpense) => {
-                console.log('Expense added successfully:', newExpense);
                 const totalExpenses = await getSumOfExpensesForCurrentDate();
                 broadcastExpenses({ newExpense, totalExpenses });
             })
@@ -277,7 +277,7 @@ function addMemberToDatabase(newMember) {
               return;
             }
             
-            pool.query('SELECT * FROM members ORDER BY id DESC', (error, results) => {
+            pool.query('SELECT * FROM members ORDER BY name ASC', (error, results) => {
               if (error) {
                 reject(error);
                 return;
@@ -341,12 +341,12 @@ const addTransactionSalesToDatabase = (sale) => {
     const localDatetime = moment().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss'); // Convert to local time
 
     const query = `
-      INSERT INTO sales (transactionid, orders, qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount)
+      INSERT INTO sales (transactionId, orders, qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
     `;
     const values = [
-      sale.transactionid,
+      sale.transactionId,
       JSON.stringify(sale.orders),
       sale.qty,
       sale.total,
