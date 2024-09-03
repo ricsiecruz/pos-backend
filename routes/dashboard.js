@@ -1,4 +1,6 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const pool = require('../db');
 const moment = require('moment-timezone');
 const router = express.Router();
@@ -64,59 +66,94 @@ async function getMostOrdered(isToday = false) {
 }
 
 async function getSalesAndExpensesSummary() {
-    const queryText = `
-        WITH sales_summary AS (
-            SELECT 
-                DATE(datetime AT TIME ZONE '${TIMEZONE}') AS date,
-                SUM(total::numeric) AS total_sales
-            FROM 
-                sales
-            GROUP BY 
-                DATE(datetime AT TIME ZONE '${TIMEZONE}')
-        ),
-        expenses_summary AS (
-            SELECT 
-                DATE(date AT TIME ZONE '${TIMEZONE}') AS date,
-                SUM(amount::numeric) AS total_expenses
-            FROM 
-                expenses
-            GROUP BY 
-                DATE(date AT TIME ZONE '${TIMEZONE}')
-        ),
-        summary AS (
-            SELECT 
-                COALESCE(sales_summary.date, expenses_summary.date) AS date,
-                COALESCE(sales_summary.total_sales, 0) AS total_sales,
-                COALESCE(expenses_summary.total_expenses, 0) AS total_expenses,
-                COALESCE(sales_summary.total_sales, 0) - COALESCE(expenses_summary.total_expenses, 0) AS net
-            FROM 
-                sales_summary
-            FULL OUTER JOIN 
-                expenses_summary 
-            ON 
-                sales_summary.date = expenses_summary.date
-        )
+    const salesJsonPath = path.join(__dirname, '../sales.json');
+    const salesJsonData = JSON.parse(fs.readFileSync(salesJsonPath, 'utf-8'));
+  
+    const salesQueryText = `
         SELECT 
+            DATE(datetime AT TIME ZONE '${TIMEZONE}') AS date,
+            SUM(total::numeric) AS total_sales
+        FROM 
+            sales
+        GROUP BY 
+            DATE(datetime AT TIME ZONE '${TIMEZONE}')
+    `;
+  
+    const expensesQueryText = `
+        SELECT 
+            DATE(date AT TIME ZONE '${TIMEZONE}') AS date,
+            SUM(amount::numeric) AS total_expenses
+        FROM 
+            expenses
+        GROUP BY 
+            DATE(date AT TIME ZONE '${TIMEZONE}')
+    `;
+  
+    // Execute database queries
+    const salesResults = await pool.query(salesQueryText);
+    const expensesResults = await pool.query(expensesQueryText);
+  
+    // Process sales data from the database
+    const dbSalesData = salesResults.rows.reduce((acc, row) => {
+        acc[row.date] = {
+            date: row.date,
+            total_sales: parseFloat(row.total_sales) || 0,
+        };
+        return acc;
+    }, {});
+  
+    // Process sales data from the sales.json file
+    const jsonSalesData = salesJsonData.reduce((acc, sale) => {
+        const date = moment(sale.datetime).tz(TIMEZONE).format('YYYY-MM-DD');
+        if (!acc[date]) {
+            acc[date] = { date: date, total_sales: 0 };
+        }
+        acc[date].total_sales += parseFloat(sale.total) || 0;
+        return acc;
+    }, {});
+  
+    // Combine sales data from both the database and sales.json
+    const combinedSalesData = { ...jsonSalesData, ...dbSalesData };
+  
+    // Process expenses data from the database
+    const expensesData = expensesResults.rows.reduce((acc, row) => {
+        acc[row.date] = {
+            date: row.date,
+            total_expenses: parseFloat(row.total_expenses) || 0,
+        };
+        return acc;
+    }, {});
+  
+    // Combine sales and expenses data
+    const combinedData = [];
+    const allDates = new Set([...Object.keys(combinedSalesData), ...Object.keys(expensesData)]);
+  
+    allDates.forEach(date => {
+        const total_sales = combinedSalesData[date]?.total_sales || 0;
+        const total_expenses = expensesData[date]?.total_expenses || 0;
+        const net = total_sales - total_expenses;
+  
+        combinedData.push({
             date,
             total_sales,
             total_expenses,
-            net
-        FROM 
-            summary
-        WHERE 
-            total_sales > 0
-        ORDER BY 
-            total_sales DESC;
-    `;
-
-    const { rows } = await pool.query(queryText);
-
+            net,
+        });
+    });
+  
+    // Sort combined data by total sales in descending order
+    combinedData.sort((a, b) => b.total_sales - a.total_sales);
+  
+    // Filter out entries with total_sales = 0 for all-time low calculation
+    const filteredData = combinedData.filter(item => item.total_sales > 0);
+  
     return {
-        data: rows,
-        all_time_low: rows[rows.length - 1],
-        all_time_high: rows[0]
+        data: combinedData,
+        all_time_low: filteredData[filteredData.length - 1],
+        all_time_high: filteredData[0],
     };
 }
+
 
 async function getTopSpenders(today = false) {
     let queryText = `
@@ -217,7 +254,7 @@ router.get('/sales-expenses-summary', async (req, res) => {
         console.error('Error fetching sales and expenses summary:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
-});
+  });
 
 router.get('/top-spenders', async (req, res) => {
     try {
