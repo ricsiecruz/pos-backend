@@ -26,13 +26,19 @@ async function getSalesFromJson() {
   }
 }
 
-// Helper function to write to sales.json
 async function writeSalesToJson(salesData) {
   try {
     const existingData = await getSalesFromJson();
     const updatedData = [...existingData, ...salesData];
+    
+    // Sort the updated data by datetime in descending order
+    updatedData.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+    
     await fs.promises.writeFile(salesJsonPath, JSON.stringify(updatedData, null, 2));
     console.log('Sales data successfully written to sales.json');
+    
+    // Optional: Log the first few entries to verify order
+    console.log('First few entries in sorted sales.json:', updatedData.slice(0, 5));
   } catch (error) {
     console.error('Error writing to sales.json:', error);
   }
@@ -114,16 +120,6 @@ cron.schedule('0 0 1 * *', async () => {
   await exportPreviousMonthsSales();
 });
 
-// router.post('/manual-export', async (req, res) => {
-//   try {
-//     await exportPreviousMonthSales();
-//     res.status(200).json({ message: 'Previous month sales exported successfully.' });
-//   } catch (error) {
-//     res.status(500).json({ error: 'Error exporting previous month sales.' });
-//   }
-// });
-
-// Merge JSON and database sales data
 async function mergeSalesData(jsonSales, dbSales) {
   // Combine the two data sources
   const combinedSales = [...jsonSales, ...dbSales];

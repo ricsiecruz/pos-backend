@@ -1,1060 +1,5 @@
 [
   {
-    "id": 109,
-    "transactionid": "TRX-1719288155181-32212",
-    "orders": [],
-    "qty": 0,
-    "total": "9.00",
-    "datetime": "2024-06-24T12:02:35.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "9.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 110,
-    "transactionid": "TRX-1719288242617-91536",
-    "orders": [],
-    "qty": 0,
-    "total": "1.00",
-    "datetime": "2024-06-24T04:04:02.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "1.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 111,
-    "transactionid": "TRX-1719291293770-61062",
-    "orders": [],
-    "qty": 0,
-    "total": "9.00",
-    "datetime": "2024-06-24T12:54:53.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "9.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 104,
-    "transactionid": "TRX-1719286523190-20446",
-    "orders": [],
-    "qty": 0,
-    "total": "125.00",
-    "datetime": "2024-06-20T11:35:23.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "125.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 97,
-    "transactionid": "TRX-1719285701696-20493",
-    "orders": [],
-    "qty": 0,
-    "total": "65.00",
-    "datetime": "2024-06-25T11:21:41.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "65.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 137,
-    "transactionid": "TRX-1719541803206-74925",
-    "orders": [
-      {
-        "price": "54",
-        "total": 54,
-        "product": "h",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "54.00",
-    "datetime": "2024-06-28T02:30:03.000Z",
-    "customer": "RAMOS",
-    "computer": "0.00",
-    "subtotal": "54.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 116,
-    "transactionid": "TRX-1719331255969-80174",
-    "orders": [
-      {
-        "price": "54",
-        "total": 54,
-        "product": "h",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "54.00",
-    "datetime": "2024-06-25T16:00:55.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "0.00",
-    "subtotal": "54.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 113,
-    "transactionid": "TRX-1719292608496-68176",
-    "orders": [
-      {
-        "price": "54",
-        "total": 54,
-        "product": "h",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "54.00",
-    "datetime": "2024-06-25T05:16:48.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "0.00",
-    "subtotal": "54.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 114,
-    "transactionid": "TRX-1719300440437-62933",
-    "orders": [
-      {
-        "price": "70.00",
-        "total": 140,
-        "product": "cookies",
-        "quantity": 2
-      },
-      {
-        "price": "55.00",
-        "total": 110,
-        "product": "caramel bar",
-        "quantity": 2
-      }
-    ],
-    "qty": 4,
-    "total": "250.00",
-    "datetime": "2024-06-25T07:27:20.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "0.00",
-    "subtotal": "250.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 117,
-    "transactionid": "TRX-1719332002369-93422",
-    "orders": [
-      {
-        "price": "54",
-        "total": 54,
-        "product": "h",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "54.00",
-    "datetime": "2024-06-25T16:13:22.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "0.00",
-    "subtotal": "54.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 118,
-    "transactionid": "TRX-1719388638874-55889",
-    "orders": [
-      {
-        "price": "54",
-        "total": 54,
-        "product": "h",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "54.00",
-    "datetime": "2024-06-26T07:57:18.000Z",
-    "customer": "RAMOS",
-    "computer": "0.00",
-    "subtotal": "54.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 93,
-    "transactionid": "TRX-1719281661353-89995",
-    "orders": [],
-    "qty": 0,
-    "total": "50.00",
-    "datetime": "2024-06-23T10:14:21.353Z",
-    "customer": "RAMOS",
-    "computer": "50.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 119,
-    "transactionid": "TRX-1719398316854-57309",
-    "orders": [],
-    "qty": 0,
-    "total": "4.00",
-    "datetime": "2024-06-26T10:38:36.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "4.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 112,
-    "transactionid": "TRX-1719291888265-72715",
-    "orders": [],
-    "qty": 0,
-    "total": "11.00",
-    "datetime": "2024-06-25T05:04:48.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "11.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 120,
-    "transactionid": "TRX-1719422305199-32856",
-    "orders": [
-      {
-        "price": "54",
-        "total": 54,
-        "product": "h",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "54.00",
-    "datetime": "2024-06-26T17:18:25.000Z",
-    "customer": "RAMOS",
-    "computer": "0.00",
-    "subtotal": "54.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 121,
-    "transactionid": "TRX-1719422309305-73826",
-    "orders": [
-      {
-        "price": "65",
-        "total": 65,
-        "product": "e",
-        "quantity": 1
-      },
-      {
-        "price": "65",
-        "total": 65,
-        "product": "d",
-        "quantity": 1
-      }
-    ],
-    "qty": 2,
-    "total": "130.00",
-    "datetime": "2024-06-26T17:18:29.000Z",
-    "customer": "AKII459",
-    "computer": "0.00",
-    "subtotal": "130.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 122,
-    "transactionid": "TRX-1719422313704-28706",
-    "orders": [
-      {
-        "price": "200",
-        "total": 200,
-        "product": "i",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "200.00",
-    "datetime": "2024-06-26T17:18:33.000Z",
-    "customer": "RAMOS",
-    "computer": "0.00",
-    "subtotal": "200.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 115,
-    "transactionid": "TRX-1719300519773-87241",
-    "orders": [
-      {
-        "price": "200",
-        "total": 200,
-        "product": "i",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "204.00",
-    "datetime": "2024-06-25T07:28:39.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "4.00",
-    "subtotal": "200.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 123,
-    "transactionid": "TRX-1719422320441-73055",
-    "orders": [],
-    "qty": 0,
-    "total": "50.00",
-    "datetime": "2024-06-26T17:18:40.000Z",
-    "customer": "AKII459",
-    "computer": "50.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 124,
-    "transactionid": "TRX-1719422325005-51873",
-    "orders": [],
-    "qty": 0,
-    "total": "10.00",
-    "datetime": "2024-06-26T17:18:45.000Z",
-    "customer": "RAMOS",
-    "computer": "10.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 125,
-    "transactionid": "TRX-1719422329605-47257",
-    "orders": [],
-    "qty": 0,
-    "total": "550.00",
-    "datetime": "2024-06-26T17:18:49.000Z",
-    "customer": "AKII459",
-    "computer": "550.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 138,
-    "transactionid": "TRX-1719541806364-87855",
-    "orders": [
-      {
-        "price": "200",
-        "total": 200,
-        "product": "i",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "200.00",
-    "datetime": "2024-06-28T02:30:06.000Z",
-    "customer": "AKII459",
-    "computer": "0.00",
-    "subtotal": "200.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 139,
-    "transactionid": "TRX-1719541810262-99188",
-    "orders": [
-      {
-        "price": "65",
-        "total": 65,
-        "product": "d",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "115.00",
-    "datetime": "2024-06-28T02:30:10.000Z",
-    "customer": "RAMOS",
-    "computer": "50.00",
-    "subtotal": "65.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 140,
-    "transactionid": "TRX-1719541816201-69485",
-    "orders": [],
-    "qty": 0,
-    "total": "90.00",
-    "datetime": "2024-06-28T02:30:16.000Z",
-    "customer": "AKII459",
-    "computer": "90.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 141,
-    "transactionid": "TRX-1719542046683-26582",
-    "orders": [
-      {
-        "price": "54",
-        "total": 54,
-        "product": "h",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "54.00",
-    "datetime": "2024-06-28T02:34:06.000Z",
-    "customer": "RAMOS",
-    "computer": "0.00",
-    "subtotal": "54.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 126,
-    "transactionid": "TRX-1719422334162-84004",
-    "orders": [],
-    "qty": 0,
-    "total": "20.00",
-    "datetime": "2024-06-26T17:18:54.000Z",
-    "customer": "AKII459",
-    "computer": "20.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 127,
-    "transactionid": "TRX-1719508107411-87302",
-    "orders": [
-      {
-        "price": "54",
-        "total": 54,
-        "product": "h",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "54.00",
-    "datetime": "2024-06-27T17:08:27.000Z",
-    "customer": "RAMOS",
-    "computer": "0.00",
-    "subtotal": "54.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 130,
-    "transactionid": "TRX-1719508121319-36637",
-    "orders": [
-      {
-        "price": "65",
-        "total": 65,
-        "product": "d",
-        "quantity": 1
-      },
-      {
-        "price": "65",
-        "total": 65,
-        "product": "e",
-        "quantity": 1
-      }
-    ],
-    "qty": 2,
-    "total": "130.00",
-    "datetime": "2024-06-27T17:08:41.000Z",
-    "customer": "AKII459",
-    "computer": "0.00",
-    "subtotal": "130.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 131,
-    "transactionid": "TRX-1719508125504-93712",
-    "orders": [
-      {
-        "price": "65",
-        "total": 65,
-        "product": "z",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "65.00",
-    "datetime": "2024-06-27T17:08:45.000Z",
-    "customer": "AKII459",
-    "computer": "0.00",
-    "subtotal": "65.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 132,
-    "transactionid": "TRX-1719508139487-53285",
-    "orders": [
-      {
-        "price": "5",
-        "total": 5,
-        "product": "k",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "5.00",
-    "datetime": "2024-06-27T17:08:59.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "0.00",
-    "subtotal": "5.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 133,
-    "transactionid": "TRX-1719508178972-82759",
-    "orders": [
-      {
-        "price": "200",
-        "total": 200,
-        "product": "i",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "200.00",
-    "datetime": "2024-06-27T17:09:38.000Z",
-    "customer": "RAMOS",
-    "computer": "0.00",
-    "subtotal": "200.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 134,
-    "transactionid": "TRX-1719508304026-65268",
-    "orders": [
-      {
-        "price": "65",
-        "total": 65,
-        "product": "d",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "65.00",
-    "datetime": "2024-06-27T17:11:44.000Z",
-    "customer": "AKII459",
-    "computer": "0.00",
-    "subtotal": "65.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 136,
-    "transactionid": "TRX-1719508587263-59840",
-    "orders": [
-      {
-        "price": "54",
-        "total": 54,
-        "product": "h",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "54.00",
-    "datetime": "2024-06-27T17:16:27.000Z",
-    "customer": "RAMOS",
-    "computer": "0.00",
-    "subtotal": "54.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 142,
-    "transactionid": "TRX-1719559063044-23681",
-    "orders": [],
-    "qty": 0,
-    "total": "55.00",
-    "datetime": "2024-06-28T07:17:43.000Z",
-    "customer": "RAMOS",
-    "computer": "55.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 143,
-    "transactionid": "TRX-1719564279311-34742",
-    "orders": [
-      {
-        "price": "54",
-        "total": 54,
-        "product": "h",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "54.00",
-    "datetime": "2024-06-28T08:44:39.000Z",
-    "customer": "RAMOS",
-    "computer": "0.00",
-    "subtotal": "54.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 144,
-    "transactionid": "TRX-1719564303625-51997",
-    "orders": [],
-    "qty": 0,
-    "total": "1.00",
-    "datetime": "2024-06-28T08:45:03.000Z",
-    "customer": "RAMOS",
-    "computer": "1.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 145,
-    "transactionid": "TRX-1719564725432-25111",
-    "orders": [
-      {
-        "price": "200",
-        "total": 200,
-        "product": "i",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "200.00",
-    "datetime": "2024-06-28T08:52:05.000Z",
-    "customer": "test",
-    "computer": "0.00",
-    "subtotal": "200.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 147,
-    "transactionid": "TRX-1719673376173-65950",
-    "orders": [
-      {
-        "price": "65",
-        "total": 65,
-        "product": "d",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "65.00",
-    "datetime": "2024-06-29T15:02:56.000Z",
-    "customer": "RAMOS",
-    "computer": "0.00",
-    "subtotal": "65.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 146,
-    "transactionid": "TRX-1719641208051-11390",
-    "orders": [
-      {
-        "price": "54",
-        "total": 54,
-        "product": "h",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "54.00",
-    "datetime": "2024-06-29T06:06:48.000Z",
-    "customer": "test",
-    "computer": "0.00",
-    "subtotal": "54.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 128,
-    "transactionid": "TRX-1719508110159-14256",
-    "orders": [],
-    "qty": 0,
-    "total": "40.00",
-    "datetime": "2024-06-27T17:08:30.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "40.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 129,
-    "transactionid": "TRX-1719508116018-63241",
-    "orders": [],
-    "qty": 0,
-    "total": "10.00",
-    "datetime": "2024-06-27T17:08:36.000Z",
-    "customer": "RAMOS",
-    "computer": "10.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 95,
-    "transactionid": "TRX-1719285334387-30639",
-    "orders": [],
-    "qty": 0,
-    "total": "2.00",
-    "datetime": "2024-06-24T11:15:34.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "2.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 96,
-    "transactionid": "TRX-1719285481087-77976",
-    "orders": [],
-    "qty": 0,
-    "total": "4.00",
-    "datetime": "2024-06-24T11:18:01.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "4.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 98,
-    "transactionid": "TRX-1719285806516-22411",
-    "orders": [],
-    "qty": 0,
-    "total": "7.00",
-    "datetime": "2024-06-24T11:23:26.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "7.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 99,
-    "transactionid": "TRX-1719285889275-52052",
-    "orders": [],
-    "qty": 0,
-    "total": "5.00",
-    "datetime": "2024-06-24T11:24:49.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "5.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 100,
-    "transactionid": "TRX-1719286045572-51245",
-    "orders": [],
-    "qty": 0,
-    "total": "5.00",
-    "datetime": "2024-06-24T11:27:25.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "5.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 101,
-    "transactionid": "TRX-1719286212167-42665",
-    "orders": [],
-    "qty": 0,
-    "total": "7.00",
-    "datetime": "2024-06-24T11:30:12.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "7.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 102,
-    "transactionid": "TRX-1719286298684-75230",
-    "orders": [],
-    "qty": 0,
-    "total": "7.00",
-    "datetime": "2024-06-24T11:31:38.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "7.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 103,
-    "transactionid": "TRX-1719286444794-57143",
-    "orders": [],
-    "qty": 0,
-    "total": "8.00",
-    "datetime": "2024-06-24T11:34:04.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "8.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 105,
-    "transactionid": "TRX-1719286623433-67468",
-    "orders": [],
-    "qty": 0,
-    "total": "6.00",
-    "datetime": "2024-06-24T11:37:03.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "6.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 106,
-    "transactionid": "TRX-1719287516999-70564",
-    "orders": [],
-    "qty": 0,
-    "total": "9.00",
-    "datetime": "2024-06-24T11:51:57.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "9.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 107,
-    "transactionid": "TRX-1719287605331-91447",
-    "orders": [],
-    "qty": 0,
-    "total": "8.00",
-    "datetime": "2024-06-24T11:53:25.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "8.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 108,
-    "transactionid": "TRX-1719287692656-58117",
-    "orders": [],
-    "qty": 0,
-    "total": "7.00",
-    "datetime": "2024-06-24T11:54:52.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "7.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 94,
-    "transactionid": "TRX-1719281762328-11571",
-    "orders": [],
-    "qty": 0,
-    "total": "6.00",
-    "datetime": "2024-06-22T10:16:02.328Z",
-    "customer": "AKII459",
-    "computer": "6.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 135,
-    "transactionid": "TRX-1719508459473-62784",
-    "orders": [],
-    "qty": 0,
-    "total": "4.00",
-    "datetime": "2024-06-27T17:14:19.000Z",
-    "customer": "RAMOS",
-    "computer": "4.00",
-    "subtotal": "0.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
-    "id": 148,
-    "transactionid": "TRX-1719678497741-87647",
-    "orders": [
-      {
-        "price": "200",
-        "total": 200,
-        "product": "i",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "200.00",
-    "datetime": "2024-06-29T16:28:17.000Z",
-    "customer": "test",
-    "computer": "0.00",
-    "subtotal": "200.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": true,
-    "discount": "0.00"
-  },
-  {
-    "id": 149,
-    "transactionid": "TRX-1719729855837-99999",
-    "orders": [
-      {
-        "price": "54",
-        "total": 54,
-        "product": "h",
-        "quantity": 1
-      }
-    ],
-    "qty": 1,
-    "total": "54.00",
-    "datetime": "2024-06-30T06:44:15.000Z",
-    "customer": "Walk-in Customer",
-    "computer": "0.00",
-    "subtotal": "54.00",
-    "credit": "0.00",
-    "mode_of_payment": null,
-    "student_discount": false,
-    "discount": "0.00"
-  },
-  {
     "id": 259,
     "transactionid": "TRX-1724515538890-80675",
     "orders": [
@@ -1143,22 +88,44 @@
     "discount": "0.00"
   },
   {
-    "id": 248,
-    "transactionid": "TRX-1724485021772-99725",
+    "id": 255,
+    "transactionid": "TRX-1724498783358-49819",
     "orders": [
       {
-        "price": "78",
-        "total": 78,
-        "product": "macchiato",
+        "price": "100",
+        "total": 100,
+        "product": "matcha",
         "quantity": 1
       }
     ],
     "qty": 1,
-    "total": "78.00",
-    "datetime": "2024-08-24T07:37:01.000Z",
+    "total": "100.00",
+    "datetime": "2024-08-24T11:26:23.000Z",
     "customer": "Walk-in Customer",
     "computer": "0.00",
-    "subtotal": "78.00",
+    "subtotal": "100.00",
+    "credit": "0.00",
+    "mode_of_payment": "cash",
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 256,
+    "transactionid": "TRX-1724498783358-49819",
+    "orders": [
+      {
+        "price": "100",
+        "total": 100,
+        "product": "matcha",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "100.00",
+    "datetime": "2024-08-24T11:26:23.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "0.00",
+    "subtotal": "100.00",
     "credit": "0.00",
     "mode_of_payment": "cash",
     "student_discount": false,
@@ -1209,22 +176,44 @@
     "discount": "0.00"
   },
   {
-    "id": 242,
-    "transactionid": "TRX-1724063147033-29972",
+    "id": 251,
+    "transactionid": "TRX-1724498235044-42296",
     "orders": [
       {
-        "price": "5",
-        "total": 5,
-        "product": "CARAMEL MACCHIATO ICE (16oz)",
+        "price": "78",
+        "total": 78,
+        "product": "macchiato",
         "quantity": 1
       }
     ],
     "qty": 1,
-    "total": "5.00",
-    "datetime": "2024-08-19T10:25:47.000Z",
+    "total": "78.00",
+    "datetime": "2024-08-24T11:17:15.000Z",
     "customer": "Walk-in Customer",
     "computer": "0.00",
-    "subtotal": "5.00",
+    "subtotal": "78.00",
+    "credit": "0.00",
+    "mode_of_payment": "cash",
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 252,
+    "transactionid": "TRX-1724498235044-42296",
+    "orders": [
+      {
+        "price": "78",
+        "total": 78,
+        "product": "macchiato",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "78.00",
+    "datetime": "2024-08-24T11:17:15.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "0.00",
+    "subtotal": "78.00",
     "credit": "0.00",
     "mode_of_payment": "cash",
     "student_discount": false,
@@ -1253,8 +242,8 @@
     "discount": "0.00"
   },
   {
-    "id": 255,
-    "transactionid": "TRX-1724498783358-49819",
+    "id": 250,
+    "transactionid": "TRX-1724497818944-30980",
     "orders": [
       {
         "price": "100",
@@ -1265,7 +254,95 @@
     ],
     "qty": 1,
     "total": "100.00",
-    "datetime": "2024-08-24T11:26:23.000Z",
+    "datetime": "2024-08-24T11:10:18.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "0.00",
+    "subtotal": "100.00",
+    "credit": "0.00",
+    "mode_of_payment": "cash",
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 248,
+    "transactionid": "TRX-1724485021772-99725",
+    "orders": [
+      {
+        "price": "78",
+        "total": 78,
+        "product": "macchiato",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "78.00",
+    "datetime": "2024-08-24T07:37:01.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "0.00",
+    "subtotal": "78.00",
+    "credit": "0.00",
+    "mode_of_payment": "cash",
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 247,
+    "transactionid": "TRX-1724485021772-99725",
+    "orders": [
+      {
+        "price": "78",
+        "total": 78,
+        "product": "macchiato",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "78.00",
+    "datetime": "2024-08-24T07:37:01.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "0.00",
+    "subtotal": "78.00",
+    "credit": "0.00",
+    "mode_of_payment": "cash",
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 245,
+    "transactionid": "TRX-1724484969726-13792",
+    "orders": [
+      {
+        "price": "100",
+        "total": 100,
+        "product": "matcha",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "100.00",
+    "datetime": "2024-08-24T07:36:09.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "0.00",
+    "subtotal": "100.00",
+    "credit": "0.00",
+    "mode_of_payment": "cash",
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 246,
+    "transactionid": "TRX-1724484969726-13792",
+    "orders": [
+      {
+        "price": "100",
+        "total": 100,
+        "product": "matcha",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "100.00",
+    "datetime": "2024-08-24T07:36:09.000Z",
     "customer": "Walk-in Customer",
     "computer": "0.00",
     "subtotal": "100.00",
@@ -1319,156 +396,1101 @@
     "discount": "0.00"
   },
   {
-    "id": 250,
-    "transactionid": "TRX-1724497818944-30980",
+    "id": 242,
+    "transactionid": "TRX-1724063147033-29972",
     "orders": [
       {
-        "price": "100",
-        "total": 100,
-        "product": "matcha",
+        "price": "5",
+        "total": 5,
+        "product": "CARAMEL MACCHIATO ICE (16oz)",
         "quantity": 1
       }
     ],
     "qty": 1,
-    "total": "100.00",
-    "datetime": "2024-08-24T11:10:18.000Z",
+    "total": "5.00",
+    "datetime": "2024-08-19T10:25:47.000Z",
     "customer": "Walk-in Customer",
     "computer": "0.00",
-    "subtotal": "100.00",
+    "subtotal": "5.00",
     "credit": "0.00",
     "mode_of_payment": "cash",
     "student_discount": false,
     "discount": "0.00"
   },
   {
-    "id": 256,
-    "transactionid": "TRX-1724498783358-49819",
+    "id": 329,
+    "transactionid": "TRX-1725288923723-10095",
     "orders": [
       {
-        "price": "100",
-        "total": 100,
-        "product": "matcha",
+        "price": "2.00",
+        "total": 2,
+        "product": "b",
         "quantity": 1
       }
     ],
     "qty": 1,
-    "total": "100.00",
-    "datetime": "2024-08-24T11:26:23.000Z",
-    "customer": "Walk-in Customer",
+    "total": "2.00",
+    "datetime": "2024-08-02T14:55:23.000Z",
+    "customer": "r",
     "computer": "0.00",
-    "subtotal": "100.00",
+    "subtotal": "2.00",
     "credit": "0.00",
     "mode_of_payment": "cash",
     "student_discount": false,
     "discount": "0.00"
   },
   {
-    "id": 245,
-    "transactionid": "TRX-1724484969726-13792",
+    "id": 149,
+    "transactionid": "TRX-1719729855837-99999",
     "orders": [
       {
-        "price": "100",
-        "total": 100,
-        "product": "matcha",
+        "price": "54",
+        "total": 54,
+        "product": "h",
         "quantity": 1
       }
     ],
     "qty": 1,
-    "total": "100.00",
-    "datetime": "2024-08-24T07:36:09.000Z",
+    "total": "54.00",
+    "datetime": "2024-06-30T06:44:15.000Z",
     "customer": "Walk-in Customer",
     "computer": "0.00",
-    "subtotal": "100.00",
+    "subtotal": "54.00",
     "credit": "0.00",
-    "mode_of_payment": "cash",
+    "mode_of_payment": null,
     "student_discount": false,
     "discount": "0.00"
   },
   {
-    "id": 246,
-    "transactionid": "TRX-1724484969726-13792",
+    "id": 148,
+    "transactionid": "TRX-1719678497741-87647",
     "orders": [
       {
-        "price": "100",
-        "total": 100,
-        "product": "matcha",
+        "price": "200",
+        "total": 200,
+        "product": "i",
         "quantity": 1
       }
     ],
     "qty": 1,
-    "total": "100.00",
-    "datetime": "2024-08-24T07:36:09.000Z",
-    "customer": "Walk-in Customer",
+    "total": "200.00",
+    "datetime": "2024-06-29T16:28:17.000Z",
+    "customer": "test",
     "computer": "0.00",
-    "subtotal": "100.00",
+    "subtotal": "200.00",
     "credit": "0.00",
-    "mode_of_payment": "cash",
+    "mode_of_payment": null,
+    "student_discount": true,
+    "discount": "0.00"
+  },
+  {
+    "id": 147,
+    "transactionid": "TRX-1719673376173-65950",
+    "orders": [
+      {
+        "price": "65",
+        "total": 65,
+        "product": "d",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "65.00",
+    "datetime": "2024-06-29T15:02:56.000Z",
+    "customer": "RAMOS",
+    "computer": "0.00",
+    "subtotal": "65.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
     "student_discount": false,
     "discount": "0.00"
   },
   {
-    "id": 251,
-    "transactionid": "TRX-1724498235044-42296",
+    "id": 146,
+    "transactionid": "TRX-1719641208051-11390",
     "orders": [
       {
-        "price": "78",
-        "total": 78,
-        "product": "macchiato",
+        "price": "54",
+        "total": 54,
+        "product": "h",
         "quantity": 1
       }
     ],
     "qty": 1,
-    "total": "78.00",
-    "datetime": "2024-08-24T11:17:15.000Z",
-    "customer": "Walk-in Customer",
+    "total": "54.00",
+    "datetime": "2024-06-29T06:06:48.000Z",
+    "customer": "test",
     "computer": "0.00",
-    "subtotal": "78.00",
+    "subtotal": "54.00",
     "credit": "0.00",
-    "mode_of_payment": "cash",
+    "mode_of_payment": null,
     "student_discount": false,
     "discount": "0.00"
   },
   {
-    "id": 247,
-    "transactionid": "TRX-1724485021772-99725",
+    "id": 145,
+    "transactionid": "TRX-1719564725432-25111",
     "orders": [
       {
-        "price": "78",
-        "total": 78,
-        "product": "macchiato",
+        "price": "200",
+        "total": 200,
+        "product": "i",
         "quantity": 1
       }
     ],
     "qty": 1,
-    "total": "78.00",
-    "datetime": "2024-08-24T07:37:01.000Z",
-    "customer": "Walk-in Customer",
+    "total": "200.00",
+    "datetime": "2024-06-28T08:52:05.000Z",
+    "customer": "test",
     "computer": "0.00",
-    "subtotal": "78.00",
+    "subtotal": "200.00",
     "credit": "0.00",
-    "mode_of_payment": "cash",
+    "mode_of_payment": null,
     "student_discount": false,
     "discount": "0.00"
   },
   {
-    "id": 252,
-    "transactionid": "TRX-1724498235044-42296",
+    "id": 144,
+    "transactionid": "TRX-1719564303625-51997",
+    "orders": [],
+    "qty": 0,
+    "total": "1.00",
+    "datetime": "2024-06-28T08:45:03.000Z",
+    "customer": "RAMOS",
+    "computer": "1.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 143,
+    "transactionid": "TRX-1719564279311-34742",
     "orders": [
       {
-        "price": "78",
-        "total": 78,
-        "product": "macchiato",
+        "price": "54",
+        "total": 54,
+        "product": "h",
         "quantity": 1
       }
     ],
     "qty": 1,
-    "total": "78.00",
-    "datetime": "2024-08-24T11:17:15.000Z",
+    "total": "54.00",
+    "datetime": "2024-06-28T08:44:39.000Z",
+    "customer": "RAMOS",
+    "computer": "0.00",
+    "subtotal": "54.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 142,
+    "transactionid": "TRX-1719559063044-23681",
+    "orders": [],
+    "qty": 0,
+    "total": "55.00",
+    "datetime": "2024-06-28T07:17:43.000Z",
+    "customer": "RAMOS",
+    "computer": "55.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 141,
+    "transactionid": "TRX-1719542046683-26582",
+    "orders": [
+      {
+        "price": "54",
+        "total": 54,
+        "product": "h",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "54.00",
+    "datetime": "2024-06-28T02:34:06.000Z",
+    "customer": "RAMOS",
+    "computer": "0.00",
+    "subtotal": "54.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 140,
+    "transactionid": "TRX-1719541816201-69485",
+    "orders": [],
+    "qty": 0,
+    "total": "90.00",
+    "datetime": "2024-06-28T02:30:16.000Z",
+    "customer": "AKII459",
+    "computer": "90.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 139,
+    "transactionid": "TRX-1719541810262-99188",
+    "orders": [
+      {
+        "price": "65",
+        "total": 65,
+        "product": "d",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "115.00",
+    "datetime": "2024-06-28T02:30:10.000Z",
+    "customer": "RAMOS",
+    "computer": "50.00",
+    "subtotal": "65.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 138,
+    "transactionid": "TRX-1719541806364-87855",
+    "orders": [
+      {
+        "price": "200",
+        "total": 200,
+        "product": "i",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "200.00",
+    "datetime": "2024-06-28T02:30:06.000Z",
+    "customer": "AKII459",
+    "computer": "0.00",
+    "subtotal": "200.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 137,
+    "transactionid": "TRX-1719541803206-74925",
+    "orders": [
+      {
+        "price": "54",
+        "total": 54,
+        "product": "h",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "54.00",
+    "datetime": "2024-06-28T02:30:03.000Z",
+    "customer": "RAMOS",
+    "computer": "0.00",
+    "subtotal": "54.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 136,
+    "transactionid": "TRX-1719508587263-59840",
+    "orders": [
+      {
+        "price": "54",
+        "total": 54,
+        "product": "h",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "54.00",
+    "datetime": "2024-06-27T17:16:27.000Z",
+    "customer": "RAMOS",
+    "computer": "0.00",
+    "subtotal": "54.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 135,
+    "transactionid": "TRX-1719508459473-62784",
+    "orders": [],
+    "qty": 0,
+    "total": "4.00",
+    "datetime": "2024-06-27T17:14:19.000Z",
+    "customer": "RAMOS",
+    "computer": "4.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 134,
+    "transactionid": "TRX-1719508304026-65268",
+    "orders": [
+      {
+        "price": "65",
+        "total": 65,
+        "product": "d",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "65.00",
+    "datetime": "2024-06-27T17:11:44.000Z",
+    "customer": "AKII459",
+    "computer": "0.00",
+    "subtotal": "65.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 133,
+    "transactionid": "TRX-1719508178972-82759",
+    "orders": [
+      {
+        "price": "200",
+        "total": 200,
+        "product": "i",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "200.00",
+    "datetime": "2024-06-27T17:09:38.000Z",
+    "customer": "RAMOS",
+    "computer": "0.00",
+    "subtotal": "200.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 132,
+    "transactionid": "TRX-1719508139487-53285",
+    "orders": [
+      {
+        "price": "5",
+        "total": 5,
+        "product": "k",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "5.00",
+    "datetime": "2024-06-27T17:08:59.000Z",
     "customer": "Walk-in Customer",
     "computer": "0.00",
-    "subtotal": "78.00",
+    "subtotal": "5.00",
     "credit": "0.00",
-    "mode_of_payment": "cash",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 131,
+    "transactionid": "TRX-1719508125504-93712",
+    "orders": [
+      {
+        "price": "65",
+        "total": 65,
+        "product": "z",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "65.00",
+    "datetime": "2024-06-27T17:08:45.000Z",
+    "customer": "AKII459",
+    "computer": "0.00",
+    "subtotal": "65.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 130,
+    "transactionid": "TRX-1719508121319-36637",
+    "orders": [
+      {
+        "price": "65",
+        "total": 65,
+        "product": "d",
+        "quantity": 1
+      },
+      {
+        "price": "65",
+        "total": 65,
+        "product": "e",
+        "quantity": 1
+      }
+    ],
+    "qty": 2,
+    "total": "130.00",
+    "datetime": "2024-06-27T17:08:41.000Z",
+    "customer": "AKII459",
+    "computer": "0.00",
+    "subtotal": "130.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 129,
+    "transactionid": "TRX-1719508116018-63241",
+    "orders": [],
+    "qty": 0,
+    "total": "10.00",
+    "datetime": "2024-06-27T17:08:36.000Z",
+    "customer": "RAMOS",
+    "computer": "10.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 128,
+    "transactionid": "TRX-1719508110159-14256",
+    "orders": [],
+    "qty": 0,
+    "total": "40.00",
+    "datetime": "2024-06-27T17:08:30.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "40.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 127,
+    "transactionid": "TRX-1719508107411-87302",
+    "orders": [
+      {
+        "price": "54",
+        "total": 54,
+        "product": "h",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "54.00",
+    "datetime": "2024-06-27T17:08:27.000Z",
+    "customer": "RAMOS",
+    "computer": "0.00",
+    "subtotal": "54.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 126,
+    "transactionid": "TRX-1719422334162-84004",
+    "orders": [],
+    "qty": 0,
+    "total": "20.00",
+    "datetime": "2024-06-26T17:18:54.000Z",
+    "customer": "AKII459",
+    "computer": "20.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 125,
+    "transactionid": "TRX-1719422329605-47257",
+    "orders": [],
+    "qty": 0,
+    "total": "550.00",
+    "datetime": "2024-06-26T17:18:49.000Z",
+    "customer": "AKII459",
+    "computer": "550.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 124,
+    "transactionid": "TRX-1719422325005-51873",
+    "orders": [],
+    "qty": 0,
+    "total": "10.00",
+    "datetime": "2024-06-26T17:18:45.000Z",
+    "customer": "RAMOS",
+    "computer": "10.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 123,
+    "transactionid": "TRX-1719422320441-73055",
+    "orders": [],
+    "qty": 0,
+    "total": "50.00",
+    "datetime": "2024-06-26T17:18:40.000Z",
+    "customer": "AKII459",
+    "computer": "50.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 122,
+    "transactionid": "TRX-1719422313704-28706",
+    "orders": [
+      {
+        "price": "200",
+        "total": 200,
+        "product": "i",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "200.00",
+    "datetime": "2024-06-26T17:18:33.000Z",
+    "customer": "RAMOS",
+    "computer": "0.00",
+    "subtotal": "200.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 121,
+    "transactionid": "TRX-1719422309305-73826",
+    "orders": [
+      {
+        "price": "65",
+        "total": 65,
+        "product": "e",
+        "quantity": 1
+      },
+      {
+        "price": "65",
+        "total": 65,
+        "product": "d",
+        "quantity": 1
+      }
+    ],
+    "qty": 2,
+    "total": "130.00",
+    "datetime": "2024-06-26T17:18:29.000Z",
+    "customer": "AKII459",
+    "computer": "0.00",
+    "subtotal": "130.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 120,
+    "transactionid": "TRX-1719422305199-32856",
+    "orders": [
+      {
+        "price": "54",
+        "total": 54,
+        "product": "h",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "54.00",
+    "datetime": "2024-06-26T17:18:25.000Z",
+    "customer": "RAMOS",
+    "computer": "0.00",
+    "subtotal": "54.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 119,
+    "transactionid": "TRX-1719398316854-57309",
+    "orders": [],
+    "qty": 0,
+    "total": "4.00",
+    "datetime": "2024-06-26T10:38:36.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "4.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 118,
+    "transactionid": "TRX-1719388638874-55889",
+    "orders": [
+      {
+        "price": "54",
+        "total": 54,
+        "product": "h",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "54.00",
+    "datetime": "2024-06-26T07:57:18.000Z",
+    "customer": "RAMOS",
+    "computer": "0.00",
+    "subtotal": "54.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 117,
+    "transactionid": "TRX-1719332002369-93422",
+    "orders": [
+      {
+        "price": "54",
+        "total": 54,
+        "product": "h",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "54.00",
+    "datetime": "2024-06-25T16:13:22.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "0.00",
+    "subtotal": "54.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 116,
+    "transactionid": "TRX-1719331255969-80174",
+    "orders": [
+      {
+        "price": "54",
+        "total": 54,
+        "product": "h",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "54.00",
+    "datetime": "2024-06-25T16:00:55.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "0.00",
+    "subtotal": "54.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 97,
+    "transactionid": "TRX-1719285701696-20493",
+    "orders": [],
+    "qty": 0,
+    "total": "65.00",
+    "datetime": "2024-06-25T11:21:41.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "65.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 115,
+    "transactionid": "TRX-1719300519773-87241",
+    "orders": [
+      {
+        "price": "200",
+        "total": 200,
+        "product": "i",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "204.00",
+    "datetime": "2024-06-25T07:28:39.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "4.00",
+    "subtotal": "200.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 114,
+    "transactionid": "TRX-1719300440437-62933",
+    "orders": [
+      {
+        "price": "70.00",
+        "total": 140,
+        "product": "cookies",
+        "quantity": 2
+      },
+      {
+        "price": "55.00",
+        "total": 110,
+        "product": "caramel bar",
+        "quantity": 2
+      }
+    ],
+    "qty": 4,
+    "total": "250.00",
+    "datetime": "2024-06-25T07:27:20.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "0.00",
+    "subtotal": "250.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 113,
+    "transactionid": "TRX-1719292608496-68176",
+    "orders": [
+      {
+        "price": "54",
+        "total": 54,
+        "product": "h",
+        "quantity": 1
+      }
+    ],
+    "qty": 1,
+    "total": "54.00",
+    "datetime": "2024-06-25T05:16:48.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "0.00",
+    "subtotal": "54.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 112,
+    "transactionid": "TRX-1719291888265-72715",
+    "orders": [],
+    "qty": 0,
+    "total": "11.00",
+    "datetime": "2024-06-25T05:04:48.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "11.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 111,
+    "transactionid": "TRX-1719291293770-61062",
+    "orders": [],
+    "qty": 0,
+    "total": "9.00",
+    "datetime": "2024-06-24T12:54:53.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "9.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 109,
+    "transactionid": "TRX-1719288155181-32212",
+    "orders": [],
+    "qty": 0,
+    "total": "9.00",
+    "datetime": "2024-06-24T12:02:35.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "9.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 108,
+    "transactionid": "TRX-1719287692656-58117",
+    "orders": [],
+    "qty": 0,
+    "total": "7.00",
+    "datetime": "2024-06-24T11:54:52.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "7.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 107,
+    "transactionid": "TRX-1719287605331-91447",
+    "orders": [],
+    "qty": 0,
+    "total": "8.00",
+    "datetime": "2024-06-24T11:53:25.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "8.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 106,
+    "transactionid": "TRX-1719287516999-70564",
+    "orders": [],
+    "qty": 0,
+    "total": "9.00",
+    "datetime": "2024-06-24T11:51:57.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "9.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 105,
+    "transactionid": "TRX-1719286623433-67468",
+    "orders": [],
+    "qty": 0,
+    "total": "6.00",
+    "datetime": "2024-06-24T11:37:03.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "6.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 103,
+    "transactionid": "TRX-1719286444794-57143",
+    "orders": [],
+    "qty": 0,
+    "total": "8.00",
+    "datetime": "2024-06-24T11:34:04.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "8.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 102,
+    "transactionid": "TRX-1719286298684-75230",
+    "orders": [],
+    "qty": 0,
+    "total": "7.00",
+    "datetime": "2024-06-24T11:31:38.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "7.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 101,
+    "transactionid": "TRX-1719286212167-42665",
+    "orders": [],
+    "qty": 0,
+    "total": "7.00",
+    "datetime": "2024-06-24T11:30:12.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "7.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 100,
+    "transactionid": "TRX-1719286045572-51245",
+    "orders": [],
+    "qty": 0,
+    "total": "5.00",
+    "datetime": "2024-06-24T11:27:25.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "5.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 99,
+    "transactionid": "TRX-1719285889275-52052",
+    "orders": [],
+    "qty": 0,
+    "total": "5.00",
+    "datetime": "2024-06-24T11:24:49.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "5.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 98,
+    "transactionid": "TRX-1719285806516-22411",
+    "orders": [],
+    "qty": 0,
+    "total": "7.00",
+    "datetime": "2024-06-24T11:23:26.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "7.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 96,
+    "transactionid": "TRX-1719285481087-77976",
+    "orders": [],
+    "qty": 0,
+    "total": "4.00",
+    "datetime": "2024-06-24T11:18:01.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "4.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 95,
+    "transactionid": "TRX-1719285334387-30639",
+    "orders": [],
+    "qty": 0,
+    "total": "2.00",
+    "datetime": "2024-06-24T11:15:34.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "2.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 110,
+    "transactionid": "TRX-1719288242617-91536",
+    "orders": [],
+    "qty": 0,
+    "total": "1.00",
+    "datetime": "2024-06-24T04:04:02.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "1.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 93,
+    "transactionid": "TRX-1719281661353-89995",
+    "orders": [],
+    "qty": 0,
+    "total": "50.00",
+    "datetime": "2024-06-23T10:14:21.353Z",
+    "customer": "RAMOS",
+    "computer": "50.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 94,
+    "transactionid": "TRX-1719281762328-11571",
+    "orders": [],
+    "qty": 0,
+    "total": "6.00",
+    "datetime": "2024-06-22T10:16:02.328Z",
+    "customer": "AKII459",
+    "computer": "6.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
+    "student_discount": false,
+    "discount": "0.00"
+  },
+  {
+    "id": 104,
+    "transactionid": "TRX-1719286523190-20446",
+    "orders": [],
+    "qty": 0,
+    "total": "125.00",
+    "datetime": "2024-06-20T11:35:23.000Z",
+    "customer": "Walk-in Customer",
+    "computer": "125.00",
+    "subtotal": "0.00",
+    "credit": "0.00",
+    "mode_of_payment": null,
     "student_discount": false,
     "discount": "0.00"
   }
