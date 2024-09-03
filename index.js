@@ -20,7 +20,7 @@ const membersRoutes = require('./routes/members');
 const foodsRoutes = require('./routes/foods');
 const beverageRoutes = require('./routes/beverage');
 const whitelistRoutes = require('./routes/whitelist');
-const kahaRoutes = require('./routes/kaha');
+// const kahaRoutes = require('./routes/kaha');
 
 // WebSocket server setup
 const server = app.listen(port, () => {
@@ -428,53 +428,25 @@ const addTransactionSalesToDatabase = (sale) => {
   return new Promise((resolve, reject) => {
     const localDatetime = moment().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss'); // Convert to local time
 
-    pool.connect((err, client, release) => {
-      if (err) return reject(err);
-
-      client.query('BEGIN', (beginError) => {
-        if (beginError) {
-          release();
-          return reject(beginError);
-        }
-
-        // Check if the transactionId already exists
-        const checkQuery = 'SELECT 1 FROM sales WHERE transactionid = $1';
-        client.query(checkQuery, [sale.transactionid], (checkError, checkResults) => {
-          if (checkError) {
-            return client.query('ROLLBACK', () => {
-              release();
-              reject(checkError);
-            });
-          }
-
-          if (checkResults.rows.length > 0) {
-            console.log(`Sale with transactionid ${sale.transactionid} already exists.`);
-            return client.query('ROLLBACK', () => {
-              release();
-              resolve(null); // Skip insertion or handle as needed
-            });
-          }
-
-          // Proceed with insertion if no duplicate is found
-          const query = `
-            INSERT INTO sales (transactionid, orders, qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-            RETURNING *
-          `;
-          const values = [
-            sale.transactionid,
-            JSON.stringify(sale.orders),
-            sale.qty,
-            sale.total,
-            localDatetime,
-            sale.customer,
-            sale.computer,
-            sale.subtotal,
-            sale.credit,
-            sale.mode_of_payment,
-            sale.student_discount,
-            sale.discount
-          ];
+    const query = `
+      INSERT INTO sales (transactionid, orders, qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING *
+    `;
+    const values = [
+      sale.transactionid,
+      JSON.stringify(sale.orders),
+      sale.qty,
+      sale.total,
+      localDatetime, // Use the local datetime here
+      sale.customer,
+      sale.computer,
+      sale.subtotal,
+      sale.credit,
+      sale.mode_of_payment,
+      sale.student_discount,
+      sale.discount
+    ];
 
           client.query(query, values, (error, results) => {
             if (error) {
@@ -573,52 +545,17 @@ const addTransactionSalesToDatabase = (sale) => {
                     });
                   }
 
-                  if (totalBeverageQuantity > 0) {
-                    // Deduct inventory for the beverages sold
-                    const updateBeverageStocksQuery = `
-                      UPDATE beverage
-                      SET stocks = GREATEST(stocks - $1, 0)
-                      WHERE product = ANY($2)
-                      RETURNING *
-                    `;
-
-                    beveragesPromise = new Promise((resolve, reject) => {
-                      client.query(updateBeverageStocksQuery, [totalBeverageQuantity, productNames], (updateError, updateResults) => {
-                        if (updateError) {
-                          reject(updateError);
-                        } else {
-                          broadcastBeverage()
-                          resolve();
-                        }
-                      });
-                    });
-                  }
-
-                  // Wait for all promises to resolve before committing the transaction
-                  Promise.all([baristaPromise, utensilsPromise, beveragesPromise])
-                    .then(() => {
-                      client.query('COMMIT', (commitError) => {
-                        release();
-                        if (commitError) {
-                          reject(commitError);
-                        } else {
-                          console.log('New sale added successfully');
-                          resolve(insertedSale);
-                        }
-                      });
-                    })
-                    .catch((error) => {
-                      client.query('ROLLBACK', () => {
-                        release();
-                        reject(error);
-                      });
-                    });
-                });
-              });
+                // Wait for both promises to resolve before resolving the main promise
+                Promise.all([baristaPromise, utensilsPromise])
+                  .then(() => {
+                    resolve(insertedSale);
+                  })
+                  .catch(reject);
+              }
             });
-          });
+          }
         });
-      });
+      }
     });
   });
 };
