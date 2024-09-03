@@ -120,14 +120,24 @@ cron.schedule('0 0 1 * *', async () => {
   await exportPreviousMonthsSales();
 });
 
+// Function to merge database and JSON sales data
 async function mergeSalesData(dbSales, jsonSales) {
   // Convert datetime fields to Date objects
   dbSales.forEach(sale => sale.datetime = new Date(sale.datetime));
   jsonSales.forEach(sale => sale.datetime = new Date(sale.datetime));
 
-  // Combine and sort the sales data by datetime in descending order
+  // Combine and sort the sales data
   const combinedSales = [...dbSales, ...jsonSales];
-  combinedSales.sort((a, b) => b.datetime - a.datetime);
+
+  // Sort primarily by credit (non-zero credit first), then by datetime
+  combinedSales.sort((a, b) => {
+    // Sort by credit first: non-zero credit should come before zero credit
+    const creditComparison = (b.credit > 0) - (a.credit > 0);
+    if (creditComparison !== 0) return creditComparison;
+
+    // If credit is the same, sort by datetime
+    return b.datetime - a.datetime;
+  });
 
   return combinedSales;
 }
