@@ -277,6 +277,10 @@ router.get('/top-spenders-today', async (req, res) => {
 });
 
 async function getStartDate() {
+    const salesJsonPath = path.join(__dirname, '../sales.json');
+    const salesJsonData = JSON.parse(fs.readFileSync(salesJsonPath, 'utf-8'));
+
+    // Query to get the earliest datetime from the database
     const queryText = `
         SELECT 
             MIN(datetime AT TIME ZONE '${TIMEZONE}') AS start_date
@@ -284,7 +288,20 @@ async function getStartDate() {
             sales;
     `;
     const { rows } = await pool.query(queryText);
-    return rows[0].start_date;
+    const dbStartDate = rows[0].start_date;
+
+    // Find the earliest datetime in the sales.json file
+    const jsonStartDate = salesJsonData.reduce((earliest, sale) => {
+        const saleDate = moment(sale.datetime).tz(TIMEZONE).format('YYYY-MM-DD HH:mm:ss');
+        return earliest ? (moment(saleDate).isBefore(earliest) ? saleDate : earliest) : saleDate;
+    }, null);
+
+    // Determine the overall earliest date between database and JSON file
+    const overallStartDate = dbStartDate && jsonStartDate 
+        ? (moment(jsonStartDate).isBefore(dbStartDate) ? jsonStartDate : dbStartDate)
+        : (dbStartDate || jsonStartDate);
+
+    return overallStartDate;
 }
 
 function handleError(res, logMessage, error, clientMessage) {
