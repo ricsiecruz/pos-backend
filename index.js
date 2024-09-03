@@ -18,9 +18,9 @@ const expensesRoutes = require('./routes/expenses');
 const salesRoutes = require('./routes/sales');
 const membersRoutes = require('./routes/members');
 const foodsRoutes = require('./routes/foods');
-const whitelistRoutes = require('./routes/whitelist');
 const beverageRoutes = require('./routes/beverage');
-// const kahaRoutes = require('./routes/kaha');
+const whitelistRoutes = require('./routes/whitelist');
+const kahaRoutes = require('./routes/kaha');
 
 // WebSocket server setup
 const server = app.listen(port, () => {
@@ -49,9 +49,9 @@ app.use('/expenses', expensesRoutes(wss)); // Pass WebSocket server instance
 app.use('/sales', salesRoutes);
 app.use('/members', membersRoutes);
 app.use('/foods', foodsRoutes);
-app.use('/whitelist', whitelistRoutes);
 app.use('/beverage', beverageRoutes);
-// app.use('/kaha', kahaRoutes);
+app.use('/whitelist', whitelistRoutes);
+app.use('/kaha', kahaRoutes);
 
 wss.on('connection', (ws, req) => {
   console.log('Client connected');
@@ -59,6 +59,7 @@ wss.on('connection', (ws, req) => {
   websocketHandlers.sendSalesToClient(ws);
   websocketHandlers.sendInventoryToClient(ws);
   websocketHandlers.sendFoodsToClient(ws);
+  websocketHandlers.sendBeverageToClient(ws);
   websocketHandlers.sendExpensesToClient(ws);
   membersHandler.sendMembersToClient(ws);
 
@@ -92,34 +93,6 @@ wss.on('connection', (ws, req) => {
             console.error('Error editing product in database:', error);
           });
         break;
-        case 'addBeverage':
-          addBeverageToDatabase(data.beverage)
-            .then((updatedBeverageStock) => {
-              broadcastBeverage(updatedBeverageStock);
-            })
-            .catch((error) => {
-              console.error('Error adding beverage to database:', error);
-            });
-          break;
-        case 'editBeverage':
-          editBeverage(data.beverage)
-            .then(() => {
-              broadcastBeverage();
-            })
-            .catch((error) => {
-              console.error('Error editing beverage to database:', error);
-            });
-          break;
-          case 'addBeverageStock':
-            addBeverageStock(data.beverage)
-              .then(() => {
-                broadcastBeverage();
-              })
-              .catch((error) => {
-                console.error('Error adding beverage stocks:', error)
-              });
-            break;
-      
       case 'addFood':
         addFoodToDatabase(data.food)
           .then((updatedFoodStock) => {
@@ -136,6 +109,24 @@ wss.on('connection', (ws, req) => {
           })
           .catch((error) => {
             console.error('Error editing food in database:', error);
+          });
+        break;
+      case 'addBeverage':
+        addBeverageToDatabase(data.beverage)
+          .then((updatedBeverageStock) => {
+            broadcastBeverage(updatedBeverageStock);
+          })
+          .catch((error) => {
+            console.error('Error adding beverage to database:', error);
+          });
+        break;
+      case 'editBeverage':
+        editBeverage(data.beverage)
+          .then(() => {
+            broadcastBeverage();
+          })
+          .catch((error) => {
+            console.error('Error editing beverage to database:', error);
           });
         break;
       case 'updateSales':
@@ -180,6 +171,15 @@ wss.on('connection', (ws, req) => {
             console.error('Error adding food stock:', error)
           });
         break;
+      case 'addBeverageStock':
+        addBeverageStock(data.beverage)
+          .then(() => {
+            broadcastBeverage();
+          })
+          .catch((error) => {
+            console.error('Error adding beverage stocks:', error)
+          });
+        break;
       case 'addExpenses':
         addExpenses(data.expense)
             .then(async (newExpense) => {
@@ -193,16 +193,17 @@ wss.on('connection', (ws, req) => {
       case 'addExpensesResponse':
         handleAddExpensesResponse(data);
         break;
-      case 'addSales':
-        addTransactionSalesToDatabase(data.sale)
-          .then((newSale) => {
-            broadcastSales(newSale);
-            updateMembersAfterSale();            
-          })
-          .catch((error) => {
-            console.log('Error adding sale to database:', error);
-          });
-        break;
+        case 'addSales':
+          addTransactionSalesToDatabase(data.sale)
+              .then((newSale) => {
+                  broadcastSales(newSale);
+                  updateMembersAfterSale();            
+              })
+              .catch((error) => {
+                  console.log('Error adding sale to database:', error);
+              });
+          break;
+      
       case 'addMember':
         addMemberToDatabase(data.member)
           .then(() => {
@@ -222,6 +223,23 @@ wss.on('connection', (ws, req) => {
     console.log('Client disconnected');
   });
 });
+
+async function addFoodToDatabase(newFood) {
+  try {
+    const { product, price, stocks, utensils } = newFood;
+    const result = await pool.query(
+      'INSERT INTO foods (product, price, stocks, utensils) VALUES ($1, $2, $3, $4) RETURNING id, product, price, stocks, utensils',
+      [product, price, stocks, utensils]
+    );
+    const { id } = result.rows[0];
+    const updatedFoods = await pool.query('SELECT * FROM foods ORDER BY id DESC');
+    broadcastFoods(updatedFoods.rows);
+    return { id, product, price, stocks, utensils };
+  } catch (error) {
+    console.error('Error adding food to database:', error);
+    throw error;
+  }
+}
 
 async function addBeverageToDatabase(newBeverage) {
   try {
@@ -246,67 +264,6 @@ async function addBeverageToDatabase(newBeverage) {
     return { id, product, price, stocks };
   } catch(error) {
     console.error('Error adding beverage to database:', error);
-    throw error;
-  }
-}
-
-function editBeverage(updatedBeverage) {
-  return new Promise((resolve, reject) => {
-    const { id, product, stocks, price } = updatedBeverage;
-    pool.query(
-      'UPDATE beverage SET product = $1, stocks = $2, price = $3 WHERE id = $4', 
-      [product, stocks, price, id],
-      (error, results) => {
-        if(error) {
-          reject(error);
-          return;
-        }
-        resolve();
-        broadcastBeverage();
-      }
-    )
-  })
-}
-
-function addBeverageStock(updateBeverageStock) {
-  return new Promise((resolve, reject) => {
-    const { id, stocks } = updateBeverageStock;
-    pool.query(
-      'UPDATE beverage SET stocks = $1 WHERE id = $2',
-      [stocks, id],
-      (error, results) => {
-        if(error) {
-          reject(error);
-          return;
-        }
-        resolve();
-        broadcastBeverage();
-      }
-    )
-  })
-}
-
-function broadcastBeverage(addBeverage) {
-  wss.clients.forEach((client) => {
-    if(client.readyState === WebSocket.OPEN) {
-      websocketHandlers.sendBeverageToClient(client, addBeverage)
-    }
-  })
-}
-
-async function addFoodToDatabase(newFood) {
-  try {
-    const { product, price, stocks, utensils } = newFood;
-    const result = await pool.query(
-      'INSERT INTO foods (product, price, stocks, utensils) VALUES ($1, $2, $3, $4) RETURNING id, product, price, stocks, utensils',
-      [product, price, stocks, utensils]
-    );
-    const { id } = result.rows[0];
-    const updatedFoods = await pool.query('SELECT * FROM foods ORDER BY id DESC');
-    broadcastFoods(updatedFoods.rows);
-    return { id, product, price, stocks, utensils };
-  } catch (error) {
-    console.error('Error adding food to database:', error);
     throw error;
   }
 }
@@ -345,6 +302,24 @@ function editFood(updatedFood) {
         }
         resolve();
         broadcastFoods();
+      }
+    )
+  })
+}
+
+function editBeverage(updatedBeverage) {
+  return new Promise((resolve, reject) => {
+    const { id, product, stocks, price } = updatedBeverage;
+    pool.query(
+      'UPDATE beverage SET product = $1, stocks = $2, price = $3 WHERE id = $4', 
+      [product, stocks, price, id],
+      (error, results) => {
+        if(error) {
+          reject(error);
+          return;
+        }
+        resolve();
+        broadcastBeverage();
       }
     )
   })
@@ -697,6 +672,24 @@ function addFoodStock(updateFoodStock) {
   })
 }
 
+function addBeverageStock(updateBeverageStock) {
+  return new Promise((resolve, reject) => {
+    const { id, stocks } = updateBeverageStock;
+    pool.query(
+      'UPDATE beverage SET stocks = $1 WHERE id = $2',
+      [stocks, id],
+      (error, results) => {
+        if(error) {
+          reject(error);
+          return;
+        }
+        resolve();
+        broadcastBeverage();
+      }
+    )
+  })
+}
+
 function broadcastExpenses(updatedExpenses) {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
@@ -717,6 +710,14 @@ function broadcastFoods(addFood) {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       websocketHandlers.sendFoodsToClient(client, addFood);
+    }
+  })
+}
+
+function broadcastBeverage(addBeverage) {
+  wss.clients.forEach((client) => {
+    if(client.readyState === WebSocket.OPEN) {
+      websocketHandlers.sendBeverageToClient(client, addBeverage)
     }
   })
 }
