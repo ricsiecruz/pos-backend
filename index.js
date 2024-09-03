@@ -18,7 +18,8 @@ const salesRoutes = require('./routes/sales');
 const membersRoutes = require('./routes/members');
 const foodsRoutes = require('./routes/foods');
 const whitelistRoutes = require('./routes/whitelist');
-const kahaRoutes = require('./routes/kaha');
+const beverageRoutes = require('./routes/beverage');
+// const kahaRoutes = require('./routes/kaha');
 
 // WebSocket server setup
 const server = app.listen(port, () => {
@@ -48,6 +49,7 @@ app.use('/sales', salesRoutes);
 app.use('/members', membersRoutes);
 app.use('/foods', foodsRoutes);
 app.use('/whitelist', whitelistRoutes);
+app.use('/beverage', beverageRoutes);
 // app.use('/kaha', kahaRoutes);
 
 wss.on('connection', (ws, req) => {
@@ -89,6 +91,34 @@ wss.on('connection', (ws, req) => {
             console.error('Error editing product in database:', error);
           });
         break;
+        case 'addBeverage':
+          addBeverageToDatabase(data.beverage)
+            .then((updatedBeverageStock) => {
+              broadcastBeverage(updatedBeverageStock);
+            })
+            .catch((error) => {
+              console.error('Error adding beverage to database:', error);
+            });
+          break;
+        case 'editBeverage':
+          editBeverage(data.beverage)
+            .then(() => {
+              broadcastBeverage();
+            })
+            .catch((error) => {
+              console.error('Error editing beverage to database:', error);
+            });
+          break;
+          case 'addBeverageStock':
+            addBeverageStock(data.beverage)
+              .then(() => {
+                broadcastBeverage();
+              })
+              .catch((error) => {
+                console.error('Error adding beverage stocks:', error)
+              });
+            break;
+      
       case 'addFood':
         addFoodToDatabase(data.food)
           .then((updatedFoodStock) => {
@@ -192,6 +222,77 @@ wss.on('connection', (ws, req) => {
     console.log('Client disconnected');
   });
 });
+
+async function addBeverageToDatabase(newBeverage) {
+  try {
+    const { product, price, stocks } = newBeverage;
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS beverage (
+        id SERIAL PRIMARY KEY,
+        product VARCHAR(255) UNIQUE NOT NULL,
+        price NUMERIC(10, 2) DEFAULT NULL,
+        stocks NUMERIC DEFAULT NULL
+      );    
+    `);
+
+    const result = await pool.query(
+      'INSERT INTO beverage (product, price, stocks) VALUES ($1, $2, $3) RETURNING id, product, price, stocks', 
+      [product, price, stocks]
+    );
+    const { id } = result.rows[0];
+    const updatedBeverage = await pool.query('SELECT * FROM beverage ORDER BY id DESC');
+    broadcastBeverage(updatedBeverage.rows);
+    return { id, product, price, stocks };
+  } catch(error) {
+    console.error('Error adding beverage to database:', error);
+    throw error;
+  }
+}
+
+function editBeverage(updatedBeverage) {
+  return new Promise((resolve, reject) => {
+    const { id, product, stocks, price } = updatedBeverage;
+    pool.query(
+      'UPDATE beverage SET product = $1, stocks = $2, price = $3 WHERE id = $4', 
+      [product, stocks, price, id],
+      (error, results) => {
+        if(error) {
+          reject(error);
+          return;
+        }
+        resolve();
+        broadcastBeverage();
+      }
+    )
+  })
+}
+
+function addBeverageStock(updateBeverageStock) {
+  return new Promise((resolve, reject) => {
+    const { id, stocks } = updateBeverageStock;
+    pool.query(
+      'UPDATE beverage SET stocks = $1 WHERE id = $2',
+      [stocks, id],
+      (error, results) => {
+        if(error) {
+          reject(error);
+          return;
+        }
+        resolve();
+        broadcastBeverage();
+      }
+    )
+  })
+}
+
+function broadcastBeverage(addBeverage) {
+  wss.clients.forEach((client) => {
+    if(client.readyState === WebSocket.OPEN) {
+      websocketHandlers.sendBeverageToClient(client, addBeverage)
+    }
+  })
+}
 
 async function addFoodToDatabase(newFood) {
   try {
@@ -345,7 +446,6 @@ const addTransactionSalesToDatabase = (sale) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
     `;
-    console.log('sale', sale)
     const values = [
       sale.transactionId,
       JSON.stringify(sale.orders),
@@ -371,6 +471,7 @@ const addTransactionSalesToDatabase = (sale) => {
         // Fetch product details to check for barista and utensils flags
         const baristaProductsQuery = 'SELECT product FROM products WHERE product = ANY($1) AND barista = true';
         const utensilsProductsQuery = 'SELECT product FROM foods WHERE product = ANY($1) AND utensils = true';
+        const beveragesQuery = 'SELECT product FROM beverage WHERE product = ANY($1)';
 
         pool.query(baristaProductsQuery, [productNames], (baristaError, baristaResults) => {
           if (baristaError) {
