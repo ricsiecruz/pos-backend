@@ -18,7 +18,7 @@ async function getSalesFromJson() {
   try {
     const data = await fs.promises.readFile(salesJsonPath, 'utf-8');
     const jsonData = JSON.parse(data);
-    console.log('json')
+    console.log('Sales data from JSON:', jsonData);
     return jsonData;
   } catch (error) {
     console.error('Error reading sales.json:', error);
@@ -120,13 +120,15 @@ cron.schedule('0 0 1 * *', async () => {
   await exportPreviousMonthsSales();
 });
 
-async function mergeSalesData(jsonSales, dbSales) {
-  // Combine the two data sources
-  const combinedSales = [...jsonSales, ...dbSales];
-  
-  // Sort combined data by datetime in descending order
-  combinedSales.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
-  
+async function mergeSalesData(dbSales, jsonSales) {
+  // Convert datetime fields to Date objects
+  dbSales.forEach(sale => sale.datetime = new Date(sale.datetime));
+  jsonSales.forEach(sale => sale.datetime = new Date(sale.datetime));
+
+  // Combine and sort the sales data by datetime in descending order
+  const combinedSales = [...dbSales, ...jsonSales];
+  combinedSales.sort((a, b) => b.datetime - a.datetime);
+
   return combinedSales;
 }
 
@@ -139,8 +141,9 @@ router.post('/', async (req, res) => {
     const limit = parseInt(req.body.limit) || 10;
     const offset = (page - 1) * limit;
 
+    // Fetch sales data from the database
     const [dbSales, totalRecords, totalSum] = await Promise.all([
-      getSalesFromDatabase(limit, offset),
+      getSalesFromDatabase(),  // Fetch all data from the database
       getTotalSalesCount(),
       getSumOfTotalSales(),
     ]);
@@ -148,15 +151,23 @@ router.post('/', async (req, res) => {
     // Read and parse the sales.json data
     const jsonSales = await getSalesFromJson();
 
+    // Log the sizes of fetched data
+    console.log(`Database Sales Data Count: ${dbSales.length}`);
+    console.log(`JSON Sales Data Count: ${jsonSales.length}`);
+
     // Merge JSON and database sales data
-    const mergedSales = await mergeSalesData(jsonSales, dbSales);
+    const mergedSales = await mergeSalesData(dbSales, jsonSales);
+
+    // Log the size of merged data
+    console.log(`Merged Sales Data Count: ${mergedSales.length}`);
 
     // Apply pagination on merged data
     const paginatedSales = mergedSales.slice(offset, offset + limit);
 
+    // Calculate additional information for the response
     const totalExpenses = await getSumOfExpensesByDateRange(null, null);
     const totalNet = totalSum - totalExpenses;
-    const totalPages = Math.ceil(totalRecords / limit);
+    const totalPages = Math.ceil(mergedSales.length / limit);
 
     const currentSalesData = await getSalesForCurrentDate();
     const currentIncome = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.total), 0);
@@ -195,13 +206,13 @@ router.post('/', async (req, res) => {
         food_and_drinks: await getSumOfFoodAndDrinks(),
         credit: await getSumOfCredits(),
         credit_count: creditCount,
-        totalRecords: totalRecords,
+        totalRecords: mergedSales.length,  // Update totalRecords to reflect the merged data count
         totalPages: totalPages,
         pageNumber: page
       }
     };
 
-    console.log('sales');
+    console.log('Sales data sent in response:', responseData);
 
     res.json(responseData);
   } catch (error) {
@@ -370,26 +381,26 @@ async function getSumOfTotalSalesTodayByPayment(modeOfPayment) {
 
 async function getSalesFromDatabase(limit, offset) {
   const queryText = `
-      SELECT 
-        sales.id AS sale_id,
-        sales.transactionid,
-        sales.customer,
-        sales.datetime AT TIME ZONE 'Asia/Manila' AS datetime,
-        sales.total, 
-        sales.credit, 
-        sales.computer, 
-        sales.subtotal, 
-        sales.orders, 
-        sales.qty, 
-        sales.mode_of_payment,
-        sales.student_discount, 
-        sales.discount,
-        members.id AS member_id
-      FROM sales
-      LEFT JOIN members ON sales.customer = members.name
-      ORDER BY sales.credit DESC, sales.id DESC
-      LIMIT $1 OFFSET $2;
-    `;
+    SELECT 
+      sales.id AS sale_id,
+      sales.transactionid,
+      sales.customer,
+      sales.datetime AT TIME ZONE 'Asia/Manila' AS datetime,
+      sales.total, 
+      sales.credit, 
+      sales.computer, 
+      sales.subtotal, 
+      sales.orders, 
+      sales.qty, 
+      sales.mode_of_payment,
+      sales.student_discount, 
+      sales.discount,
+      members.id AS member_id
+    FROM sales
+    LEFT JOIN members ON sales.customer = members.name
+    ORDER BY sales.datetime DESC
+    LIMIT $1 OFFSET $2;
+  `;
 
   const { rows } = await pool.query(queryText, [limit, offset]);
 
