@@ -1,3 +1,4 @@
+// members.js
 const express = require('express');
 const moment = require('moment-timezone');
 const pool = require('../db');
@@ -74,8 +75,8 @@ router.post('/', async (request, response) => {
       const totalPages = Math.ceil(totalRecords / limit);
 
       const results = await pool.query(
-          'SELECT * FROM members ORDER BY id DESC LIMIT $1 OFFSET $2',
-          [limit, offset]
+        'SELECT * FROM members ORDER BY id DESC LIMIT $1 OFFSET $2',
+        [limit, offset]
       );
 
       const members = results.rows;
