@@ -1,24 +1,165 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const moment = require('moment-timezone');
 const pool = require('../db');
 const router = express.Router();
 
+const cron = require('node-cron');
+
+const salesJsonPath = path.join(__dirname, '../sales.json');
+
+console.log('Sales JSON Path:', salesJsonPath);
+const fileExists = fs.existsSync(salesJsonPath);
+console.log('File exists:', fileExists);
+
+// Helper function to read and parse sales.json
+async function getSalesFromJson() {
+  try {
+    const data = await fs.promises.readFile(salesJsonPath, 'utf-8');
+    const jsonData = JSON.parse(data);
+    console.log('json')
+    return jsonData;
+  } catch (error) {
+    console.error('Error reading sales.json:', error);
+    return [];
+  }
+}
+
+// Helper function to write to sales.json
+async function writeSalesToJson(salesData) {
+  try {
+    const existingData = await getSalesFromJson();
+    const updatedData = [...existingData, ...salesData];
+    await fs.promises.writeFile(salesJsonPath, JSON.stringify(updatedData, null, 2));
+    console.log('Sales data successfully written to sales.json');
+  } catch (error) {
+    console.error('Error writing to sales.json:', error);
+  }
+}
+
+async function getPreviousMonthSales(startDate, endDate) {
+  try {
+    console.log('Fetching sales data from:', startDate, 'to:', endDate);
+    const query = `
+      SELECT * FROM sales
+      WHERE datetime >= $1 AND datetime <= $2
+    `;
+    const result = await pool.query(query, [startDate, endDate]);
+    return result.rows;
+  } catch (error) {
+    console.error('Error fetching previous month sales:', error);
+    throw error;
+  }
+}
+
+async function exportPreviousMonthsSales() {
+  try {
+    const currentMonthStart = moment().startOf('month').format('YYYY-MM-DDTHH:mm:ssZ'); // ISO 8601 format
+
+    // Query to get the oldest sale datetime
+    const oldestDateQuery = `
+      SELECT MIN(datetime) AS oldest_date
+      FROM sales
+    `;
+    const oldestDateResult = await pool.query(oldestDateQuery);
+    const oldestDate = oldestDateResult.rows[0]?.oldest_date;
+
+    if (!oldestDate) {
+      console.log('No sales data found in the database.');
+      return;
+    }
+
+    // Parse the oldest date and set it to the start of the month
+    const oldestDateLocal = moment(oldestDate).utcOffset('+08:00').startOf('month');
+    console.log('Oldest date in local time zone:', oldestDateLocal.format()); // Debugging line
+
+    let exportDate = oldestDateLocal;
+
+    while (exportDate.isBefore(moment(currentMonthStart))) {
+      const previousMonthStart = exportDate.format('YYYY-MM-DDT00:00:00+08:00'); // ISO 8601 format with time zone
+      const previousMonthEnd = exportDate.endOf('month').format('YYYY-MM-DDT23:59:59+08:00'); // ISO 8601 format with time zone
+
+      console.log(`Exporting sales data from ${previousMonthStart} to ${previousMonthEnd}`);
+
+      const salesData = await getPreviousMonthSales(previousMonthStart, previousMonthEnd);
+      console.log('Fetched sales data:', salesData);
+
+      if (salesData.length > 0) {
+        await writeSalesToJson(salesData);
+
+        // Delete exported sales data from the database
+        const deleteQuery = `
+          DELETE FROM sales
+          WHERE datetime >= $1 AND datetime <= $2
+        `;
+        await pool.query(deleteQuery, [previousMonthStart, previousMonthEnd]);
+        console.log(`Sales data from ${previousMonthStart} to ${previousMonthEnd} exported and deleted.`);
+      } else {
+        console.log(`No sales data found for ${previousMonthStart} to ${previousMonthEnd}`);
+      }
+
+      // Move to the previous month
+      exportDate = moment(exportDate).subtract(1, 'month').startOf('month');
+      console.log('Next exportDate:', exportDate.format('YYYY-MM-DD')); // Debugging line
+    }
+  } catch (error) {
+    console.error('Error exporting previous month sales:', error);
+  }
+}
+
+// Updated cron job schedule
+cron.schedule('0 0 1 * *', async () => {
+  console.log('Running monthly sales export...');
+  await exportPreviousMonthsSales();
+});
+
+// router.post('/manual-export', async (req, res) => {
+//   try {
+//     await exportPreviousMonthSales();
+//     res.status(200).json({ message: 'Previous month sales exported successfully.' });
+//   } catch (error) {
+//     res.status(500).json({ error: 'Error exporting previous month sales.' });
+//   }
+// });
+
+// Merge JSON and database sales data
+async function mergeSalesData(jsonSales, dbSales) {
+  // Combine the two data sources
+  const combinedSales = [...jsonSales, ...dbSales];
+  
+  // Sort combined data by datetime in descending order
+  combinedSales.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+  
+  return combinedSales;
+}
+
 router.post('/', async (req, res) => {
   try {
-    // Check if page and limit are passed in the request body instead of query
-    const page = parseInt(req.body.page) || 1; // Default page is 1
-    const limit = parseInt(req.body.limit) || 10; // Default limit is 10 records per page
+    // Run export of previous month's sales before processing the request
+    await exportPreviousMonthsSales();
+
+    const page = parseInt(req.body.page) || 1;
+    const limit = parseInt(req.body.limit) || 10;
     const offset = (page - 1) * limit;
 
-    const [sales, totalRecords, totalSum] = await Promise.all([
+    const [dbSales, totalRecords, totalSum] = await Promise.all([
       getSalesFromDatabase(limit, offset),
       getTotalSalesCount(),
       getSumOfTotalSales(),
     ]);
 
+    // Read and parse the sales.json data
+    const jsonSales = await getSalesFromJson();
+
+    // Merge JSON and database sales data
+    const mergedSales = await mergeSalesData(jsonSales, dbSales);
+
+    // Apply pagination on merged data
+    const paginatedSales = mergedSales.slice(offset, offset + limit);
+
     const totalExpenses = await getSumOfExpensesByDateRange(null, null);
     const totalNet = totalSum - totalExpenses;
-
     const totalPages = Math.ceil(totalRecords / limit);
 
     const currentSalesData = await getSalesForCurrentDate();
@@ -32,7 +173,7 @@ router.post('/', async (req, res) => {
     const currentGcashTotal = await getSumOfTotalSalesTodayByPayment('gcash');
 
     // Count sales with non-zero credit for all sales
-    const creditCount = sales.reduce((acc, sale) => acc + (parseFloat(sale.credit) !== 0 ? 1 : 0), 0);
+    const creditCount = paginatedSales.reduce((acc, sale) => acc + (parseFloat(sale.credit) !== 0 ? 1 : 0), 0);
 
     const responseData = {
       current_sales: {
@@ -47,10 +188,10 @@ router.post('/', async (req, res) => {
         gcash: currentGcashTotal,
         totalRecords: totalRecords,
         totalPages: totalPages,
-        pageNumber: page // Correct page number
+        pageNumber: page
       },
       sales: {
-        data: sales,
+        data: paginatedSales,
         income: totalSum,
         expenses: totalExpenses,
         net: totalNet,
@@ -60,9 +201,11 @@ router.post('/', async (req, res) => {
         credit_count: creditCount,
         totalRecords: totalRecords,
         totalPages: totalPages,
-        pageNumber: page // Correct page number
+        pageNumber: page
       }
     };
+
+    console.log('sales');
 
     res.json(responseData);
   } catch (error) {
@@ -226,17 +369,6 @@ async function getSumOfTotalSalesTodayByPayment(modeOfPayment) {
     AND mode_of_payment = $1;
   `;
   const { rows } = await pool.query(queryText, [modeOfPayment]);
-  return rows[0].total_sum_today;
-}
-
-// Function to get the sum of total sales today
-async function getSumOfTotalSalesToday() {
-  const queryText = `
-    SELECT COALESCE(SUM(total::numeric), 0) AS total_sum_today
-    FROM sales
-    WHERE DATE(datetime) = CURRENT_DATE;
-  `;
-  const { rows } = await pool.query(queryText);
   return rows[0].total_sum_today;
 }
 

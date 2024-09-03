@@ -82,5 +82,3 @@ module.exports = {
   editProductInDatabase,
   deleteProductFromDatabase
 };
-
-  

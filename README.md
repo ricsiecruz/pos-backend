@@ -1,5 +1,5 @@
 to update, push in main
-need to push package also
+need to push package also but not in glitch
 
 glitch uses only 1 port. run index.js only
 need to update affected files in glitch when adding columns
@@ -10,6 +10,7 @@ postgresql://myuser:mypassword@localhost:5432/mydatabase
 pg_dump -Fc -v -d postgresql://postgres:R1cs1e09@localhost:5432/pos -f pos.bak
 
 pg_restore -v -d postgresql://pos_owner:b6glQcCGmah4@ep-gentle-haze-a1mmolgz.ap-southeast-1.aws.neon.tech/pos pos.bak
+pg_restore -v -d postgresql://neondb_owner:x6B0TEwsfAJe@ep-silent-rain-a5if6y9f.us-east-2.aws.neon.tech/neondb pos2.bak
 <!--  -->
 psql -U your_username
 psql -U postgres

@@ -10,7 +10,6 @@ const port = 3000;
 
 // Import routes
 const dashboardRoutes = require('./routes/dashboard');
-const userRoutes = require('./routes/queries');
 const inventoryRoutes = require('./routes/inventory');
 const productsRoutes = require('./routes/products');
 const expensesRoutes = require('./routes/expenses');
@@ -40,7 +39,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // HTTP Routes
-app.use('/users', userRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/inventory', inventoryRoutes);
 app.use('/products', productsRoutes);
