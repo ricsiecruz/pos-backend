@@ -341,13 +341,12 @@ const addTransactionSalesToDatabase = (sale) => {
     const localDatetime = moment().tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss'); // Convert to local time
 
     const query = `
-      INSERT INTO sales (transactionId, orders, qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount)
+      INSERT INTO sales (transactionid, orders, qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
     `;
-    console.log('sale', sale)
     const values = [
-      sale.transactionId,
+      sale.transactionid,
       JSON.stringify(sale.orders),
       sale.qty,
       sale.total,
@@ -435,7 +434,6 @@ const addTransactionSalesToDatabase = (sale) => {
                 // Wait for both promises to resolve before resolving the main promise
                 Promise.all([baristaPromise, utensilsPromise])
                   .then(() => {
-                    console.log('New sale added successfully:', insertedSale);
                     resolve(insertedSale);
                   })
                   .catch(reject);
