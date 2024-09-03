@@ -319,6 +319,7 @@ function editFood(updatedFood) {
 function editBeverage(updatedBeverage) {
   return new Promise((resolve, reject) => {
     const { id, product, stocks, price } = updatedBeverage;
+    console.log('beverage', updatedBeverage)
     pool.query(
       'UPDATE beverage SET product = $1, stocks = $2, price = $3 WHERE id = $4', 
       [product, stocks, price, id],
@@ -362,12 +363,13 @@ function addMemberToDatabase(newMember) {
               return;
             }
             
-            pool.query('SELECT * FROM members ORDER BY name ASC', (error, results) => {
+            pool.query('SELECT * FROM members ORDER BY id DESC', (error, results) => {
               if (error) {
                 reject(error);
                 return;
               }
               const updatedMembers = results.rows;
+              console.log('new member', updatedMembers)
               broadcastMembers(updatedMembers);
               resolve(updatedMembers);
             });

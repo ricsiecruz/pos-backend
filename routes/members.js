@@ -54,7 +54,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
 router.get('/', async(req, res) => {
   try {
-    const results = await pool.query('SELECT * FROM members ORDER BY name ASC');
+    const results = await pool.query('SELECT * FROM members ORDER BY id DESC');
     const members = results.rows;
     res.status(200).json(members)
   } catch(error) {
@@ -74,7 +74,7 @@ router.post('/', async (request, response) => {
       const totalPages = Math.ceil(totalRecords / limit);
 
       const results = await pool.query(
-          'SELECT * FROM members ORDER BY name ASC LIMIT $1 OFFSET $2',
+          'SELECT * FROM members ORDER BY id DESC LIMIT $1 OFFSET $2',
           [limit, offset]
       );
 
