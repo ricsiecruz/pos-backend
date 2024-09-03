@@ -52,6 +52,17 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+router.get('/', async(req, res) => {
+  try {
+    const results = await pool.query('SELECT * FROM members ORDER BY name ASC');
+    const members = results.rows;
+    res.status(200).json(members)
+  } catch(error) {
+    console.error('Error fetching members:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+})
+
 router.post('/', async (request, response) => {
   const { page = 1, limit = 10 } = request.body;
 
