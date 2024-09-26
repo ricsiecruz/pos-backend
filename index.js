@@ -426,8 +426,8 @@ const addTransactionSalesToDatabase = (sale) => {
         }
 
         // Check if the transactionId already exists
-        const checkQuery = 'SELECT 1 FROM sales WHERE transactionId = $1';
-        client.query(checkQuery, [sale.transactionId], (checkError, checkResults) => {
+        const checkQuery = 'SELECT 1 FROM sales WHERE transactionid = $1';
+        client.query(checkQuery, [sale.transactionid], (checkError, checkResults) => {
           if (checkError) {
             return client.query('ROLLBACK', () => {
               release();
@@ -436,7 +436,7 @@ const addTransactionSalesToDatabase = (sale) => {
           }
 
           if (checkResults.rows.length > 0) {
-            console.log(`Sale with transactionId ${sale.transactionId} already exists.`);
+            console.log(`Sale with transactionid ${sale.transactionid} already exists.`);
             return client.query('ROLLBACK', () => {
               release();
               resolve(null); // Skip insertion or handle as needed
@@ -445,17 +445,18 @@ const addTransactionSalesToDatabase = (sale) => {
 
           // Proceed with insertion if no duplicate is found
           const query = `
-            INSERT INTO sales (transactionId, orders, qty, total, datetime, customer, computer, subtotal, credit, mode_of_payment, student_discount, discount)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            INSERT INTO sales (transactionid, orders, qty, total, datetime, customer, computer, ps4, subtotal, credit, mode_of_payment, student_discount, discount)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING *
           `;
           const values = [
-            sale.transactionId,
+            sale.transactionid,
             JSON.stringify(sale.orders),
             sale.qty,
             sale.total,
             localDatetime,
             sale.customer,
+            sale.ps4,
             sale.computer,
             sale.subtotal,
             sale.credit,
