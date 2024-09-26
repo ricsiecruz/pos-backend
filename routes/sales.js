@@ -28,6 +28,7 @@ router.post('/', async (req, res) => {
     const currentNet = currentIncome - currentExpenses;
     const currentCredit = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.credit), 0);
     const currentComputer = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.computer), 0);
+    const currentPs4 = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.ps4), 0);
     const currentFoodAndDrinks = currentSalesData.reduce((acc, sale) => acc + parseFloat(sale.subtotal), 0);
     const currentCashTotal = await getSumOfTotalSalesTodayByPayment('cash');
     const currentGcashTotal = await getSumOfTotalSalesTodayByPayment('gcash');
@@ -42,6 +43,7 @@ router.post('/', async (req, res) => {
         expenses: currentExpenses,
         net: currentNet,
         computer: currentComputer,
+        ps4: currentPs4,
         food_and_drinks: currentFoodAndDrinks,
         credit: currentCredit,
         cash: currentCashTotal,
@@ -56,6 +58,7 @@ router.post('/', async (req, res) => {
         expenses: totalExpenses,
         net: totalNet,
         computer: await getSumOfComputers(),
+        ps4: await getSumOfPs4(),
         food_and_drinks: await getSumOfFoodAndDrinks(),
         credit: await getSumOfCredits(),
         credit_count: creditCount,
@@ -363,6 +366,24 @@ async function getSumOfComputers(startDate, endDate) {
     return rows[0].total_computer;
   } catch (error) {
     console.error('Error in getSumOfComputers query:', error);
+    throw error;
+  }
+}
+
+async function getSumOfPs4(startDate, endDate) {
+  let queryText = 'SELECT COALESCE(SUM(ps4::numeric), 0) AS total_ps4 FROM sales';
+
+  if (startDate && endDate) {
+    queryText += ' WHERE DATE(datetime) >= $1 AND DATE(datetime) <= $2';
+  }
+
+  const values = startDate && endDate ? [startDate, endDate] : [];
+
+  try {
+    const { rows } = await pool.query(queryText, values);
+    return rows[0].total_ps4;
+  } catch (error) {
+    console.error('Error in getSumOfPs4 query:', error);
     throw error;
   }
 }
