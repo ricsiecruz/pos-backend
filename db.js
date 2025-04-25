@@ -96,15 +96,18 @@ async function createTablesIfNotExist(pool) {
   }
 }
 
-// Create the pool
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: dbName,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-  ssl: false, // Disable SSL for local dev
-});
+// prod
+const pool = new Pool({connectionString: process.env.DATABASE_URL});
+
+// local
+// const pool = new Pool({
+//   user: process.env.DB_USER,
+//   host: process.env.DB_HOST,
+//   database: dbName,
+//   password: process.env.DB_PASSWORD,
+//   port: process.env.DB_PORT,
+//   ssl: false, // Disable SSL for local dev
+// });
 
 // Kick off the setup when this file is required
 (async () => {
