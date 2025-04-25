@@ -1,7 +1,7 @@
 // members.js
 const express = require('express');
 const moment = require('moment-timezone');
-const pool = require('../db');
+const poolPromise = require('../db');
 const router = express.Router();
 const multer = require('multer');
 const xlsx = require('xlsx');
@@ -54,13 +54,14 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 });
 
 router.get('/', async(req, res) => {
+  const pool = await poolPromise; // ✅ Wait for the real pool
+
   try {
-    const results = await pool.query('SELECT * FROM members ORDER BY id DESC');
-    const members = results.rows;
-    res.status(200).json(members)
-  } catch(error) {
-    console.error('Error fetching members:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    const result = await pool.query('SELECT * FROM members');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching members:', err);
+    res.status(500).json({ error: 'Failed to fetch members' });
   }
 })
 

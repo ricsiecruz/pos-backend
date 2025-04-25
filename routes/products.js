@@ -29,6 +29,24 @@ router.get('/:id', (request, response) => {
   });
 });
 
+router.post('/', (request, response) => {
+  const { product, price } = request.body;
+
+  pool.query(
+    'INSERT INTO products (product, price) VALUES ($1, $2) RETURNING *',
+    [product, price],
+    (error, results) => {
+      if (error) {
+        console.error('Error inserting product into database:', error);
+        return response.status(500).json({ error: 'Internal server error' });
+      }
+      const newProduct = results.rows[0];
+      response.status(201).json(newProduct); // return the newly created product
+    }
+  );
+});
+
+
 router.put('/:id', (request, response) => {
   const id = parseInt(request.params.id);
   const { price } = request.body;
