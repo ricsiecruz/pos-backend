@@ -108,6 +108,21 @@ async function createTablesIfNotExist(pool) {
       $$;
     `);
 
+        // === BEVERAGE TABLE ===
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS beverage (
+  id SERIAL PRIMARY KEY,
+  product VARCHAR(100) NOT NULL,
+  price NUMERIC(10, 2) NOT NULL,
+  stocks INTEGER DEFAULT 0,
+  available BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+        `);
+        console.log(`✅ Table "beverage" created/verified.`);
+    
+
     // === PRODUCTS TABLE ===
     await pool.query(`
       CREATE TABLE IF NOT EXISTS products (
