@@ -37,8 +37,8 @@ const membersHandler = require('./handlers/membersHandler');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(cors({
-  // origin: 'http://localhost:4200', // or your deployed frontend URL
-  origin: 'https://ricsiecruz.github.io',
+  origin: 'http://localhost:4200', // or your deployed frontend URL
+  // origin: 'https://ricsiecruz.github.io',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
