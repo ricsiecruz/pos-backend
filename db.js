@@ -1,14 +1,14 @@
-const { Pool, Client } = require('pg');
-require('dotenv').config();
+const { Pool, Client } = require("pg");
+require("dotenv").config();
 
-const dbName = process.env.DB_DATABASE || 'pos';
+const dbName = process.env.DB_DATABASE || "pos";
 
 // Function to create database if it doesn't exist
 async function createDatabaseIfNotExists() {
   const client = new Client({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
-    database: 'postgres', // default DB to connect to initially
+    database: "postgres", // default DB to connect to initially
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT,
   });
@@ -28,13 +28,12 @@ async function createDatabaseIfNotExists() {
       console.log(`✅ Database "${dbName}" already exists.`);
     }
   } catch (err) {
-    console.error('❌ Error checking or creating database:', err);
+    console.error("❌ Error checking or creating database:", err);
   } finally {
     await client.end();
   }
 }
 
-// Function to create required tables
 // Function to create required tables
 async function createTablesIfNotExist(pool) {
   try {
@@ -77,6 +76,20 @@ async function createTablesIfNotExist(pool) {
       $$;
     `);
 
+    // === FOODS TABLE ===
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS foods (
+        id SERIAL PRIMARY KEY,
+        product VARCHAR(255) NOT NULL,
+        price NUMERIC(10, 2) NOT NULL,
+        stocks INTEGER DEFAULT 0,
+        available BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    console.log(`✅ Table "foods" created/verified.`);
+
     // Add extra member fields if missing
     await pool.query(`
       DO $$
@@ -108,20 +121,18 @@ async function createTablesIfNotExist(pool) {
       $$;
     `);
 
-        // === BEVERAGE TABLE ===
-        await pool.query(`
-          CREATE TABLE IF NOT EXISTS beverage (
-  id SERIAL PRIMARY KEY,
-  product VARCHAR(100) NOT NULL,
-  price NUMERIC(10, 2) NOT NULL,
-  stocks INTEGER DEFAULT 0,
-  available BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-        `);
-        console.log(`✅ Table "beverage" created/verified.`);
-    
+    // === BEVERAGE TABLE ===
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS beverage (
+        id SERIAL PRIMARY KEY,
+        product VARCHAR(100) NOT NULL,
+        price NUMERIC(10, 2) NOT NULL,
+        stocks INTEGER DEFAULT 0,
+        available BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log(`✅ Table "beverage" created/verified.`);
 
     // === PRODUCTS TABLE ===
     await pool.query(`
@@ -135,10 +146,9 @@ async function createTablesIfNotExist(pool) {
 
     console.log(`✅ Tables "members" and "products" created/verified.`);
   } catch (err) {
-    console.error('❌ Error creating tables:', err);
+    console.error("❌ Error creating tables:", err);
   }
 }
-
 
 // === Connect Pool ===
 // prod
