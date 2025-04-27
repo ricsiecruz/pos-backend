@@ -15,10 +15,7 @@ async function createDatabaseIfNotExists() {
 
   try {
     await client.connect();
-    const res = await client.query(
-      `SELECT 1 FROM pg_database WHERE datname = $1`,
-      [dbName]
-    );
+    const res = await client.query(`SELECT 1 FROM pg_database WHERE datname = $1`, [dbName]);
 
     if (res.rowCount === 0) {
       console.log(`Database "${dbName}" does not exist. Creating...`);
@@ -143,6 +140,44 @@ async function createTablesIfNotExist(pool) {
         stocks NUMERIC DEFAULT 0
       )
     `);
+
+    // === SALES TABLE ===
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sales (
+        id SERIAL PRIMARY KEY,
+        transactionid VARCHAR(255),
+        orders JSONB,
+        qty INT,
+        total NUMERIC(10, 2),
+        datetime TIMESTAMP,
+        customer VARCHAR(255),
+        computer NUMERIC(10, 2),
+        ps4 NUMERIC(10, 2),
+        mode_of_payment VARCHAR(50),
+        credit NUMERIC(10, 2),
+        student_discount BOOLEAN,
+        discount NUMERIC(10, 2),
+        subtotal NUMERIC(10, 2)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS expenses (
+        id SERIAL PRIMARY KEY,
+        expense VARCHAR(255),
+        month VARCHAR(20),
+        date DATE,
+        amount NUMERIC(10, 2),
+        mode_of_payment VARCHAR(50),
+        credit BOOLEAN DEFAULT FALSE,
+        paid_by VARCHAR(255),
+        settled_by VARCHAR(255),
+        image_path TEXT,
+        date_settled TIMESTAMP WITH TIME ZONE
+      )
+    `);
+
+    console.log(`✅ Table "sales" created/verified.`);
 
     console.log(`✅ Tables "members" and "products" created/verified.`);
   } catch (err) {
