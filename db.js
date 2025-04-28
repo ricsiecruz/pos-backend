@@ -51,9 +51,13 @@ async function createTablesIfNotExist(pool) {
       CREATE TABLE IF NOT EXISTS members (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
-        email VARCHAR(100) UNIQUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
+        date_joined TIMESTAMP,
+        total_load NUMERIC DEFAULT 0,
+        coffee NUMERIC DEFAULT 0,
+        total_spent NUMERIC DEFAULT 0,
+        last_spent TIMESTAMP,
+        current_load NUMERIC DEFAULT 0
+      );
     `);
 
     // ✅ Ensure email column allows NULL if previously set to NOT NULL
