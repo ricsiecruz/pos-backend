@@ -34,6 +34,20 @@ async function createDatabaseIfNotExists() {
 // Function to create required tables
 async function createTablesIfNotExist(pool) {
   try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS mode_of_payment (
+      id SERIAL PRIMARY KEY,
+      mode_of_payment VARCHAR(255)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS paid_by (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255)
+      )
+    `);
+
     // === WHITELIST TABLE ===
     await pool.query(`
       CREATE TABLE IF NOT EXISTS whitelist (
