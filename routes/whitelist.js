@@ -29,13 +29,23 @@ router.get("/imei", async (req, res) => {
     const { rows } = await pool.query(queryText, [clientIp]);
 
     if (rows.length > 0) {
-      res.json(rows[0].imei);
+      res.json({
+        ip: clientIp,
+        imei: rows[0].imei,
+      });
     } else {
-      res.status(404).json({ error: "IMEI not found" });
+      res.status(404).json({
+        error: "IMEI not found",
+        ip: clientIp,
+        test: "test",
+      });
     }
   } catch (error) {
     console.error("Error fetching IMEI:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      error: "Internal server error",
+      ip: normalizeIp(req.ip), // Still include IP in case of error
+    });
   }
 });
 
