@@ -1,14 +1,14 @@
-const { Pool, Client } = require('pg');
-require('dotenv').config();
+const { Pool, Client } = require("pg");
+require("dotenv").config();
 
-const dbName = process.env.DB_DATABASE || 'pos';
+const dbName = process.env.DB_DATABASE || "pos";
 
 // Function to create database if it doesn't exist
 async function createDatabaseIfNotExists() {
   const client = new Client({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
-    database: 'postgres', // Connect to the default DB to create a new one
+    database: "postgres", // Connect to the default DB to create a new one
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT,
   });
@@ -28,7 +28,7 @@ async function createDatabaseIfNotExists() {
       console.log(`✅ Database "${dbName}" already exists.`);
     }
   } catch (err) {
-    console.error('Error checking or creating database:', err);
+    console.error("Error checking or creating database:", err);
   } finally {
     await client.end();
   }
@@ -90,9 +90,49 @@ async function createTablesIfNotExist(pool) {
       )
     `);
 
-    console.log(`✅ Tables "members" and "products" exist or were created.`);
+    // === SALES TABLE ===
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sales (
+        id SERIAL PRIMARY KEY,
+        transactionid VARCHAR(255),
+        orders JSONB,
+        qty INT,
+        total NUMERIC(10, 2),
+        datetime TIMESTAMP,
+        customer VARCHAR(255),
+        computer NUMERIC(10, 2),
+        load NUMERIC(10, 2),
+        zombiePromo BOOLEAN DEFAULT FALSE,
+        ps4 NUMERIC(10, 2),
+        mode_of_payment VARCHAR(50),
+        credit NUMERIC(10, 2),
+        student_discount BOOLEAN,
+        discount NUMERIC(10, 2),
+        subtotal NUMERIC(10, 2)
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS expenses (
+        id SERIAL PRIMARY KEY,
+        expense VARCHAR(255),
+        month VARCHAR(20),
+        date DATE,
+        amount NUMERIC(10, 2),
+        mode_of_payment VARCHAR(50),
+        credit BOOLEAN DEFAULT FALSE,
+        paid_by VARCHAR(255),
+        settled_by VARCHAR(255),
+        image_path TEXT,
+        date_settled TIMESTAMP WITH TIME ZONE
+      )
+    `);
+
+    console.log(`✅ Table "sales" created/verified.`);
+
+    console.log(`✅ Tables "members" and "products" created/verified.`);
   } catch (err) {
-    console.error('Error creating tables:', err);
+    console.error("Error creating tables:", err);
   }
 }
 
