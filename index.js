@@ -38,7 +38,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(
   cors({
-    // origin: "http://localhost:4200", // or your deployed frontend URL
+    // origin: 'http://localhost:4200', // or your deployed frontend URL
     origin: "https://ricsiecruz.github.io",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
@@ -242,9 +242,7 @@ async function addFoodToDatabase(newFood) {
       [product, price, stocks, utensils]
     );
     const { id } = result.rows[0];
-    const updatedFoods = await pool.query(
-      "SELECT * FROM foods ORDER BY id DESC"
-    );
+    const updatedFoods = await pool.query("SELECT * FROM foods ORDER BY id DESC");
     broadcastFoods(updatedFoods.rows);
     return { id, product, price, stocks, utensils };
   } catch (error) {
@@ -271,9 +269,7 @@ async function addBeverageToDatabase(newBeverage) {
       [product, price, stocks]
     );
     const { id } = result.rows[0];
-    const updatedBeverage = await pool.query(
-      "SELECT * FROM beverage ORDER BY id DESC"
-    );
+    const updatedBeverage = await pool.query("SELECT * FROM beverage ORDER BY id DESC");
     broadcastBeverage(updatedBeverage.rows);
     return { id, product, price, stocks };
   } catch (error) {
@@ -368,64 +364,42 @@ function editBeverage(updatedBeverage) {
 
 function addMemberToDatabase(newMember) {
   return new Promise((resolve, reject) => {
-    const {
-      name,
-      date_joined,
-      coffee,
-      total_load,
-      total_spent,
-      last_spent,
-      current_load,
-    } = newMember;
+    const { name, date_joined, coffee, total_load, total_spent, last_spent, current_load } =
+      newMember;
 
-    pool.query(
-      "SELECT id FROM members WHERE name = $1",
-      [name],
-      (error, results) => {
-        if (error) {
-          reject(error);
-          return;
-        }
+    pool.query("SELECT id FROM members WHERE name = $1", [name], (error, results) => {
+      if (error) {
+        reject(error);
+        return;
+      }
 
-        if (results.rows.length > 0) {
-          const errorMessage = "Member already exists";
-          reject(errorMessage);
-          return;
-        }
+      if (results.rows.length > 0) {
+        const errorMessage = "Member already exists";
+        reject(errorMessage);
+        return;
+      }
 
-        pool.query(
-          "INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent, current_load) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, date_joined, coffee, total_load, total_spent, last_spent, current_load",
-          [
-            name,
-            date_joined,
-            coffee,
-            total_load,
-            total_spent,
-            last_spent,
-            current_load,
-          ],
-          (error, results) => {
+      pool.query(
+        "INSERT INTO members (name, date_joined, coffee, total_load, total_spent, last_spent, current_load) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, date_joined, coffee, total_load, total_spent, last_spent, current_load",
+        [name, date_joined, coffee, total_load, total_spent, last_spent, current_load],
+        (error, results) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          pool.query("SELECT * FROM members ORDER BY id DESC", (error, results) => {
             if (error) {
               reject(error);
               return;
             }
-
-            pool.query(
-              "SELECT * FROM members ORDER BY id DESC",
-              (error, results) => {
-                if (error) {
-                  reject(error);
-                  return;
-                }
-                const updatedMembers = results.rows;
-                broadcastMembers(updatedMembers);
-                resolve(updatedMembers);
-              }
-            );
-          }
-        );
-      }
-    );
+            const updatedMembers = results.rows;
+            broadcastMembers(updatedMembers);
+            resolve(updatedMembers);
+          });
+        }
+      );
+    });
   });
 }
 
@@ -444,17 +418,7 @@ function addExpenses(newExpenses) {
     } = newExpenses;
     pool.query(
       "INSERT INTO expenses (expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *",
-      [
-        expense,
-        month,
-        date,
-        amount,
-        mode_of_payment,
-        image_path,
-        credit,
-        paid_by,
-        settled_by,
-      ],
+      [expense, month, date, amount, mode_of_payment, image_path, credit, paid_by, settled_by],
       (error, results) => {
         if (error) {
           reject(error);
@@ -465,12 +429,7 @@ function addExpenses(newExpenses) {
 
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
-            client.send(
-              JSON.stringify({
-                action: "addExpensesResponse",
-                expense: newExpense,
-              })
-            );
+            client.send(JSON.stringify({ action: "addExpensesResponse", expense: newExpense }));
           }
         });
       }
@@ -499,9 +458,7 @@ async function getSumOfExpensesForCurrentDate() {
 
 const addTransactionSalesToDatabase = (sale) => {
   return new Promise((resolve, reject) => {
-    const localDatetime = moment()
-      .tz("Asia/Manila")
-      .format("YYYY-MM-DD HH:mm:ss"); // Convert to local time
+    const localDatetime = moment().tz("Asia/Manila").format("YYYY-MM-DD HH:mm:ss"); // Convert to local time
 
     pool.connect((err, client, release) => {
       if (err) return reject(err);
@@ -514,26 +471,21 @@ const addTransactionSalesToDatabase = (sale) => {
 
         // Check if the transactionId already exists
         const checkQuery = "SELECT 1 FROM sales WHERE transactionid = $1";
-        client.query(
-          checkQuery,
-          [sale.transactionid],
-          (checkError, checkResults) => {
-            if (checkError) {
-              return client.query("ROLLBACK", () => {
-                release();
-                reject(checkError);
-              });
-            }
+        client.query(checkQuery, [sale.transactionid], (checkError, checkResults) => {
+          if (checkError) {
+            return client.query("ROLLBACK", () => {
+              release();
+              reject(checkError);
+            });
+          }
 
-            if (checkResults.rows.length > 0) {
-              console.log(
-                `Sale with transactionid ${sale.transactionid} already exists.`
-              );
-              return client.query("ROLLBACK", () => {
-                release();
-                resolve(null); // Skip insertion or handle as needed
-              });
-            }
+          if (checkResults.rows.length > 0) {
+            console.log(`Sale with transactionid ${sale.transactionid} already exists.`);
+            return client.query("ROLLBACK", () => {
+              release();
+              resolve(null); // Skip insertion or handle as needed
+            });
+          }
 
             // Proceed with insertion if no duplicate is found
             const query = `
@@ -541,203 +493,185 @@ const addTransactionSalesToDatabase = (sale) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING *
           `;
-            const values = [
-              sale.transactionid,
-              JSON.stringify(sale.orders),
-              sale.qty,
-              sale.total,
-              localDatetime,
-              sale.customer,
-              sale.ps4,
-              sale.computer,
-              sale.subtotal,
-              sale.credit,
-              sale.mode_of_payment,
-              sale.student_discount,
-              sale.discount,
-            ];
+          const values = [
+            sale.transactionid,
+            JSON.stringify(sale.orders),
+            sale.qty,
+            sale.total,
+            localDatetime,
+            sale.customer,
+            sale.ps4,
+            sale.computer,
+            sale.subtotal,
+            sale.credit,
+            sale.mode_of_payment,
+            sale.student_discount,
+            sale.discount,
+          ];
 
-            client.query(query, values, (error, results) => {
-              if (error) {
+          client.query(query, values, (error, results) => {
+            if (error) {
+              return client.query("ROLLBACK", () => {
+                release();
+                reject(error);
+              });
+            }
+
+            const insertedSale = results.rows[0];
+            const productNames = sale.orders.map((order) => order.product);
+
+            // Fetch product details to check for barista, utensils, and beverages
+            const baristaProductsQuery =
+              "SELECT product FROM products WHERE product = ANY($1) AND barista = true";
+            const utensilsProductsQuery =
+              "SELECT product FROM foods WHERE product = ANY($1) AND utensils = true";
+            const beveragesQuery = "SELECT product FROM beverage WHERE product = ANY($1)";
+
+            client.query(baristaProductsQuery, [productNames], (baristaError, baristaResults) => {
+              if (baristaError) {
                 return client.query("ROLLBACK", () => {
                   release();
-                  reject(error);
+                  reject(baristaError);
                 });
               }
 
-              const insertedSale = results.rows[0];
-              const productNames = sale.orders.map((order) => order.product);
-
-              // Fetch product details to check for barista, utensils, and beverages
-              const baristaProductsQuery =
-                "SELECT product FROM products WHERE product = ANY($1) AND barista = true";
-              const utensilsProductsQuery =
-                "SELECT product FROM foods WHERE product = ANY($1) AND utensils = true";
-              const beveragesQuery =
-                "SELECT product FROM beverage WHERE product = ANY($1)";
-
               client.query(
-                baristaProductsQuery,
+                utensilsProductsQuery,
                 [productNames],
-                (baristaError, baristaResults) => {
-                  if (baristaError) {
+                (utensilsError, utensilsResults) => {
+                  if (utensilsError) {
                     return client.query("ROLLBACK", () => {
                       release();
-                      reject(baristaError);
+                      reject(utensilsError);
                     });
                   }
 
                   client.query(
-                    utensilsProductsQuery,
+                    beveragesQuery,
                     [productNames],
-                    (utensilsError, utensilsResults) => {
-                      if (utensilsError) {
+                    (beveragesError, beveragesResults) => {
+                      if (beveragesError) {
                         return client.query("ROLLBACK", () => {
                           release();
-                          reject(utensilsError);
+                          reject(beveragesError);
                         });
                       }
 
-                      client.query(
-                        beveragesQuery,
-                        [productNames],
-                        (beveragesError, beveragesResults) => {
-                          if (beveragesError) {
-                            return client.query("ROLLBACK", () => {
-                              release();
-                              reject(beveragesError);
-                            });
-                          }
+                      // Calculate total quantities for barista, utensils, and beverages
+                      const totalBaristaQuantity = sale.orders
+                        .filter((order) =>
+                          baristaResults.rows.some((bp) => bp.product === order.product)
+                        )
+                        .reduce((sum, order) => sum + order.quantity, 0);
 
-                          // Calculate total quantities for barista, utensils, and beverages
-                          const totalBaristaQuantity = sale.orders
-                            .filter((order) =>
-                              baristaResults.rows.some(
-                                (bp) => bp.product === order.product
-                              )
-                            )
-                            .reduce((sum, order) => sum + order.quantity, 0);
+                      const totalUtensilsQuantity = sale.orders
+                        .filter((order) =>
+                          utensilsResults.rows.some((up) => up.product === order.product)
+                        )
+                        .reduce((sum, order) => sum + order.quantity, 0);
 
-                          const totalUtensilsQuantity = sale.orders
-                            .filter((order) =>
-                              utensilsResults.rows.some(
-                                (up) => up.product === order.product
-                              )
-                            )
-                            .reduce((sum, order) => sum + order.quantity, 0);
+                      const totalBeverageQuantity = sale.orders
+                        .filter((order) =>
+                          beveragesResults.rows.some((b) => b.product === order.product)
+                        )
+                        .reduce((sum, order) => sum + order.quantity, 0);
 
-                          const totalBeverageQuantity = sale.orders
-                            .filter((order) =>
-                              beveragesResults.rows.some(
-                                (b) => b.product === order.product
-                              )
-                            )
-                            .reduce((sum, order) => sum + order.quantity, 0);
+                      let baristaPromise = Promise.resolve();
+                      let utensilsPromise = Promise.resolve();
+                      let beveragesPromise = Promise.resolve();
 
-                          let baristaPromise = Promise.resolve();
-                          let utensilsPromise = Promise.resolve();
-                          let beveragesPromise = Promise.resolve();
-
-                          if (totalBaristaQuantity > 0) {
-                            // Deduct inventory for "straw", "lids", and "cups" based on the totalBaristaQuantity
-                            const updateInventoryBaristaQuery = `
+                      if (totalBaristaQuantity > 0) {
+                        // Deduct inventory for "straw", "lids", and "cups" based on the totalBaristaQuantity
+                        const updateInventoryBaristaQuery = `
                       UPDATE inventory
                       SET stocks = GREATEST(stocks - $1, 0)
                       WHERE product IN ('straw', 'lids', 'cups')
                       RETURNING *
                     `;
 
-                            baristaPromise = new Promise((resolve, reject) => {
-                              client.query(
-                                updateInventoryBaristaQuery,
-                                [totalBaristaQuantity],
-                                (updateError, updateResults) => {
-                                  if (updateError) {
-                                    reject(updateError);
-                                  } else {
-                                    resolve();
-                                  }
-                                }
-                              );
-                            });
-                          }
+                        baristaPromise = new Promise((resolve, reject) => {
+                          client.query(
+                            updateInventoryBaristaQuery,
+                            [totalBaristaQuantity],
+                            (updateError, updateResults) => {
+                              if (updateError) {
+                                reject(updateError);
+                              } else {
+                                resolve();
+                              }
+                            }
+                          );
+                        });
+                      }
 
-                          if (totalUtensilsQuantity > 0) {
-                            // Deduct inventory for "forks" based on the totalUtensilsQuantity
-                            const updateInventoryUtensilsQuery = `
+                      if (totalUtensilsQuantity > 0) {
+                        // Deduct inventory for "forks" based on the totalUtensilsQuantity
+                        const updateInventoryUtensilsQuery = `
                       UPDATE inventory
                       SET stocks = GREATEST(stocks - $1, 0)
                       WHERE product = 'forks'
                       RETURNING *
                     `;
 
-                            utensilsPromise = new Promise((resolve, reject) => {
-                              client.query(
-                                updateInventoryUtensilsQuery,
-                                [totalUtensilsQuantity],
-                                (updateError, updateResults) => {
-                                  if (updateError) {
-                                    reject(updateError);
-                                  } else {
-                                    resolve();
-                                  }
-                                }
-                              );
-                            });
-                          }
+                        utensilsPromise = new Promise((resolve, reject) => {
+                          client.query(
+                            updateInventoryUtensilsQuery,
+                            [totalUtensilsQuantity],
+                            (updateError, updateResults) => {
+                              if (updateError) {
+                                reject(updateError);
+                              } else {
+                                resolve();
+                              }
+                            }
+                          );
+                        });
+                      }
 
-                          if (totalBeverageQuantity > 0) {
-                            // Deduct inventory for the beverages sold
-                            const updateBeverageStocksQuery = `
+                      if (totalBeverageQuantity > 0) {
+                        // Deduct inventory for the beverages sold
+                        const updateBeverageStocksQuery = `
                       UPDATE beverage
                       SET stocks = GREATEST(stocks - $1, 0)
                       WHERE product = ANY($2)
                       RETURNING *
                     `;
 
-                            beveragesPromise = new Promise(
-                              (resolve, reject) => {
-                                client.query(
-                                  updateBeverageStocksQuery,
-                                  [totalBeverageQuantity, productNames],
-                                  (updateError, updateResults) => {
-                                    if (updateError) {
-                                      reject(updateError);
-                                    } else {
-                                      broadcastBeverage();
-                                      resolve();
-                                    }
-                                  }
-                                );
+                        beveragesPromise = new Promise((resolve, reject) => {
+                          client.query(
+                            updateBeverageStocksQuery,
+                            [totalBeverageQuantity, productNames],
+                            (updateError, updateResults) => {
+                              if (updateError) {
+                                reject(updateError);
+                              } else {
+                                broadcastBeverage();
+                                resolve();
                               }
-                            );
-                          }
+                            }
+                          );
+                        });
+                      }
 
-                          // Wait for all promises to resolve before committing the transaction
-                          Promise.all([
-                            baristaPromise,
-                            utensilsPromise,
-                            beveragesPromise,
-                          ])
-                            .then(() => {
-                              client.query("COMMIT", (commitError) => {
-                                release();
-                                if (commitError) {
-                                  reject(commitError);
-                                } else {
-                                  console.log("New sale added successfully");
-                                  resolve(insertedSale);
-                                }
-                              });
-                            })
-                            .catch((error) => {
-                              client.query("ROLLBACK", () => {
-                                release();
-                                reject(error);
-                              });
-                            });
-                        }
-                      );
+                      // Wait for all promises to resolve before committing the transaction
+                      Promise.all([baristaPromise, utensilsPromise, beveragesPromise])
+                        .then(() => {
+                          client.query("COMMIT", (commitError) => {
+                            release();
+                            if (commitError) {
+                              reject(commitError);
+                            } else {
+                              console.log("New sale added successfully");
+                              resolve(insertedSale);
+                            }
+                          });
+                        })
+                        .catch((error) => {
+                          client.query("ROLLBACK", () => {
+                            release();
+                            reject(error);
+                          });
+                        });
                     }
                   );
                 }
@@ -748,7 +682,7 @@ const addTransactionSalesToDatabase = (sale) => {
       });
     });
   });
-};
+
 
 function addInventory(newInventory) {
   return new Promise((resolve, reject) => {
@@ -762,17 +696,14 @@ function addInventory(newInventory) {
           return;
         }
         const { id, product, category, brand, stocks } = results.rows[0];
-        pool.query(
-          "SELECT * FROM inventory ORDER BY id DESC",
-          (error, results) => {
-            if (error) {
-              reject(error);
-              return;
-            }
-            const updatedInventory = results.rows;
-            resolve(updatedInventory);
+        pool.query("SELECT * FROM inventory ORDER BY id DESC", (error, results) => {
+          if (error) {
+            reject(error);
+            return;
           }
-        );
+          const updatedInventory = results.rows;
+          resolve(updatedInventory);
+        });
       }
     );
   });
@@ -781,54 +712,42 @@ function addInventory(newInventory) {
 function addStock(updateInventory) {
   return new Promise((resolve, reject) => {
     const { id, stocks } = updateInventory;
-    pool.query(
-      "UPDATE inventory SET stocks = $1 WHERE id = $2",
-      [stocks, id],
-      (error, results) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve();
-        broadcastInventory();
+    pool.query("UPDATE inventory SET stocks = $1 WHERE id = $2", [stocks, id], (error, results) => {
+      if (error) {
+        reject(error);
+        return;
       }
-    );
+      resolve();
+      broadcastInventory();
+    });
   });
 }
 
 function addFoodStock(updateFoodStock) {
   return new Promise((resolve, reject) => {
     const { id, stocks } = updateFoodStock;
-    pool.query(
-      "UPDATE foods SET stocks = $1 WHERE id = $2",
-      [stocks, id],
-      (error, results) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve();
-        broadcastFoods();
+    pool.query("UPDATE foods SET stocks = $1 WHERE id = $2", [stocks, id], (error, results) => {
+      if (error) {
+        reject(error);
+        return;
       }
-    );
+      resolve();
+      broadcastFoods();
+    });
   });
 }
 
 function addBeverageStock(updateBeverageStock) {
   return new Promise((resolve, reject) => {
     const { id, stocks } = updateBeverageStock;
-    pool.query(
-      "UPDATE beverage SET stocks = $1 WHERE id = $2",
-      [stocks, id],
-      (error, results) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve();
-        broadcastBeverage();
+    pool.query("UPDATE beverage SET stocks = $1 WHERE id = $2", [stocks, id], (error, results) => {
+      if (error) {
+        reject(error);
+        return;
       }
-    );
+      resolve();
+      broadcastBeverage();
+    });
   });
 }
 

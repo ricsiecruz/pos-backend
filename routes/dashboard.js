@@ -1,36 +1,48 @@
-const express = require('express');
-const pool = require('../db');
-const moment = require('moment-timezone');
+const express = require("express");
+const pool = require("../db");
+const moment = require("moment-timezone");
 const router = express.Router();
 
-const TIMEZONE = 'Asia/Manila';
+const TIMEZONE = "Asia/Manila";
 
-router.get('/', async (req, res) => {
-    try {
-        const [mostOrderedToday, mostOrdered, salesAndExpensesSummary, topSpenders, updatedMembers, startDate] = await Promise.all([
-            getMostOrdered(true),
-            getMostOrdered(),
-            getSalesAndExpensesSummary(),
-            getTopSpenders(),
-            updateMemberData(),
-            getStartDate()
-        ]);
+router.get("/", async (req, res) => {
+  try {
+    const [
+      mostOrderedToday,
+      mostOrdered,
+      salesAndExpensesSummary,
+      topSpenders,
+      updatedMembers,
+      startDate,
+    ] = await Promise.all([
+      getMostOrdered(true),
+      getMostOrdered(),
+      getSalesAndExpensesSummary(),
+      getTopSpenders(),
+      updateMemberData(),
+      getStartDate(),
+    ]);
 
-        res.json({
-            mostOrderedToday,
-            mostOrdered,
-            salesAndExpensesSummary,
-            topSpenders,
-            updatedMembers,
-            startDate
-        });
-    } catch (error) {
-        handleError(res, 'Error fetching dashboard from database:', error, 'Internal server error - dashboard');
-    }
+    res.json({
+      mostOrderedToday,
+      mostOrdered,
+      salesAndExpensesSummary,
+      topSpenders,
+      updatedMembers,
+      startDate,
+    });
+  } catch (error) {
+    handleError(
+      res,
+      "Error fetching dashboard from database:",
+      error,
+      "Internal server error - dashboard"
+    );
+  }
 });
 
 async function getMostOrdered(isToday = false) {
-    let queryText = `
+  let queryText = `
         WITH expanded_orders AS (
             SELECT 
                 o.order_detail
@@ -43,12 +55,12 @@ async function getMostOrdered(isToday = false) {
                         jsonb_typeof(orders::jsonb) = 'array'
                 ) o
     `;
-    
-    if (isToday) {
-        queryText += ` WHERE DATE(datetime AT TIME ZONE '${TIMEZONE}') = CURRENT_DATE `;
-    }
 
-    queryText += `
+  if (isToday) {
+    queryText += ` WHERE DATE(datetime AT TIME ZONE '${TIMEZONE}') = CURRENT_DATE `;
+  }
+
+  queryText += `
         )
         SELECT 
             order_detail ->> 'product' AS product,
@@ -59,18 +71,20 @@ async function getMostOrdered(isToday = false) {
         LIMIT 10;
     `;
 
-    const { rows } = await pool.query(queryText);
-    return rows;
+  const { rows } = await pool.query(queryText);
+  return rows;
 }
 
-async function getSalesAndExpensesSummary() {
-    const queryText = `
+async function getSalesAndExpensesSummary(startDate, endDate) {
+  const queryText = `
         WITH sales_summary AS (
             SELECT 
                 DATE(datetime AT TIME ZONE '${TIMEZONE}') AS date,
                 SUM(total::numeric) AS total_sales
             FROM 
                 sales
+            WHERE 
+                datetime AT TIME ZONE '${TIMEZONE}' BETWEEN $1 AND $2
             GROUP BY 
                 DATE(datetime AT TIME ZONE '${TIMEZONE}')
         ),
@@ -80,6 +94,8 @@ async function getSalesAndExpensesSummary() {
                 SUM(amount::numeric) AS total_expenses
             FROM 
                 expenses
+            WHERE 
+                date AT TIME ZONE '${TIMEZONE}' BETWEEN $1 AND $2
             GROUP BY 
                 DATE(date AT TIME ZONE '${TIMEZONE}')
         ),
@@ -109,17 +125,17 @@ async function getSalesAndExpensesSummary() {
             total_sales DESC;
     `;
 
-    const { rows } = await pool.query(queryText);
+  const { rows } = await pool.query(queryText, [startDate, endDate]);
 
-    return {
-        data: rows,
-        all_time_low: rows[rows.length - 1],
-        all_time_high: rows[0]
-    };
+  return {
+    data: rows,
+    all_time_low: rows[rows.length - 1],
+    all_time_high: rows[0],
+  };
 }
 
 async function getTopSpenders(today = false) {
-    let queryText = `
+  let queryText = `
         SELECT 
             customer,
             SUM(total::numeric) AS total_spent,
@@ -129,11 +145,11 @@ async function getTopSpenders(today = false) {
             sales
     `;
 
-    if (today) {
-        queryText += ` WHERE DATE(datetime AT TIME ZONE '${TIMEZONE}') = CURRENT_DATE `;
-    }
+  if (today) {
+    queryText += ` WHERE DATE(datetime AT TIME ZONE '${TIMEZONE}') = CURRENT_DATE `;
+  }
 
-    queryText += `
+  queryText += `
         GROUP BY 
             customer
         ORDER BY 
@@ -141,24 +157,24 @@ async function getTopSpenders(today = false) {
         LIMIT 10;
     `;
 
-    const { rows } = await pool.query(queryText);
+  const { rows } = await pool.query(queryText);
 
-    const formatter = new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+  const formatter = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
-    rows.forEach(row => {
-        row.total_spent = formatter.format(row.total_spent);
-        row.total_subtotal = formatter.format(row.total_subtotal);
-        row.total_computer = formatter.format(row.total_computer);
-    });
+  rows.forEach((row) => {
+    row.total_spent = formatter.format(row.total_spent);
+    row.total_subtotal = formatter.format(row.total_subtotal);
+    row.total_computer = formatter.format(row.total_computer);
+  });
 
-    return rows;
+  return rows;
 }
 
 async function updateMemberData() {
-    const updateQueryText = `
+  const updateQueryText = `
         WITH member_sales AS (
             SELECT 
                 customer,
@@ -182,77 +198,83 @@ async function updateMemberData() {
             members.name = ms.customer
         RETURNING id, name, total_load, coffee, total_spent, members.last_spent AT TIME ZONE '${TIMEZONE}' AS last_spent;
     `;
-    const { rows } = await pool.query(updateQueryText);
+  const { rows } = await pool.query(updateQueryText);
 
-    const formatter = new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+  const formatter = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
-    rows.forEach(row => {
-        row.total_load = formatter.format(row.total_load);
-        row.coffee = formatter.format(row.coffee);
-        row.total_spent = formatter.format(row.total_spent);
-        row.last_spent = moment(row.last_spent).tz(TIMEZONE).format('YYYY-MM-DD HH:mm:ss');
-    });
+  rows.forEach((row) => {
+    row.total_load = formatter.format(row.total_load);
+    row.coffee = formatter.format(row.coffee);
+    row.total_spent = formatter.format(row.total_spent);
+    row.last_spent = moment(row.last_spent).tz(TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
+  });
 
-    return rows;
+  return rows;
 }
 
-router.get('/most-ordered', async (req, res) => {
-    try {
-        const mostOrdered = await getMostOrdered();
-        res.json({ most_ordered: mostOrdered });
-    } catch (error) {
-        console.error('Error fetching most ordered:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+router.get("/most-ordered", async (req, res) => {
+  try {
+    const mostOrdered = await getMostOrdered();
+    res.json({ most_ordered: mostOrdered });
+  } catch (error) {
+    console.error("Error fetching most ordered:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
-router.get('/sales-expenses-summary', async (req, res) => {
-    try {
-        const summary = await getSalesAndExpensesSummary();
-        res.json({ sales_expenses_summary: summary });
-    } catch (error) {
-        console.error('Error fetching sales and expenses summary:', error);
-        res.status(500).json({ error: 'Internal server error' });
+router.get("/sales-expenses-summary", async (req, res) => {
+  try {
+    const { start_date, end_date } = req.query;
+
+    if (!start_date || !end_date) {
+      return res.status(400).json({ error: "start_date and end_date are required" });
     }
+
+    const summary = await getSalesAndExpensesSummary(start_date, end_date);
+    res.json({ sales_expenses_summary: summary });
+  } catch (error) {
+    console.error("Error fetching sales and expenses summary:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
-router.get('/top-spenders', async (req, res) => {
-    try {
-        const topSpenders = await getTopSpenders();
-        res.json({ top_spenders: topSpenders });
-    } catch (error) {
-        console.error('Error fetching top spenders:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+router.get("/top-spenders", async (req, res) => {
+  try {
+    const topSpenders = await getTopSpenders();
+    res.json({ top_spenders: topSpenders });
+  } catch (error) {
+    console.error("Error fetching top spenders:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
-router.get('/top-spenders-today', async (req, res) => {
-    try {
-        const topSpendersToday = await getTopSpenders(true);
-        res.json({ top_spenders_today: topSpendersToday });
-    } catch (error) {
-        console.error('Error fetching top spenders for today:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+router.get("/top-spenders-today", async (req, res) => {
+  try {
+    const topSpendersToday = await getTopSpenders(true);
+    res.json({ top_spenders_today: topSpendersToday });
+  } catch (error) {
+    console.error("Error fetching top spenders for today:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 async function getStartDate() {
-    const queryText = `
+  const queryText = `
         SELECT 
             MIN(datetime AT TIME ZONE '${TIMEZONE}') AS start_date
         FROM 
             sales;
     `;
-    const { rows } = await pool.query(queryText);
-    return rows[0].start_date;
+  const { rows } = await pool.query(queryText);
+  return rows[0].start_date;
 }
 
 function handleError(res, logMessage, error, clientMessage) {
-    console.error(logMessage, error);
-    res.status(500).json({ message: clientMessage });
+  console.error(logMessage, error);
+  res.status(500).json({ message: clientMessage });
 }
 
 module.exports = router;

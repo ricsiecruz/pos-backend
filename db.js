@@ -8,17 +8,14 @@ async function createDatabaseIfNotExists() {
   const client = new Client({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
-    database: "postgres", // Connect to the default DB to create a new one
+    database: "postgres", // default DB to connect to initially
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT,
   });
 
   try {
     await client.connect();
-    const res = await client.query(
-      `SELECT 1 FROM pg_database WHERE datname = $1`,
-      [dbName]
-    );
+    const res = await client.query(`SELECT 1 FROM pg_database WHERE datname = $1`, [dbName]);
 
     if (res.rowCount === 0) {
       console.log(`Database "${dbName}" does not exist. Creating...`);
@@ -28,7 +25,7 @@ async function createDatabaseIfNotExists() {
       console.log(`✅ Database "${dbName}" already exists.`);
     }
   } catch (err) {
-    console.error("Error checking or creating database:", err);
+    console.error("❌ Error checking or creating database:", err);
   } finally {
     await client.end();
   }
@@ -37,7 +34,21 @@ async function createDatabaseIfNotExists() {
 // Function to create required tables
 async function createTablesIfNotExist(pool) {
   try {
-    // Create whitelist table with "ip" column
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS mode_of_payment (
+      id SERIAL PRIMARY KEY,
+      mode_of_payment VARCHAR(255)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS paid_by (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255)
+      )
+    `);
+
+    // === WHITELIST TABLE ===
     await pool.query(`
       CREATE TABLE IF NOT EXISTS whitelist (
         id SERIAL PRIMARY KEY,
@@ -47,46 +58,106 @@ async function createTablesIfNotExist(pool) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    console.log(`✅ Table "whitelist" exists or was created.`);
+    console.log(`✅ Table "whitelist" created/verified.`);
 
-    // Ensure additional columns in case table existed before
+    // === MEMBERS TABLE ===
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS members (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        date_joined TIMESTAMP,
+        total_load NUMERIC DEFAULT 0,
+        coffee NUMERIC DEFAULT 0,
+        total_spent NUMERIC DEFAULT 0,
+        last_spent TIMESTAMP,
+        current_load NUMERIC DEFAULT 0
+      );
+    `);
+
+    // ✅ Ensure email column allows NULL if previously set to NOT NULL
     await pool.query(`
       DO $$
       BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
-          WHERE table_name='whitelist' AND column_name='ip'
+        IF EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_name = 'members'
+          AND column_name = 'email'
+          AND is_nullable = 'NO'
         ) THEN
-          ALTER TABLE whitelist ADD COLUMN ip VARCHAR(45);
-        END IF;
-
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
-          WHERE table_name='whitelist' AND column_name='enabled'
-        ) THEN
-          ALTER TABLE whitelist ADD COLUMN enabled BOOLEAN DEFAULT TRUE;
+          ALTER TABLE members ALTER COLUMN email DROP NOT NULL;
         END IF;
       END
       $$;
     `);
 
-    // Create members table
+    // === FOODS TABLE ===
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS members (
+      CREATE TABLE IF NOT EXISTS foods (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        email VARCHAR(100) UNIQUE NOT NULL,
+        product VARCHAR(255) NOT NULL,
+        price NUMERIC(10, 2) NOT NULL,
+        stocks INTEGER DEFAULT 0,
+        available BOOLEAN DEFAULT TRUE,
+        utensils BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    // Create products table
+    console.log(`✅ Table "foods" created/verified.`);
+
+    // Add extra member fields if missing
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='members' AND column_name='date_joined') THEN
+          ALTER TABLE members ADD COLUMN date_joined TIMESTAMP;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='members' AND column_name='coffee') THEN
+          ALTER TABLE members ADD COLUMN coffee NUMERIC DEFAULT 0;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='members' AND column_name='total_load') THEN
+          ALTER TABLE members ADD COLUMN total_load NUMERIC DEFAULT 0;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='members' AND column_name='total_spent') THEN
+          ALTER TABLE members ADD COLUMN total_spent NUMERIC DEFAULT 0;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='members' AND column_name='last_spent') THEN
+          ALTER TABLE members ADD COLUMN last_spent TIMESTAMP;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='members' AND column_name='current_load') THEN
+          ALTER TABLE members ADD COLUMN current_load NUMERIC DEFAULT 0;
+        END IF;
+      END
+      $$;
+    `);
+
+    // === BEVERAGE TABLE ===
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS beverage (
+        id SERIAL PRIMARY KEY,
+        product VARCHAR(100) NOT NULL,
+        price NUMERIC(10, 2) NOT NULL,
+        stocks INTEGER DEFAULT 0,
+        available BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log(`✅ Table "beverage" created/verified.`);
+
+    // === PRODUCTS TABLE ===
     await pool.query(`
       CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
         product VARCHAR(255) NOT NULL,
         price NUMERIC(10, 2),
-        stocks NUMERIC DEFAULT 0
+        stocks NUMERIC DEFAULT 0,
+        barista BOOLEAN DEFAULT TRUE
       )
     `);
 
@@ -132,25 +203,28 @@ async function createTablesIfNotExist(pool) {
 
     console.log(`✅ Tables "members" and "products" created/verified.`);
   } catch (err) {
-    console.error("Error creating tables:", err);
+    console.error("❌ Error creating tables:", err);
   }
 }
 
-// Create the pool
+// === Connect Pool ===
+// prod
+// const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+// local
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
   database: dbName,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
-  ssl: false, // Disable SSL for local dev
+  ssl: false, // or true if using Vercel with Neon (enable if needed)
 });
 
-// Kick off the setup when this file is required
+// === Init Setup ===
 (async () => {
   await createDatabaseIfNotExists();
   await createTablesIfNotExist(pool);
 })();
 
-// Export the pool for use in other files
 module.exports = pool;
