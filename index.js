@@ -38,7 +38,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(
   cors({
-    // origin: 'http://localhost:4200', // or your deployed frontend URL
+    // origin: "http://localhost:4200", // or your deployed frontend URL
     origin: "https://ricsiecruz.github.io",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
@@ -429,7 +429,12 @@ function addExpenses(newExpenses) {
 
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({ action: "addExpensesResponse", expense: newExpense }));
+            client.send(
+              JSON.stringify({
+                action: "addExpensesResponse",
+                expense: newExpense,
+              })
+            );
           }
         });
       }
@@ -487,8 +492,8 @@ const addTransactionSalesToDatabase = (sale) => {
             });
           }
 
-            // Proceed with insertion if no duplicate is found
-            const query = `
+          // Proceed with insertion if no duplicate is found
+          const query = `
             INSERT INTO sales (transactionid, orders, qty, total, datetime, customer, computer, ps4, subtotal, credit, mode_of_payment, student_discount, discount)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING *
@@ -677,12 +682,12 @@ const addTransactionSalesToDatabase = (sale) => {
                 }
               );
             });
-          }
-        );
+          });
+        });
       });
     });
   });
-
+};
 
 function addInventory(newInventory) {
   return new Promise((resolve, reject) => {

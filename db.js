@@ -209,17 +209,17 @@ async function createTablesIfNotExist(pool) {
 
 // === Connect Pool ===
 // prod
-// const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 // local
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: dbName,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-  ssl: false, // or true if using Vercel with Neon (enable if needed)
-});
+// const pool = new Pool({
+//   user: process.env.DB_USER,
+//   host: process.env.DB_HOST,
+//   database: dbName,
+//   password: process.env.DB_PASSWORD,
+//   port: process.env.DB_PORT,
+//   ssl: false, // or true if using Vercel with Neon (enable if needed)
+// });
 
 // === Init Setup ===
 (async () => {
